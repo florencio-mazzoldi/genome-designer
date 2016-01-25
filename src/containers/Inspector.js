@@ -53,8 +53,8 @@ export class Inspector extends Component {
 
 function mapStateToProps(state, props) {
   const { isVisible } = state.inspector;
-  const { currentBlocks } = state.ui;
-  const block = currentBlocks && currentBlocks.length ? state.blocks[currentBlocks[0]] : null;
+  const { currentBlocks, currentConstructId } = state.ui;
+  const block = currentBlocks && currentBlocks.length ? state.blocks[currentBlocks[0]] : state.blocks[currentConstructId];
 
   const { projectId } = state.router.params;
   const project = state.projects[projectId];
@@ -62,6 +62,7 @@ function mapStateToProps(state, props) {
   return {
     isVisible,
     currentBlocks,
+    ui: state.ui,
     block,
     project,
   };

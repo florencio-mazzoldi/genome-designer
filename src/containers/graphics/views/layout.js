@@ -144,10 +144,6 @@ export default class Layout {
    * If the part is an SBOL symbol then use the symbol name preferentially
    */
   partName(part) {
-    // if (this.isSBOL(part)) {
-    //   return this.partRule(part, 'sbol');
-    // }
-    // return meta data name if present or just the ID of the part if it is not.
     return this.partMeta(part, 'name') || this.partRule(part, 'sbol') || 'block';
   }
   /**
@@ -170,11 +166,10 @@ export default class Layout {
    * @param  {[type]} part [description]
    * @return {[type]}   [description]
    */
-  titleFactory(part) { //
+  titleFactory(part) {
     if (!this.titleNode) {
       this.titleNode = new Node2D(Object.assign({
         sg: this.sceneGraph,
-        color: this.baseColor,
       }, kT.titleAppearance));
       this.sceneGraph.root.appendChild(this.titleNode);
     }
@@ -241,8 +236,9 @@ export default class Layout {
    * display elements as required
    * @return {[type]} [description]
    */
-  update(construct, layoutAlgorithm, blocks, currentBlocks) {
+  update(construct, layoutAlgorithm, blocks, currentBlocks, currentConstructId) {
     this.construct = construct;
+    this.currentConstructId = currentConstructId;
     this.layoutAlgorithm = layoutAlgorithm;
     this.blocks = blocks;
     this.currentBlocks = currentBlocks;
@@ -324,9 +320,11 @@ export default class Layout {
     // create title as neccessary and position
     this.titleFactory(ct);
     // update title to current position and text
+    const isSelectedConstruct = this.construct.id === this.currentConstructId;
     this.titleNode.set({
       bounds: new Box2D(xs, ys, this.sceneGraph.availableWidth, kT.titleH),
-      text: "Construct: " + ct.id.substr(0, 6),
+      text: ct.metadata.name || ct.id,
+      color: isSelectedConstruct ? 'white' : this.baseColor,
     });
     // layout all the various components, constructing elements as required
     // and wrapping when a row is complete

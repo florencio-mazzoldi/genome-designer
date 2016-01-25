@@ -54,7 +54,7 @@ export default class MouseTrap {
     }
     // get local position and record the starting position and setup
     // move/up handlers on the body
-    const localPosition = this.mouseToLocal(event, event.currentTarget);
+    const localPosition = new Vector2D(event.offsetX, event.offsetY);
     this.dragging = {
       startPosition: localPosition,
     };
@@ -69,7 +69,7 @@ export default class MouseTrap {
    * mousemove event
    */
   onMouseMove(event) {
-    const localPosition = this.mouseToLocal(event, this.element);
+    const localPosition = this.globalToLocal(this.mouseToGlobal(event), this.element);
     this.callback('mouseMove', event, localPosition);
   }
 
@@ -79,11 +79,10 @@ export default class MouseTrap {
   onMouseDrag(event) {
     invariant(this.dragging, 'only expect mouse moves during a drag');
     // send the mouse move, then check for the begin of a drag
-    const localPosition = this.mouseToLocal(event, this.element);
-    const startPosition = this.dragging.startPosition;
+    const localPosition = this.globalToLocal(this.mouseToGlobal(event), this.element);
     const distance = localPosition.sub(this.dragging.startPosition).len();
     // invoke optional callback
-    this.callback('mouseDrag', event, localPosition, startPosition, distance);
+    this.callback('mouseDrag', event, localPosition, this.dragging.startPosition, distance);
   }
 
   /**
@@ -95,7 +94,7 @@ export default class MouseTrap {
       return;
     }
     invariant(this.dragging, 'only expect mouse up during a drag');
-    const localPosition = this.mouseToLocal(event, this.element);
+    const localPosition = this.globalToLocal(this.mouseToGlobal(event), this.element);
     this.cancelDrag();
     this.callback('mouseUp', event, localPosition);
   }
@@ -136,62 +135,31 @@ export default class MouseTrap {
   }
 
   /**
-   * x-browser solution for the global mouse position
-   */
-  mouseToGlobal(event) {
-    // get the position in document coordinates, allowing for browsers that don't have pageX/pageY
-    let pageX = event.pageX;
-    let pageY = event.pageY;
-    if (pageX === undefined) {
-      pageX = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-      pageY = event.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-    }
-    return new Vector2D(pageX, pageY);
-  }
-
-  /**
-   * Get the client area coordinates for a given mouse event and HTML element.
-   * @param {MouseEvent} event - mouse event you are interested in
-   * @param {HTMLElement} element - element for which you want local coordinates
-   */
-
-   mouseToLocal(event, element) {
-     invariant(event && element, 'Bad parameters');
-     return this.globalToLocal(this.mouseToGlobal(event), element);
-   }
-
-  /**
    * convert page coordinates into local coordinates
    * @param vector
    * @param element
    * @returns {G.Vector2D}
    */
   globalToLocal(vector, element) {
-    invariant(vector && element, 'Bad parameters');
-    const point = this.documentOffset(element);
-    return new Vector2D(vector.x - point.left, vector.y - point.top);
+    invariant(vector && element && arguments.length === 2, 'Needs a vector and an element');
+    return vector.sub(this.documentOffset(element));
+  }
+
+  /**
+   * x-browser solution for the global mouse position
+   */
+  mouseToGlobal(event) {
+    invariant(arguments.length === 1, 'expect only an event for this method');
+    const parentPosition = this.documentOffset(event.target);
+    return new Vector2D(event.offsetX + parentPosition.x, event.offsetY + parentPosition.y);
   }
 
   /**
    * return the top/left of the element relative to the document. Includes any scrolling.
-   * @param {HTMLElement} element
-   * @returns {{left: Number, top: Number}}
    */
-  documentOffset(_element) {
-    invariant(_element, 'Bad parameter');
-    // use the elements offset + the nearest positioned element, back to the root to find
-    // the absolute position of the element
-    let element = _element;
-    let curleft = element.offsetLeft - element.scrollLeft;
-    let curtop = element.offsetTop - element.scrollTop;
-    while (element.offsetParent) {
-      element = element.offsetParent;
-      curleft += element.offsetLeft - element.scrollLeft;
-      curtop += element.offsetTop - element.scrollTop;
-    }
-    return {
-      left: curleft,
-      top: curtop,
-    };
+  documentOffset(element) {
+    invariant(element && arguments.length === 1, 'Bad parameter');
+    const domRECT = element.getBoundingClientRect();
+    return new Vector2D(domRECT.left + window.scrollX, domRECT.top + window.scrollY);
   }
 }

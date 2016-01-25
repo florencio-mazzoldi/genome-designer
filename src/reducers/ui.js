@@ -3,10 +3,33 @@ import * as ActionTypes from '../constants/ActionTypes';
 export const initialState = {
   currentBlocks: null,
   detailViewVisible: false,
+  currentConstructId: null,
 };
 
 export default function inventory(state = initialState, action) {
   switch (action.type) {
+
+  case ActionTypes.UI_SET_CURRENT_CONSTRUCT: {
+    // action.blocks are all the blocks in the project. We use this to de-select
+    // any selected block which is not part of the current construct
+    const construct = action.blocks[action.constructId];
+    // filter selections to including only children of the construct
+    let selectedBlocks = [];
+    if (state.currentBlocks && state.currentBlocks.length) {
+      selectedBlocks = state.currentBlocks.filter(id => {
+        if (construct.components) {
+          return construct.components.includes(id);
+        } else {
+          return false;
+        }
+      });
+    }
+
+    return Object.assign({}, state, {
+      currentConstructId: action.constructId,
+      currentBlocks: selectedBlocks,
+    });
+  }
 
   case ActionTypes.UI_ADD_CURRENT : {
     const { blocks } = action;
