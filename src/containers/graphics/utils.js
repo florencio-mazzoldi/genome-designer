@@ -31,7 +31,7 @@ export const nodeIndex = (node) => {
   }
   let i = 0;
   while (i < node.parentNode.children.length) {
-    if (node.parentNode.children[i].isSameNode(node)) {
+    if (node.parentNode.children[i] == node) {
       return i;
     }
     i += 1;
