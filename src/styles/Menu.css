@@ -36,7 +36,7 @@
   left: 0;
   top: 0;
   background-color: transparent;
-  z-index: 100000,;
+  z-index: 100000;
 }
 .menu-popup-blocker-hidden {
   position: fixed;
