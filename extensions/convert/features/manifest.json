@@ -1,0 +1,14 @@
+{
+  "name": "features",
+  "version": "1.0.0",
+  "authors": [
+    { "name": "Deepak Chandran",
+      "email": "deepak.chandran@autodesk.com"
+    }
+  ],
+  "description": "convert an ApE feature file into a project with those blocks",
+  "functions": {
+    "importProject": "convert an ApE feature file into a project",
+    "exportProject": "convert all non-parent blocks into features in an ApE feature file"
+  }
+}

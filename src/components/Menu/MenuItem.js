@@ -12,7 +12,7 @@ export default class MenuItem extends Component {
   static propTypes = {
     text: PropTypes.string.isRequired,
     action: PropTypes.func.isRequired,
-  }
+  };
 
   render() {
     return (

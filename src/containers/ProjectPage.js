@@ -11,13 +11,12 @@ import '../styles/ProjectPage.css';
 import '../styles/SceneGraphPage.css';
 
 class ProjectPage extends Component {
-
   static propTypes = {
     project: PropTypes.object.isRequired,
     projectId: PropTypes.string.isRequired,
     constructs: PropTypes.array.isRequired,
     pushState: PropTypes.func.isRequired,
-  }
+  };
 
   constructor(props) {
     super(props);
@@ -27,7 +26,7 @@ class ProjectPage extends Component {
   onLayoutChanged = () => {
     this.layoutAlgorithm = this.refs.layoutSelector.value;
     this.forceUpdate();
-  }
+  };
 
   render() {
     const { project, constructs } = this.props;

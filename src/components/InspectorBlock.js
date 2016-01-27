@@ -14,25 +14,25 @@ export class InspectorBlock extends Component {
     blockSetSbol: PropTypes.func.isRequired,
     blockMerge: PropTypes.func.isRequired,
     blockRename: PropTypes.func.isRequired,
-  }
+  };
 
   setBlockName = (name) => {
     this.props.blockRename(this.props.instance.id, name);
-  }
+  };
 
   setBlockDescription = (description) => {
     if (description !== this.props.instance.metadata.description) {
       this.props.blockMerge(this.props.instance.id, {metadata: {description}});
     }
-  }
+  };
 
   selectColor = (color) => {
     this.props.blockSetColor(this.props.instance.id, color);
-  }
+  };
 
   selectSymbol = (symbol) => {
     this.props.blockSetSbol(this.props.instance.id, symbol);
-  }
+  };
 
   render() {
     const { instance } = this.props;

@@ -12,7 +12,7 @@ export default class InventoryGroupSbol extends Component {
         image: PropTypes.string.isRequired,
       }).isRequired,
     })).isRequired,
-  }
+  };
 
   render() {
     const { items } = this.props;

@@ -28,14 +28,14 @@ export class Inventory extends Component {
   static propTypes = {
     isVisible: PropTypes.bool.isRequired,
     inventoryToggleVisibility: PropTypes.func.isRequired,
-  }
+  };
 
   toggle = (forceVal) => {
     this.props.inventoryToggleVisibility(forceVal);
     window.setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 300);
-  }
+  };
 
   render() {
     const { isVisible } = this.props;

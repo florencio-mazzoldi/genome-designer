@@ -6,18 +6,18 @@ import '../styles/ProjectHeader.css';
 export default class ProjectHeader extends Component {
   static propTypes = {
     project: PropTypes.object.isRequired,
-  }
+  };
 
   //because we dont need to persist this state, it can exist in the component
   state = {
     detailVisible: false,
-  }
+  };
 
   handleToggleDetail = (event) => {
     this.setState({
       detailVisible: !this.state.detailVisible,
     });
-  }
+  };
 
   render() {
     const { project } = this.props;

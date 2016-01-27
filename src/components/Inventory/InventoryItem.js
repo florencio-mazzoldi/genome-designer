@@ -13,7 +13,7 @@ export default class InventoryItem extends Component {
         image: PropTypes.string,
       }).isRequired,
     }).isRequired,
-  }
+  };
 
   componentDidMount() {
     const dom = React.findDOMNode(this);

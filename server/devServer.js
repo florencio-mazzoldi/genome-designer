@@ -14,9 +14,12 @@ const hostname = '0.0.0.0';
 
 const app = express();
 const compiler = webpack(config);
-
 const extRouter = require('../extensions/compute/api');
-const camRouter = require('../extensions/foundry/api');
+
+//import and export file formats
+const importRouter = require('../extensions/convert/import');
+const exportRouter = require('../extensions/convert/export');
+const searchRouter = require('../extensions/search/search');
 
 //logging middleware
 app.use(morgan('dev'));
@@ -47,8 +50,10 @@ app.use('/login', (req, res) => {
 });
 
 app.use('/api', apiRouter);
-app.use('/exec', extRouter);
-app.use('/foundry', camRouter);
+app.use('/compute', extRouter);
+app.use('/import', importRouter);
+app.use('/export', exportRouter);
+app.use('/search', searchRouter);
 
 // Register Client Requests, delegate routing to client
 // ----------------------------------------------------

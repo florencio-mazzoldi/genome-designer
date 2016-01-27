@@ -15,14 +15,14 @@ export class Inspector extends Component {
     currentBlocks: PropTypes.array,
     project: PropTypes.object,
     block: PropTypes.object,
-  }
+  };
 
   toggle = (forceVal) => {
     this.props.inspectorToggleVisibility(forceVal);
     window.setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 300);
-  }
+  };
 
   render() {
     const { isVisible, block, project } = this.props;

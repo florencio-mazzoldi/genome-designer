@@ -13,11 +13,11 @@ export class InventoryGroupBlocks extends Component {
     searchTerm: PropTypes.string.isRequired,
     inventorySearch: PropTypes.func.isRequired,
     items: ({items}) => validators.arrayOf(item => BlockDefinition.validate(item, true))(items) || null,
-  }
+  };
 
   handleSearchChange = (value) => {
     this.props.inventorySearch(value);
-  }
+  };
 
   render() {
     const { items, searchTerm } = this.props;

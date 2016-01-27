@@ -23,17 +23,17 @@ export default class InventoryGroups extends Component {
       type: PropTypes.string.isRequired,
       items: PropTypes.array.isRequired,
     })).isRequired,
-  }
+  };
 
   state = {
     currentTabIndex: 0,
-  }
+  };
 
   handleSelectTab = (index) => {
     this.setState({
       currentTabIndex: index,
     });
-  }
+  };
 
   inventoryGroupTypeToComponent(type, props) {
     if (type === 'sbol') {

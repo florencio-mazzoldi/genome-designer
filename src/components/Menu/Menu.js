@@ -10,11 +10,11 @@ export default class Menu extends Component {
     onToggle: PropTypes.func.isRequired,
     title: PropTypes.string.isRequired,
     menuItems: PropTypes.array.isRequired,
-  }
+  };
 
   toggle = (forceVal) => {
     this.props.onToggle(forceVal);
-  }
+  };
 
   render() {
     return (

@@ -1,3 +1,4 @@
+command: python3 translate.py inputs/DNA outputs/Protein
 inputs:
     - id: DNA
       type: string

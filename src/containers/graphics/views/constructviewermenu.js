@@ -6,14 +6,14 @@ export default class ConstructViewerMenu extends Component {
   static propTypes = {
     layoutAlgorithm: PropTypes.string.isRequired,
     constructId: PropTypes.string.isRequired,
-  }
+  };
 
   constructor(props) {
     super(props);
   }
 
   fullClicked = () => {
-  }
+  };
 
   /**
    * render the component, the scene graph will render later when componentDidUpdate is called

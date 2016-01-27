@@ -6,11 +6,11 @@ import '../../styles/Menu.css';
 export default class MenuBar extends Component {
   static propTypes = {
     menus: PropTypes.array.isRequired,
-  }
+  };
 
   state = {
     openMenu: null,
-  }
+  };
 
   toggleMenu(menuId, forceVal) {
     const lastOpen = this.state.openMenu;

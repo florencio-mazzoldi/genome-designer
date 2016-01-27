@@ -15,14 +15,6 @@ render(
   document.getElementById('root')
 );
 
-if (false) {
-  // Use require because imports can't be conditional.
-  // In production, you should ensure process.env.NODE_ENV
-  // is envified so that Uglify can eliminate this
-  // module and its dependencies as dead code.
-  require('./createDevToolsWindow')(store);
-}
-
 // login on app start by default for all subsequent API requests...
 // need to handle this much better. this is so lame.
 // really, this isnt necessary yet, as there is a testingStub Key in middleware/api.js for now

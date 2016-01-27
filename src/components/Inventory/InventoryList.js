@@ -10,7 +10,7 @@ export default class InventoryList extends Component {
     items: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.string.isRequired,
     })).isRequired,
-  }
+  };
 
   render() {
     const { items, inventoryType } = this.props;

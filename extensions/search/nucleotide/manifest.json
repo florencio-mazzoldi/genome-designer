@@ -1,0 +1,13 @@
+{
+  "name": "nucleotide",
+  "version": "1.0.0",
+  "authors": [
+    { "name": "Deepak Chandran",
+      "email": "deepak.chandran@autodesk.com"
+    }
+  ],
+  "description": "search the NCBI nucleotide database for parts",
+  "functions": {
+    "search": "get a list of blocks from a search string"
+  }
+}

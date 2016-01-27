@@ -33,17 +33,17 @@ export default class InputSimple extends Component {
     if (this.props.updateOnBlur) {
       this.props.onChange(this.getInputValue());
     }
-  }
+  };
 
   handleKeyUp = (event) => {
     if (event.keyCode === 13 || !this.props.updateOnBlur) {
       this.handleSubmission();
     }
-  }
+  };
 
   handleSubmission = (event) => {
     this.props.onChange(this.getInputValue());
-  }
+  };
 
   render() {
     return (

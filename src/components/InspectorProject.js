@@ -10,17 +10,17 @@ export class InspectorProject extends Component {
     instance: PropTypes.object.isRequired,
     projectRename: PropTypes.func.isRequired,
     projectMerge: PropTypes.func.isRequired,
-  }
+  };
 
   setProjectName = (name) => {
     this.props.projectRename(this.props.instance.id, name);
-  }
+  };
 
   setProjectDescription = (description) => {
     if (description !== this.props.instance.metadata.description) {
       this.props.projectMerge(this.props.instance.id, {metadata: {description}});
     }
-  }
+  };
 
   render() {
     const { instance } = this.props;

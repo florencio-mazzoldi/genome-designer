@@ -42,7 +42,7 @@ export class ConstructViewer extends Component {
     blockAddComponent: PropTypes.func,
     blockRemoveComponent: PropTypes.func,
     blocks: PropTypes.object,
-  }
+  };
 
   constructor(props) {
     super(props);

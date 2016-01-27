@@ -9,7 +9,7 @@ export default class InventoryTabs extends Component {
     })).isRequired,
     onTabSelect: PropTypes.func.isRequired,
     activeTabIndex: PropTypes.number,
-  }
+  };
 
   render() {
     const { tabs, onTabSelect, activeTabIndex } = this.props;
