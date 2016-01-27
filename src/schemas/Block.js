@@ -20,6 +20,11 @@ import SequenceDefinition from './Sequence';
  */
 
 const BlockDefinition = InstanceDefinition.extend({
+  id: [
+    fields.id({prefix: 'block'}).required,
+    'Block UUID',
+  ],
+
   /*
    Part-like fields for sequence and sequence annotations, inventory source
    */

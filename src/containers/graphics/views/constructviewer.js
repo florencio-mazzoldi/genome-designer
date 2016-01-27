@@ -148,7 +148,7 @@ export class ConstructViewer extends Component {
    * select the given block
    */
   constructSelected(id) {
-    this.props.uiSetCurrentConstruct(id, this.props.blocks);
+    this.props.uiSetCurrentConstruct(id);
     this.props.inspectorToggleVisibility(true);
   }
 

@@ -10,6 +10,11 @@ import InstanceDefinition from './Instance';
 */
 
 const ProjectDefinition = InstanceDefinition.extend({
+  id: [
+    fields.id({prefix: 'project'}).required,
+    'Project UUID',
+  ],
+
   components: [
     fields.arrayOf(validators.id()).required,
     `Constructs associated with this project`,

@@ -10,7 +10,7 @@ import AnnotationDefinition from './Annotation';
 
 const SequenceDefinition = new SchemaDefinition({
   id: [
-    fields.id(),
+    fields.id({prefix: 'sequence'}),
     `ID corresponding to file for associated sequence`,
   ],
 

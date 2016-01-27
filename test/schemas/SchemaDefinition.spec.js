@@ -51,6 +51,19 @@ describe('Schema', () => {
         expect(typeof InstanceDefinition.scaffold).to.equal('function');
       });
 
+      it('should prefix IDs with passed prefix', () => {
+        const prefix = 'prefff';
+        const Extended = InstanceDefinition.extend({
+          id: [
+            fields.id({prefix}).required,
+            'Prefixed ID of the instance',
+          ]
+        });
+        const scaffold = Extended.scaffold();
+
+        expect( (scaffold.id).indexOf(prefix) ).to.equal(0);
+      });
+
       it('logs errors'); //unclear how to test without buggering up console.log for everything
     });
 

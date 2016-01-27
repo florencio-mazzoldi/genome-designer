@@ -9,7 +9,7 @@ import SchemaDefinition from './SchemaDefinition';
 
 const UserDefinition = new SchemaDefinition({
   id: [
-    fields.id().required,
+    fields.id({prefix: 'user'}).required,
     `ID of the User`,
   ],
   email: [

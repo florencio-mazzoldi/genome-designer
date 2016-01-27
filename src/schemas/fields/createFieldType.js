@@ -33,19 +33,20 @@ export default function createFieldType(baseFieldDefinition, type) {
 
   return function validatorAwaitingParams(validationParams) {
     const { baseValidator } = fieldDef;
-    const definedValidator = baseValidator(validationParams);
 
-    const opt = createFieldFromValidator(fieldDef, definedValidator, false);
-    opt.required = createFieldFromValidator(fieldDef, definedValidator, true);
+    const opt = createFieldFromValidator(fieldDef, baseValidator, validationParams, false);
+    opt.required = createFieldFromValidator(fieldDef, baseValidator, validationParams, true);
 
     return opt;
   };
 }
 
-function createFieldFromValidator(fieldDefinition, definedValidator, required) {
+function createFieldFromValidator(fieldDefinition, baseValidator, params, required) {
+  const definedValidator = baseValidator(params);
   return Object.assign({},
     fieldDefinition,
     {
+      params,
       validate: wrapValidator(definedValidator, required),
       isRequired: required,
     }

@@ -33,7 +33,10 @@ const fields = mapValues({
   id: {
     baseValidator: validatorFunctions.id,
     typeDescription: 'A UUID',
-    scaffold: () => { return uuid.v4(); },
+    scaffold: (params) => {
+      const prefix = '' + ((params && params.prefix) ? (params.prefix.toLowerCase() + '-') : '');
+      return prefix + uuid.v4();
+    },
   },
   string: {
     baseValidator: validatorFunctions.string,

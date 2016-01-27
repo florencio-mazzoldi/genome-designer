@@ -77,7 +77,7 @@ export default class SchemaDefinition {
 
     return mapValues(this.fields, field => (
       typeof field.scaffold === 'function' ?
-        field.scaffold() :
+        field.scaffold(field.params) :
         defaultScaffoldValue
     ));
   }

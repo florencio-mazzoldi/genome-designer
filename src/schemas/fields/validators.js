@@ -17,7 +17,8 @@ import semverRegex from 'semver-regex';
 
 export const id = params => input => {
   //todo - real validation
-  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const regex = /^(\w+-)?[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
   if (!regex.test(input)) {
     return new Error(`${input} is not a RFC4122-compliant UUID`);
   }

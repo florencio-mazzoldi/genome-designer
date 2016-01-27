@@ -14,5 +14,12 @@ describe('Schema', () => {
       expect(scaffold).to.be.an.object;
       expect(BlockDefinition.validate(scaffold)).to.equal(true);
     });
+
+    it('should prefix ID with block', () => {
+      const scaffold = BlockDefinition.scaffold();
+      const regex = /^block/;
+      //console.log(scaffold);
+      expect(regex.test(scaffold.id)).to.equal(true);
+    });
   });
 });

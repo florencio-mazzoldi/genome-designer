@@ -15,7 +15,7 @@ import SchemaDefinition from './SchemaDefinition';
  */
 const AnnotationDefinition = new SchemaDefinition({
   id: [
-    fields.id().required,
+    fields.id({prefix: 'annotation'}).required,
     'ID of the annotation',
   ],
   tags: [
