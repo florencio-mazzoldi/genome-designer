@@ -46,6 +46,7 @@ class OnionViewer extends React.Component {
             //}
 
             if(Array.isArray(currentBlocks) && currentBlocks.length) {
+                console.log("currentBlocks",currentBlocks);
                 let readBlockCount = currentBlocks.length;
                 let onionBlocks = [];
                 let start = 0;
@@ -58,6 +59,7 @@ class OnionViewer extends React.Component {
                                 color: block.metadata.color,
                                 start: start,
                                 length: sequence.length,
+                                name: block.metadata.name,
                             });
                             start += sequence.length;
                             totalSequence += sequence;
@@ -86,12 +88,17 @@ class OnionViewer extends React.Component {
     }
 
     updateDimensions(){
-        let width = this.props.container.offsetWidth;
-        this.setState({width: width});
+        //let width = this.props.container.offsetWidth;
+        //let height = this.props.container.offsetHeight;
+        let width = $(".ProjectDetail").width();
+        let height= $(".ProjectDetail").height();
+        console.log("new dimensions",width,height);
+        this.setState({width: width,height:height});
     }
 
     componentDidMount() {
         window.addEventListener("resize", this.updateDimensions.bind(this));
+        this.updateDimensions();
     }
 
     componentWillUnmount() {
