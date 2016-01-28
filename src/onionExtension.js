@@ -90,12 +90,15 @@ class OnionViewer extends React.Component {
     updateDimensions(){
         //let width = this.props.container.offsetWidth;
         //let height = this.props.container.offsetHeight;
-        let width = $(".ProjectDetail").width();
-        let height= $(".ProjectDetail").height();
-        height-= $(".ProjectDetail-heading").height();
-		//height-=100;
-        height = Math.max(1,height);
 
+		let frames = document.getElementsByClassName("ProjectDetail");
+		console.log("frames",frames);
+		let rectObject = frames[0].getBoundingClientRect();
+		console.log("rectObject",rectObject);
+		let width = rectObject.width - 20;
+        let height= rectObject.height - $(".ProjectDetail-heading").height();
+		console.log("rectObject",height);
+        height = Math.max(1,height);
         console.log("new dimensions",width,height);
         this.setState({width: width,height:height});
     }
