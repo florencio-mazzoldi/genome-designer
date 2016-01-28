@@ -92,6 +92,10 @@ class OnionViewer extends React.Component {
         //let height = this.props.container.offsetHeight;
         let width = $(".ProjectDetail").width();
         let height= $(".ProjectDetail").height();
+        height-= $(".ProjectDetail-heading").height();
+		//height-=100;
+        height = Math.max(1,height);
+
         console.log("new dimensions",width,height);
         this.setState({width: width,height:height});
     }
@@ -113,7 +117,7 @@ class OnionViewer extends React.Component {
                 sequence={sequence}
                 features={features}
                 width={width}
-                height={height}
+                height={height-50}
                 blocks={blocks}
             ></OnionForGenomeDesigner>
         )
