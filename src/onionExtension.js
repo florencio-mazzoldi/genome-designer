@@ -96,7 +96,7 @@ class OnionViewer extends React.Component {
 		let rectObject = frames[0].getBoundingClientRect();
 		console.log("rectObject",rectObject);
 		let width = rectObject.width - 20;
-        let height= rectObject.height - $(".ProjectDetail-heading").height();
+        let height = $(window).height() - rectObject.top - $(".ProjectDetail-heading").height()-8;
 		console.log("rectObject",height);
         height = Math.max(1,height);
         console.log("new dimensions",width,height);
@@ -119,11 +119,10 @@ class OnionViewer extends React.Component {
 
     render() {
 		let {sequence,features,width,height,blocks} = this.state;
-		let frames = document.getElementsByClassName("ProjectDetail");
-		let rectObject = frames[0].getBoundingClientRect();
-		width = rectObject.width - 20;
-		height= rectObject.height - $(".ProjectDetail-heading").height();
-
+		//let frames = document.getElementsByClassName("ProjectDetail");
+		//let rectObject = frames[0].getBoundingClientRect();
+		//width = rectObject.width - 20;
+		//height= rectObject.height - $(".ProjectDetail-heading").height();
         return (
             <OnionForGenomeDesigner
                 sequence={sequence}
