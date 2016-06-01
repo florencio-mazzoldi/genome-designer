@@ -26,11 +26,6 @@ EXPOSE 3000
 ENV PORT=3000
 
 RUN mkdir /app
-#do some directory setup for now, but the server should handle this...
-RUN mkdir /app/storage
-RUN mkdir /app/storage/projects
-RUN mkdir /app/storage/sequence
-RUN mkdir /app/storage/file
 WORKDIR /app
 
 #setup node

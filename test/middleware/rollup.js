@@ -1,10 +1,17 @@
 import chai from 'chai';
-import uuid from 'node-uuid';
-import fs from 'fs';
 import * as api from '../../src/middleware/data';
+import { range } from 'lodash';
 const { assert, expect } = chai;
-import { createFilePath } from '../../server/utils/filePaths';
-import { fileExists, fileRead, fileWrite, fileDelete, directoryExists, directoryMake, directoryDelete } from '../../server/utils/fileSystem';
+import {
+  fileExists,
+  fileRead,
+  fileWrite,
+  fileDelete,
+  directoryExists,
+  directoryMake,
+  directoryDelete
+} from '../../server/utils/fileSystem';
+import Block from '../../src/models/Block';
 
 import * as commitMessages from '../../server/data/commitMessages';
 import * as filePaths from '../../server/utils/filePaths';
@@ -66,7 +73,7 @@ describe('Middleware', () => {
     it('saveProject() creates a commit', () => {
       const a_roll = createExampleRollup();
       const a_projectId = a_roll.project.id;
-      const b_roll = Object.assign(createExampleRollup(), {project: a_roll.project});
+      const b_roll = Object.assign(createExampleRollup(), { project: a_roll.project });
 
       const a_path = filePaths.createProjectDataPath(a_projectId);
       let a_log;
@@ -90,12 +97,22 @@ describe('Middleware', () => {
       const projectId = project.id;
       const commitMessage = 'my fancy message';
 
-      return api.saveProject(projectId, roll)
-        .then(() => api.snapshot(projectId, roll, commitMessage))
+      return api.snapshot(projectId, commitMessage, roll)
         .then(commit => {
           assert(commit.message.indexOf(commitMessages.SNAPSHOT) >= 0, 'wrong commit message type, shoudl be snapshot');
           assert(commit.message.indexOf(commitMessage) >= 0, 'commit message missing');
         });
+    });
+
+    it('can save a huge project (10mb or so)', () => {
+      const roll = createExampleRollup();
+      const project = roll.project;
+
+      const newBlocks = range(1000).map(() => new Block());
+
+      roll.blocks = roll.blocks.concat(newBlocks);
+
+      return api.saveProject(project.id, roll);
     });
   });
 });

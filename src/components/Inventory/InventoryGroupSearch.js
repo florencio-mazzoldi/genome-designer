@@ -14,10 +14,10 @@ import InventorySearch from './InventorySearch';
 import InventoryList from './InventoryList';
 import InventoryListGroup from './InventoryListGroup';
 
-const defaultSearchResults = getSources().reduce((acc, source) => Object.assign(acc, { [source]: [] }), {});
+const defaultSearchResults = getSources('search').reduce((acc, source) => Object.assign(acc, { [source]: [] }), {});
 
 const createSourcesVisible = (valueFunction = () => false) => {
-  return getSources().reduce((acc, source) => Object.assign(acc, { [source]: valueFunction(source) }), {});
+  return getSources('search').reduce((acc, source) => Object.assign(acc, { [source]: valueFunction(source) }), {});
 };
 
 const inventoryTabs = [
@@ -36,7 +36,7 @@ export class InventoryGroupSearch extends Component {
 
   state = {
     searching: false,
-    sourceList: getSources(),
+    sourceList: getSources('search'),
     sourcesVisible: createSourcesVisible(),
     searchResults: defaultSearchResults,
     groupBy: 'source',
@@ -76,14 +76,14 @@ export class InventoryGroupSearch extends Component {
 
   onSourceToggle = (source) => {
     const { sourceList } = this.state;
-    const newSourceList = sourceList.length ? sourceList.slice() : getSources();
+    const newSourceList = sourceList.length ? sourceList.slice() : getSources('search');
 
     //xor, reset if empty
     const indexOfSource = newSourceList.indexOf(source);
     if (indexOfSource >= 0) {
       newSourceList.splice(indexOfSource, 1);
       if (newSourceList.length === 0) {
-        newSourceList.push(...getSources());
+        newSourceList.push(...getSources('search'));
       }
     } else {
       newSourceList.push(source);

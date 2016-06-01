@@ -33,7 +33,6 @@ describe('Store', () => {
     const {
       autosaveReducerEnhancer,
       isDirty,
-      getLastSaved,
     } = autosaving;
 
     const savingCounter = autosaveReducerEnhancer(counterReducer);
@@ -63,23 +62,15 @@ describe('Store', () => {
       setTimeout(done, throttleTime); //make sure throttle ends
     });
 
-    it('returns last saved time', () => {
-      expect(typeof getLastSaved).to.equal('function');
-      assert(getLastSaved() > Date.now() - 2000);
-    });
-
     it('only saves when state changes', (done) => {
       const callCount = saveSpy.callCount;
-      const startSaved = getLastSaved();
 
       state = savingCounter(state, { type: 'bogus' });
-      assert(startSaved === getLastSaved(), 'wrong saved time');
       expect(saveSpy.callCount).to.equal(callCount);
 
       state = savingCounter(state, increment(1));
 
       setTimeout(() => {
-        assert(startSaved < getLastSaved(), 'wrong saved time');
         expect(saveSpy.callCount).to.equal(callCount + 1);
 
         setTimeout(done, throttleTime); //make sure throttle ends
@@ -186,7 +177,7 @@ describe('Store', () => {
           expect(coordinatingSpy.callCount).to.equal(2);
           done();
         }, savingTime + 1);
-      }, waitingTime);
+      }, waitingTime + 1);
     });
   });
 });

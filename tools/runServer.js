@@ -2,7 +2,7 @@ import cp from 'child_process';
 import { serverConfig } from './webpack.config';
 
 // Should match the text string used in `src/server.js/server.listen(...)`
-const RUNNING_REGEXP = /Building, will serve at http:\/\/(.*?)\//;
+const RUNNING_REGEXP = /Server listening at http:\/\/(.*?)\//;
 
 let server;
 const { output } = serverConfig;

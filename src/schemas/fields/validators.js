@@ -23,29 +23,33 @@ export const id = params => input => {
   }
 };
 
-export const string = params => input => {
+export const string = ({ max, min } = {}) => input => {
   if (!isString(input)) {
     return new Error(`${input} is not a string`);
   }
+  if (isNumber(max) && input.length > max) {
+    return new Error(`${input} is longer than max length ${max}`);
+  }
+  if (isNumber(min) && input.length < min) {
+    return new Error(`${input} is shorter than min length ${min}`);
+  }
 };
 
-export const number = params => input => {
+export const number = ({ reals, min, max } = {}) => input => {
   if (!isNumber(input)) {
     return new Error(`input ${input} is not a number`);
   }
 
-  if (isRealObject(params)) {
-    if (params.reals && !isRealNumber(input)) {
-      return new Error(`input ${input} is not a real number`);
-    }
+  if (reals && !isRealNumber(input)) {
+    return new Error(`input ${input} is not a real number`);
+  }
 
-    if (params.min && input < params.min) {
-      return new Error(`input ${input} is less than minimum ${params.min}`);
-    }
+  if (isNumber(min) && input < min) {
+    return new Error(`input ${input} is less than minimum ${params.min}`);
+  }
 
-    if (params.max && input > params.max) {
-      return new Error(`input ${input} is greater than maximum ${params.max}`);
-    }
+  if (isNumber(max) && input > max) {
+    return new Error(`input ${input} is greater than maximum ${params.max}`);
   }
 };
 

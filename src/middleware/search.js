@@ -7,7 +7,7 @@ const zip = (keys, vals) => keys.reduce(
 
 //todo - ideally, farm these out separately without a Promise.all (dont wait for all to resolve)
 export const search = (term, options, sourceList = []) => {
-  const sources = getSources();
+  const sources = getSources('search');
 
   invariant(typeof term === 'string', 'Term must be a string');
   invariant(Array.isArray(sourceList), 'must pass array for search source list');

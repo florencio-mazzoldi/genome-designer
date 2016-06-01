@@ -1,5 +1,6 @@
 import invariant from 'invariant';
 import BlockDefinition from '../schemas/Block';
+import { values, flatten } from 'lodash';
 
 /***************************************
  * Parent accessing / store knowledge-requiring
@@ -9,7 +10,7 @@ const _getBlockFromStore = (blockId, store) => {
   return store.blocks[blockId] || null;
 };
 
-const _getParentFromStore = (blockId, store, def) => {
+const _getParentFromStore = (blockId, store, def = null) => {
   const id = Object.keys(store.blocks).find(id => {
     const block = _getBlockFromStore(id, store);
     return block.components.indexOf(blockId) > -1;
@@ -17,11 +18,13 @@ const _getParentFromStore = (blockId, store, def) => {
   return !!id ? store.blocks[id] : def;
 };
 
+//todo - move to object
 const _getChildrenShallow = (blockId, store) => {
   const block = _getBlockFromStore(blockId, store);
   return block.components.map(id => _getBlockFromStore(id, store));
 };
 
+//todo - move to object
 const _getAllChildren = (rootId, store, children = []) => {
   const kids = _getChildrenShallow(rootId, store);
   if (kids.length) {
@@ -59,6 +62,34 @@ const _getSiblings = (blockId, state) => {
   return (parent.components || []).map(id => _getBlockFromStore(id, state));
 };
 
+//returns map of { optionId : option }
+const _getOptions = (blockId, state, includeUnselected = false) => {
+  const block = _getBlockFromStore(blockId, state);
+  invariant(block.isList(), 'must pass a list block to get its options');
+
+  return block.getOptions(includeUnselected)
+    .reduce((acc, optionId) => Object.assign(acc, {
+      [optionId]: _getBlockFromStore(optionId, state),
+    }), {});
+};
+
+// flattens component hierarchy
+// returns flat array of blocks, not touching list blocks
+const _flattenConstruct = (blockId, state) => {
+  const block = _getBlockFromStore(blockId, state);
+  if (!block.components.length) {
+    return [block];
+  }
+
+  const components = block.components
+    .map(compId => _getBlockFromStore(compId, state));
+
+  return flatten(components.map(component => component.isConstruct() ?
+    _flattenConstruct(component.id, state) :
+    [component]
+  ));
+};
+
 export const blockGet = (blockId) => {
   return (dispatch, getState) => {
     return _getBlockFromStore(blockId, getState());
@@ -94,6 +125,8 @@ export const blockGetChildrenByDepth = (blockId) => {
   };
 };
 
+//get all non-constructs
+//todo - move to object
 export const blockGetLeaves = (blockId) => {
   return (dispatch, getState) => {
     return _filterToLeafNodes(_getAllChildren(blockId, getState()));
@@ -157,18 +190,23 @@ export const blockGetIndex = (blockId) => {
 };
 
 const _checkSingleBlockIsSpec = (block) => {
-  return (!block.options.length) && (block.sequence.length > 0);
+  invariant(!block.isList() && !block.isConstruct(), 'list blocks + constructs are not specs');
+  return block.sequence.length > 0;
 };
 
 export const blockIsSpec = (blockId) => {
   return (dispatch, getState) => {
     const store = getState();
-    const block = _getBlockFromStore(blockId, store);
-    if (block.components.length) {
-      return _filterToLeafNodes(_getAllChildren(blockId, store))
-        .every(_checkSingleBlockIsSpec);
-    }
-    return _checkSingleBlockIsSpec(block);
+    const flattened = _flattenConstruct(blockId, store);
+
+    return flattened.every(block => {
+      if (block.isList()) {
+        //only want selected options
+        const options = values(_getOptions(block.id, store, false));
+        return options.length > 0 && options.every(selectedBlock => _checkSingleBlockIsSpec(selectedBlock));
+      }
+      return _checkSingleBlockIsSpec(block);
+    });
   };
 };
 
@@ -180,7 +218,97 @@ export const blockIsValid = (model) => {
 
 export const blockHasSequence = blockId => {
   return (dispatch, getState) => {
-    const block = getState().blocks[blockId];
+    const block = _getBlockFromStore(blockId, getState());
     return !!block && block.hasSequence();
   };
 };
+
+/*
+deprecated filters for now
+//expects object block.rules.filter
+export const blockGetFiltered = filters => {
+  return (dispatch, getState) => {
+    invariant(typeof filters === 'object', 'must pass ovject of filters');
+    const blockState = getState().blocks;
+
+    return Object.keys(blockState)
+      .map(id => blockState[id])
+      .filter(block => {
+        return Object.keys(filters).every(key => {
+          const value = filters[key];
+          return pathGet(block, key) === value;
+        });
+      });
+  };
+};
+*/
+
+//given a construct, returns an array of parts that have sequence / are list blocks, including hidden blocks
+export const blockFlattenConstruct = (blockId) => {
+  return (dispatch, getState) => {
+    return _flattenConstruct(blockId, getState());
+  };
+};
+
+/*
+ returns 2D array - based on position - of block combinations (including hidden blocks), e.g.
+
+ given:
+ A: { sequence }                                        //single part
+ B: { options: {2: true, 3: true, 4: true, 5: false } } //list block with 3 selected options
+ C: { options: { 6: true } }                            //list block, one option
+
+ generates:
+ [
+   [A],
+   [block2, block3, block4],
+   [block6],
+ ]
+ */
+export const blockGetPositionalCombinations = (blockId, includeUnselected = false) => {
+  return (dispatch, getState) => {
+    invariant(dispatch(blockIsSpec(blockId)), 'block must be a spec to get combinations');
+
+    const state = getState();
+
+    //generate 2D array, outer array for positions, inner array with lists of parts
+    return _flattenConstruct(blockId, state)
+      .map(block => block.isList() ?
+        values(_getOptions(block.id, state, includeUnselected)) :
+        [block]
+      );
+  };
+};
+
+/*
+ returns 2D array of all possible constructs, flattened, and with options unfurled, including hidden blocks
+
+ given:
+ A: { sequence }                                        //single part
+ B: { options: {2: true, 3: true, 4: true, 5: false } } //list block with 3 selected options
+ C: { options: { 6: true } }                            //list block, one option
+
+ generates:
+ [
+   [A, block2, block6],
+   [A, block3, block6],
+   [A, block4, block6],
+ ]
+ */
+//todo - parameters for limiting number combinations, how to select them
+export const blockGetCombinations = (blockId, parameters = {}) => {
+  return (dispatch, getState) => {
+    const positions = dispatch(blockGetPositionalCombinations(blockId, false));
+
+    //guarantee both accumulator (and positions) array have at least one item to map over
+    const first = positions.shift();
+
+    //iterate through positions, essentially generating tree with * N branches for N options at position
+    return positions.reduce((acc, position) => {
+      // for each extant construct, create one variant which adds each part respectively
+      // flatten them for return and repeat!
+      return flatten(position.map(option => acc.map(partialConstruct => partialConstruct.concat(option))));
+    }, [first]);
+  };
+};
+

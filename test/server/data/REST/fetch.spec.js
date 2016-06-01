@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import fetch from 'isomorphic-fetch';
 import Project from '../../../../src/models/Project';
-import { dataApiPath } from '../../../../src/middleware/data';
+import { dataApiPath } from '../../../../src/middleware/paths';
 import devServer from '../../../../server/server';
 
 describe('REST', () => {

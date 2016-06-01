@@ -70,7 +70,7 @@
     width: 100%;
     background-color: #565B69;
     height: var(--footer-height);
-    overflow-x: scroll;
+    overflow: hidden;
   }
   &-footer ul {
     list-style: none;

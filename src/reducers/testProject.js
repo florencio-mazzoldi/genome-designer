@@ -2,7 +2,7 @@ import Block from '../models/Block';
 import Project from '../models/Project';
 
 import exampleWithAnnotations from '../inventory/examples/exampleWithAnnotations';
-import dummyBlocks from '../inventory/andrea';
+import dummyBlocks from '../inventory/andrea/parts';
 
 const annotationExample = new Block(exampleWithAnnotations);
 

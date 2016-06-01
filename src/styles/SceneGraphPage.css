@@ -31,26 +31,14 @@
   white-space: nowrap;
   overflow: hidden;
 }
-/*base class for html based glyph*/
-.html-glyph {
+/* base class for all glyphs */
+.glyph {
   position: absolute;
   display: inline-block;
   box-sizing: border-box;
 }
-
-/*base class for html based glyph*/
-.role-glyph {
-  position: absolute;
-  display: inline-block;
-  box-sizing: border-box;
-}
+/* svg icons in sbol blocks */
 .role-icon {
-  position: absolute;
-  display: inline-block;
-  box-sizing: border-box;
-}
-
-.canvas-glyph {
   position: absolute;
   display: inline-block;
   box-sizing: border-box;

@@ -40,7 +40,6 @@ const rightPad = 30;
 
 export default {
   // layout algorithms
-  layoutWrap: 'wrap',
   layoutFit: 'fit',
   layoutFull: 'full',
 

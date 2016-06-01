@@ -51,6 +51,7 @@ export class InspectorProject extends Component {
                      onBlur={this.endTransaction}
                      onEscape={() => this.endTransaction(true)}
                      readOnly={readOnly}
+                     maxLength={256}
                      value={instance.metadata.name}/>
 
         <h4 className="InspectorContent-heading">Description</h4>
@@ -61,7 +62,7 @@ export class InspectorProject extends Component {
                      onBlur={this.endTransaction}
                      onEscape={() => this.endTransaction(true)}
                      readOnly={readOnly}
-                     updateOnBlur
+                     maxLength={2048}
                      value={instance.metadata.description}/>
       </div>
     );

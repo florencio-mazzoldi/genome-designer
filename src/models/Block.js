@@ -17,6 +17,10 @@ export default class Block extends Instance {
     super(input, BlockDefinition.scaffold(), { metadata: { color: color() } });
   }
 
+  /************
+   constructors etc.
+   ************/
+
   //return an unfrozen JSON, no instance methods
   static classless(input) {
     return Object.assign({}, cloneDeep(new Block(input)));
@@ -26,6 +30,8 @@ export default class Block extends Instance {
     return BlockDefinition.validate(input, throwOnError);
   }
 
+  // note that if you are cloning multiple blocks / blocks with components, you likely need to clone the components as well
+  // need to re-map the IDs outside of this function. see blockClone action.
   clone(parentInfo) {
     const [ firstParent ] = this.parents;
     const parentObject = Object.assign({
@@ -36,32 +42,98 @@ export default class Block extends Instance {
     return super.clone(parentObject);
   }
 
-  /* project related */
+  mutate(...args) {
+    invariant(!this.isFrozen(), 'cannot mutate a frozen block');
+    return super.mutate(...args);
+  }
+
+  merge(...args) {
+    invariant(!this.isFrozen(), 'cannot mutate a frozen block');
+    return super.merge(...args);
+  }
+
+  /************
+   type checks
+   ************/
+
+  //isSpec() can't exist here, since dependent on children. use selector blockIsSpec instead.
+
+  isConstruct() {
+    return this.components.length > 0;
+  }
+
+  isTemplate() {
+    return this.rules.fixed === true;
+  }
+
+  isFiller() {
+    return !this.metadata.name && this.hasSequence() && !this.metadata.color;
+  }
+
+  isList() {
+    return this.rules.list === true;
+  }
+
+  isHidden() {
+    return this.rules.hidden === true;
+  }
+
+  isFrozen() {
+    return this.rules.frozen === true;
+  }
+
+  isFixed() {
+    return this.rules.fixed === true;
+  }
+
+  /************
+   rules
+   ************/
+
+  setRule(rule, value) {
+    return this.mutate(`rules.${rule}`, value);
+  }
+
+  setRole(role) {
+    return this.setRule('role', role);
+  }
+
+  setListBlock(isList = true) {
+    if (!!isList) {
+      //clear components
+      const cleared = this.merge({
+        components: [],
+      });
+      return cleared.setRule('list', true);
+    }
+
+    const cleared = this.merge({
+      options: [],
+    });
+    return cleared.setRule('list', false);
+  }
+
+  /************
+   metadata
+   ************/
 
   getProjectId() {
     return this.projectId;
   }
 
   setProjectId(projectId) {
-    invariant(idValidator(projectId) || projectId === null, 'project is required, or null to mark unassociated');
+    invariant(idValidator(projectId) || projectId === null, 'project Id is required, or null to mark unassociated');
     return this.mutate('projectId', projectId);
   }
 
-  /* checks */
-
-  isFiller() {
-    return !this.metadata.name && this.hasSequence() && !this.metadata.color;
-  }
-
-  /* metadata things */
-
-  getName() {
+  getName(defaultName = 'New Block') {
     // called many K per second, no es6 fluffy stuff in here.
     if (this.metadata.name) return this.metadata.name;
     if (this.rules.role) return this.rules.role;
+    if (this.isTemplate()) return 'New Template';
     if (this.components.length) return 'New Construct';
     if (this.isFiller() && this.metadata.initialBases) return this.metadata.initialBases;
-    return 'New Block';
+    return defaultName;
   }
 
   setName(newName) {
@@ -73,24 +145,32 @@ export default class Block extends Instance {
     return renamed;
   }
 
-  setRole(role) {
-    return this.mutate('rules.role', role);
+  setDescription(desc) {
+    return this.mutate('metadata.description', desc);
   }
 
   setColor(newColor = color()) {
     return this.mutate('metadata.color', newColor);
   }
 
-  /* components */
+  /************
+   components
+   ************/
+
+  //future - account for block.rules.filter
 
   addComponent(componentId, index) {
-    const spliceIndex = Number.isInteger(index) ? index : this.components.length;
+    invariant(!this.isFixed(), 'Block is fixed - cannot add/remove/move components');
+    invariant(!this.isList(), 'cannot add components to a list block');
+    invariant(idValidator(componentId), 'must pass valid component ID');
+    const spliceIndex = (Number.isInteger(index) && index >= 0) ? index : this.components.length;
     const newComponents = this.components.slice();
     newComponents.splice(spliceIndex, 0, componentId);
     return this.mutate('components', newComponents);
   }
 
   removeComponent(componentId) {
+    invariant(!this.isFixed(), 'Block is fixed - cannot add/remove/move components');
     const spliceIndex = this.components.findIndex(compId => compId === componentId);
 
     if (spliceIndex < 0) {
@@ -105,10 +185,12 @@ export default class Block extends Instance {
 
   //pass index to be at after spliced out
   moveComponent(componentId, newIndex) {
+    invariant(!this.isFixed(), 'Block is fixed - cannot add/remove/move components');
+    invariant(!this.isList(), 'cannot add components to a list block');
     const spliceFromIndex = this.components.findIndex(compId => compId === componentId);
 
     if (spliceFromIndex < 0) {
-      console.warn('component not found'); // eslint-disable-line
+      console.warn('component not found: ', componentId); // eslint-disable-line
       return this;
     }
 
@@ -121,7 +203,59 @@ export default class Block extends Instance {
     return this.mutate('components', newComponents);
   }
 
-  /* sequence */
+  /************
+   list block
+   ************/
+
+  //future  - account for block.rules.filter
+
+  //for template usage i.e. the options have already been set
+  toggleOptions(...optionIds) {
+    invariant(this.isList(), 'must be a list block to toggle list options');
+    invariant(optionIds.every(optionId => Object.prototype.hasOwnProperty.call(this.options, optionId)), 'Option ID must be present to toggle it');
+
+    const options = cloneDeep(this.options);
+    optionIds.forEach(optionId => {
+      Object.assign(options, { [optionId]: !this.options[optionId] });
+    });
+    return this.mutate('options', options);
+  }
+
+  //for list block authoring
+  addOptions(...optionIds) {
+    invariant(this.isList(), 'must be a list block to add list options');
+    invariant(optionIds.every(option => idValidator(option)), 'must pass component IDs');
+    const toAdd = optionIds.reduce((acc, id) => Object.assign(acc, { [id]: false }));
+    const newOptions = Object.assign(cloneDeep(this.options), toAdd);
+
+    if (Object.keys(newOptions).length === Object.keys(this.options).length) {
+      return this;
+    }
+
+    return this.mutate('options', newOptions);
+  }
+
+  //for list block authoring
+  removeOptions(...optionIds) {
+    const cloned = cloneDeep(this.options);
+    optionIds.forEach(id => {
+      delete cloned[id];
+    });
+
+    if (Object.keys(cloned).length === Object.keys(this.options).length) {
+      return this;
+    }
+
+    return this.mutate('options', cloned);
+  }
+
+  getOptions(includeUnselected = false) {
+    return Object.keys(this.options).filter(id => this.options[id] || (includeUnselected === true));
+  }
+
+  /************
+   sequence
+   ************/
 
   hasSequence() {
     return !!this.sequence.md5;
@@ -166,11 +300,17 @@ export default class Block extends Instance {
           length: sequenceLength,
           initialBases: sequence.substr(0, 5),
         };
-        return this.merge({ sequence: updatedSequence });
+        return this.merge({
+          sequence: updatedSequence,
+          source: {
+            source: 'user',
+            id: null,
+          },
+         });
       });
   }
 
-  /* annotations */
+  //todo - annotations are essentially keyed using name, since we got rid of ID. is that ok?
 
   annotate(annotation) {
     invariant(AnnotationDefinition.validate(annotation), `'annotation is not valid: ${annotation}`);

@@ -14,3 +14,5 @@ export const errorFileSystem = 'FILE_SYSTEM_ERROR';
 export const errorVersioningSystem = 'VERSIONING_ERROR';
 
 export const errorCouldntFindProjectId = 'PROJECT_ID_NOT_FOUND';
+
+export const errorOrderRejected = 'ORDER_REJECTED';

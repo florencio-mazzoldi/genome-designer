@@ -44,6 +44,11 @@ export default class SchemaDefinition {
       const instanceFieldValue = instance[fieldName];
       const field = this.fields[fieldName];
 
+      //check for improperly bound fields
+      if (process.env.NODE_ENV !== 'production' && !field.validate) {
+        console.error(field);
+      }
+
       //need to bind field in case it's a schema
       const validator = field.validate.bind(field);
 
@@ -51,7 +56,7 @@ export default class SchemaDefinition {
       const isValid = validator(instanceFieldValue);
 
       if (!isValid) {
-        const errorMessage = `Invalid: Field ${field.name} of type ${field.type}. Got ${instanceFieldValue}. [${field.description || field.typeDescription}]`;
+        const errorMessage = `Invalid: Field ${field.name} of type ${field.type}. Got ${instanceFieldValue} (${typeof instanceFieldValue}). [${field.description || field.typeDescription}]`;
 
         if (shouldThrow) {
           throw Error(errorMessage);
@@ -83,8 +88,12 @@ export default class SchemaDefinition {
         return scaffold;
       }
 
-      //can opt out of scaffolding a field if not required
-      if (!fieldRequired && field.avoidScaffold === true) {
+      //can opt out of scaffolding a field - note will not be valid if required
+      if (field.avoidScaffold === true) {
+        if (fieldRequired && process.env.NODE_ENV !== 'production') {
+          console.warn(`not scaffolding required field ${fieldName}`, field); //eslint-disable-line
+        }
+
         return scaffold;
       }
 

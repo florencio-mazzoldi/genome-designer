@@ -1,5 +1,6 @@
+import invariant from 'invariant';
 import * as ActionTypes from '../constants/ActionTypes';
-import { saveProject, loadProject, snapshot, listProjects } from '../middleware/data';
+import { saveProject, loadProject, snapshot, listProjects, deleteProject } from '../middleware/data';
 import * as projectSelectors from '../selectors/projects';
 import * as undoActions from '../store/undo/actions';
 import { push } from 'react-router-redux';
@@ -10,9 +11,6 @@ import { pauseAction, resumeAction } from '../store/pausableStore';
 
 import { getItem, setItem } from '../middleware/localStorageCache';
 const recentProjectKey = 'mostRecentProject';
-
-//todo - should this go in the reducers (i.e. a cache outside store state)? One for projects, one for blocks? Then compare rollup components to those directly. That way we can track individual resources more easily rather than just whole rollups.
-//note that goal is to track lastSaved versions, and so the cache if in the reducer should handle dirty tracking
 
 //Promise
 export const projectList = () => {
@@ -31,15 +29,17 @@ export const projectList = () => {
   };
 };
 
-//create a new project
-export const projectCreate = (initialModel) => {
+//Promise
+export const projectDelete = (projectId) => {
   return (dispatch, getState) => {
-    const project = new Project(initialModel);
-    dispatch({
-      type: ActionTypes.PROJECT_CREATE,
-      project,
-    });
-    return project;
+    return deleteProject(projectId)
+      .then(() => {
+        dispatch({
+          type: ActionTypes.PROJECT_DELETE,
+          projectId,
+        });
+        return projectId;
+      });
   };
 };
 
@@ -79,7 +79,7 @@ export const projectSnapshot = (projectId, message, withRollup = true) => {
   return (dispatch, getState) => {
     const roll = withRollup ?
       dispatch(projectSelectors.projectCreateRollup(projectId)) :
-      {};
+    {};
 
     return snapshot(projectId, message, roll)
       .then(commitInfo => {
@@ -127,6 +127,38 @@ export const projectLoad = (projectId) => {
   };
 };
 
+//Promise
+//default to most recent project if falsy
+export const projectOpen = (inputProjectId) => {
+  return (dispatch, getState) => {
+    //save the current project
+    return dispatch(projectSave())
+      .then(() => {
+        //dont need to load the project, projectPage will handle that
+        const projectId = !!inputProjectId ? inputProjectId : getItem(recentProjectKey);
+        //alternatively, we can just call react-router's browserHistory.push() directly
+        dispatch(push(`/project/${projectId}`));
+      });
+  };
+};
+
+//create a new project
+export const projectCreate = (initialModel) => {
+  return (dispatch, getState) => {
+    const project = new Project(initialModel);
+    dispatch({
+      type: ActionTypes.PROJECT_CREATE,
+      project,
+    });
+
+    //after we've created it, let's save it real quick so it persists + gets a version
+    //we can do this in the background
+    projectSave(project.id);
+
+    return project;
+  };
+};
+
 //this is a backup for performing arbitrary mutations
 export const projectMerge = (projectId, toMerge) => {
   return (dispatch, getState) => {
@@ -155,35 +187,43 @@ export const projectRename = (projectId, newName) => {
 };
 
 //Adds a construct to a project. Does not create the construct. Use blocks.js
-export const projectAddConstruct = (projectId, componentId) => {
+export const projectAddConstruct = (projectId, componentId, forceProjectId = false) => {
   return (dispatch, getState) => {
     const oldProject = getState().projects[projectId];
+    const component = getState().blocks[componentId];
+
+    const componentProjectId = component.getProjectId();
+
+    dispatch(pauseAction());
+    dispatch(undoActions.transact());
+
+    if (componentProjectId !== projectId) {
+      invariant(!componentProjectId || forceProjectId === true, 'cannot add component with different projectId! set forceProjectId = true to overwrite.');
+
+      const updatedComponent = component.setProjectId(projectId);
+      dispatch({
+        type: ActionTypes.BLOCK_STASH,
+        block: updatedComponent,
+      });
+    }
+
+    //todo - should better check + force removal from previous component / project
+
     const project = oldProject.addComponents(componentId);
     dispatch({
       type: ActionTypes.PROJECT_ADD_CONSTRUCT,
       undoable: true,
       project,
     });
+
+    dispatch(undoActions.commit());
+    dispatch(resumeAction());
+
     return project;
   };
 };
 
-//Promise
-//default to most recent project if falsy
-export const projectOpen = (inputProjectId) => {
-  return (dispatch, getState) => {
-    //save the current project
-    return dispatch(projectSave())
-      .then(() => {
-        //dont need to load the project, projectPage will handle that
-        const projectId = !!inputProjectId ? inputProjectId : getItem(recentProjectKey);
-        //alternatively, we can just call react-router's browserHistory.push() directly
-        dispatch(push(`/project/${projectId}`));
-      });
-  };
-};
-
-//Adds a construct to a project. Does not create the construct. Use blocks.js
+//Removes a construct from a project.
 export const projectRemoveConstruct = (projectId, componentId) => {
   return (dispatch, getState) => {
     const oldProject = getState().projects[projectId];

@@ -28,8 +28,6 @@ export default class ColorPicker extends Component {
 
   onClickCurrent = () => {
     const handleDocumentClick = (evt) => {
-      if (this.pickerToggler.contains(evt.target)) return;
-
       this.setState({ showContent: false });
       document.removeEventListener('click', handleDocumentClick);
     };

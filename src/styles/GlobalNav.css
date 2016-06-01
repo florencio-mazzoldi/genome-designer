@@ -1,6 +1,7 @@
 @import 'variables.css';
 
 .GlobalNav {
+  position: relative;
   display: flex;
   flex-direction: row;
   flex-shrink: 0;

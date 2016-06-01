@@ -1,0 +1,1 @@
+This directory is the sequences for andrea's parts. It should be cloned into storage/sequence on app start so that the sequences are available. It is outside of that directory so that it is not gitignored and properly present.

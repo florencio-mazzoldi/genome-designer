@@ -11,24 +11,16 @@ const versionValidator = (ver, required = false) => safeValidate(version(), requ
  * @description
  * you can pass as argument to the constructor either:
  *  - an object, which will extend the created instance
- *  - a string, to use as a forced ID (todo - deprecate - this is for testing...)
  */
 export default class Instance {
-  constructor(input, subclassBase, moreFields) {
-    let parsedInput;
-    if (!!input && typeof input === 'object') {
-      parsedInput = input;
-    } else if (typeof input === 'string') {
-      parsedInput = { id: input };
-    } else {
-      parsedInput = {};
-    }
+  constructor(input = {}, subclassBase, moreFields) {
+    invariant(typeof input === 'object', 'must pass an object (or leave undefined) to model constructor');
 
     merge(this,
       InstanceDefinition.scaffold(),
       subclassBase,
       moreFields,
-      parsedInput
+      input,
     );
 
     if (process.env.NODE_ENV !== 'production') {
@@ -56,22 +48,22 @@ export default class Instance {
 
   //clone can accept just an ID (e.g. project), but likely want to pass an object (e.g. block, which also has field projectId in parent)
   clone(parentInfo = {}) {
-    const self = cloneDeep(this);
+    const cloned = cloneDeep(this);
     const inputObject = (typeof parentInfo === 'string') ?
     { version: parentInfo } :
       parentInfo;
 
     const parentObject = Object.assign({
-      id: self.id,
-      version: self.version,
+      id: cloned.id,
+      version: cloned.version,
     }, inputObject);
 
     invariant(versionValidator(parentObject.version), 'must pass a valid version (SHA), got ' + parentObject.version);
 
-    const clone = Object.assign(self, {
-      id: uuid.v4(),
-      parents: [parentObject].concat(self.parents),
+    const clone = Object.assign(cloned, {
+      parents: [parentObject].concat(cloned.parents),
     });
+    delete clone.id;
     return new this.constructor(clone);
   }
 }

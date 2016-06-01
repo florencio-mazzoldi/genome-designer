@@ -34,10 +34,7 @@ export default class SBOL2D extends Node2D {
    * get the preferred width / height of this block as condensed or fully expanded
    * @return {[type]} [description]
    */
-  getPreferredSize(str, condensed) {
-    if (condensed) {
-      return new Vector2D(kT.condensedText, kT.blockH);
-    }
+  getPreferredSize(str) {
     // measure actual text plus some padding
     const roleWidth = this.roleName ? kT.roleIcon + kT.textPad : 0;
     const size = this.measureText(str).add(new Vector2D(kT.textPad * 2 + roleWidth + kT.contextDotsW, 0));

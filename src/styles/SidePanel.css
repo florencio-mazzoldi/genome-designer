@@ -17,6 +17,10 @@
   transition-duration: var(--timing-fast);
   will-change: width;
 
+  &.gruntPushdown {
+    padding-bottom: var(--grunt-height);
+  }
+
   &.visible {
     width: var(--width-SidePanel-open);
   }

@@ -23,6 +23,11 @@ const SequenceDefinition = new SchemaDefinition({
     fields.arrayOf(AnnotationDefinition.validate.bind(AnnotationDefinition)),
     `List of Annotations associated with the sequence`,
   ],
+
+  initialBases: [
+    fields.sequence({loose: true}),
+    `Initial 5 bases of the block, which can be displayed e.g. if a filler block`,
+  ],
 });
 
 export default SequenceDefinition;

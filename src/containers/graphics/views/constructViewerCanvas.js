@@ -14,6 +14,7 @@ import { projectGetVersion } from '../../../selectors/projects';
 import DnD from '../dnd/dnd';
 import ConstructViewer from './constructviewer';
 import MouseTrap from '../mousetrap';
+import { block as blockDragType } from '../../../constants/DragTypes';
 
 import '../../../styles/constructviewercanvas.css';
 
@@ -21,6 +22,7 @@ export class ConstructViewerCanvas extends Component {
 
   static propTypes = {
     blockCreate: PropTypes.func.isRequired,
+    blockClone: PropTypes.func.isRequired,
     blockRename: PropTypes.func.isRequired,
     projectAddConstruct: PropTypes.func.isRequired,
     focusConstruct: PropTypes.func.isRequired,
@@ -39,13 +41,17 @@ export class ConstructViewerCanvas extends Component {
   onDrop(globalPosition, payload, event) {
     // clone construct and add to project if a construct from inventory otherwise
     // treat as a list of one or more blocks
-    if (payload.source === 'inventory construct') {
+    //if the block is from the inventory, we've cloned it and dont need to worry about forcing the projectId when we add the components
+    const fromInventory = payload.source.indexOf('inventory') >= 0;
+
+    //dont need to check if array, since inventory drags always are single items
+    if (fromInventory && payload.type === blockDragType && payload.item.isConstruct()) {
       const construct = this.props.blockClone(payload.item.id);
-      this.props.projectAddConstruct(this.props.currentProjectId, construct.id)
+      this.props.projectAddConstruct(this.props.currentProjectId, construct.id, fromInventory);
       this.props.focusConstruct(construct.id);
     } else {
       const construct = this.props.blockCreate();
-      this.props.projectAddConstruct(this.props.currentProjectId, construct.id);
+      this.props.projectAddConstruct(this.props.currentProjectId, construct.id, shouldForceProjectId);
       const constructViewer = ConstructViewer.getViewerForConstruct(construct.id);
       invariant(constructViewer, 'expect to find a viewer for the new construct');
       constructViewer.addItemAtInsertionPoint(payload, null, null);
@@ -82,6 +88,7 @@ export class ConstructViewerCanvas extends Component {
       element: ReactDOM.findDOMNode(this),
     });
   }
+
   /**
    * unregister DND handlers
    */
@@ -91,6 +98,7 @@ export class ConstructViewerCanvas extends Component {
     this.mouseTrap.dispose();
     this.mouseTrap = null;
   }
+
   /**
    * clicking on canvas unselects all blocks
    */
@@ -101,6 +109,7 @@ export class ConstructViewerCanvas extends Component {
       this.props.focusBlocks([]);
     }
   };
+
   /**
    * end mouse scrolling
    */
@@ -133,10 +142,11 @@ export class ConstructViewerCanvas extends Component {
       }
     }
   }
+
   autoScrollUpdate() {
     invariant(this.autoScrollDirection === -1 || this.autoScrollDirection === 1, 'bad direction for autoscroll');
     const el = ReactDOM.findDOMNode(this);
-    el.scrollTop += this.autoScrollDirection * 20;
+    el.scrollTop += this.autoScrollDirection * 8;
     // start a new request unless the direction has changed to zero
     this.autoScrollRequest = this.autoScrollDirection ? window.requestAnimationFrame(this.autoScrollBound) : 0;
   }
@@ -147,7 +157,9 @@ export class ConstructViewerCanvas extends Component {
   mouseScroll(globalPosition) {
     const local = this.mouseTrap.globalToLocal(globalPosition, ReactDOM.findDOMNode(this));
     const box = this.mouseTrap.element.getBoundingClientRect();
-    const edge = 100;
+    // autoscroll threshold is clamped at a percentage of height otherwise when the window is short
+    // it can become impossible to target a specific element
+    const edge = Math.max(0, Math.min(100, box.height * 0.25));
     if (local.y < edge) {
       this.autoScroll(-1);
     } else {
@@ -159,6 +171,7 @@ export class ConstructViewerCanvas extends Component {
       }
     }
   }
+
   /**
    * render the component, the scene graph will render later when componentDidUpdate is called
    */
@@ -174,7 +187,8 @@ export class ConstructViewerCanvas extends Component {
     // map construct viewers so we can propagate projectId and any recently dropped blocks
     return (<div className="ProjectPage-constructs no-vertical-scroll" onClick={this.onClick}>
       {constructViewers}
-      <div className="cvc-drop-target" ref="dropTarget" key="dropTarget">Drop blocks here to create a new construct.</div>
+      <div className="cvc-drop-target" ref="dropTarget" key="dropTarget">Drop blocks here to create a new construct.
+      </div>
     </div>);
   }
 }

@@ -3,8 +3,9 @@ import invariant from 'invariant';
 import Instance from './Instance';
 import ProjectDefinition from '../schemas/Project';
 import safeValidate from '../schemas/fields/safeValidate';
-import { version } from '../schemas/fields/validators';
+import { id, version } from '../schemas/fields/validators';
 
+const idValidator = (input, required = false) => safeValidate(id(), required, input);
 const versionValidator = (ver, required = false) => safeValidate(version(), required, ver);
 
 export default class Project extends Instance {
@@ -43,6 +44,7 @@ export default class Project extends Instance {
   }
 
   addComponents(...components) {
+    invariant(components.every(comp => idValidator(comp)), 'must pass component IDs');
     return this.mutate('components', this.components.concat(components));
   }
 

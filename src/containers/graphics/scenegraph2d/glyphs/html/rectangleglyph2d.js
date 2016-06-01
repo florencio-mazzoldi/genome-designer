@@ -12,7 +12,7 @@ export default class RectangleGlyph2D extends Glyph2D {
   constructor(node) {
     super(node);
     this.el = document.createElement('div');
-    this.el.className = 'html-glyph';
+    this.el.className = 'glyph';
     this.node.el.appendChild(this.el);
   }
 

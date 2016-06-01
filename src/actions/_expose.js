@@ -11,6 +11,7 @@ import * as projects from './projects';
 import * as ui from './ui';
 import * as clipboard from './clipboard';
 import * as focus from './focus';
+import * as orders from './orders';
 
 const exposed = {
   blocks,
@@ -20,6 +21,7 @@ const exposed = {
   ui,
   clipboard,
   focus,
+  orders,
 };
 
 export default exposed;

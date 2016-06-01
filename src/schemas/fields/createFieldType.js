@@ -37,6 +37,13 @@ export default function createFieldType(baseFieldDefinition, type) {
     const opt = createFieldFromValidator(fieldDef, baseValidator, validationParams, false);
     opt.required = createFieldFromValidator(fieldDef, baseValidator, validationParams, true);
 
+    //catch these in case you declare a schema improperly, hard to catch otherwise
+    if (process.env.NODE_ENV !== 'production') {
+      opt.isRequired = {
+        validate: () => { throw new Error('use required, not isRequired'); },
+      };
+    }
+
     return opt;
   };
 }

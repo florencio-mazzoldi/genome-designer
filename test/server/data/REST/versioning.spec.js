@@ -139,24 +139,6 @@ describe('REST', () => {
             done();
           });
       });
-
-      it('GET /:projectId/:blockId/commit returns the git log');
-
-      it('GET /:projectId/:blockId/commit/:sha returns block at a certain point', (done) => {
-        const url = `/data/${projectId}/${blockId}/commit/${versions[2]}`;
-        request(server)
-          .get(url)
-          .expect(200)
-          .expect('Content-Type', /json/)
-          .end((err, result) => {
-            if (err) {
-              done(err);
-              return;
-            }
-            expect(result.body).to.eql(blockData);
-            done();
-          });
-      });
     });
   });
 });

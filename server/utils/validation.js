@@ -1,15 +1,20 @@
-import BlockDefinition from '../../src/schemas/Block';
-import ProjectDefinition from '../../src/schemas/Project';
+import Block from '../../src/models/Block';
+import Project from '../../src/models/Project';
+import Order from '../../src/models/Order';
 import * as validators from '../../src/schemas/fields/validators';
 
 import { errorNoIdProvided, errorIdInvalid } from './errors';
 
 export const validateBlock = (instance) => {
-  return BlockDefinition.validate(instance);
+  return Block.validate(instance);
 };
 
 export const validateProject = (instance) => {
-  return ProjectDefinition.validate(instance);
+  return Project.validate(instance);
+};
+
+export const validateOrder = instance => {
+  return Order.validate(instance, false);
 };
 
 //throws on error

@@ -37,7 +37,7 @@ export default class Menu extends Component {
               return (
                 item.text ?
                   (<MenuItem
-                    key={index}
+                    key={item.text}
                     text={item.text}
                     shortcut={item.shortcut}
                     checked={item.checked}

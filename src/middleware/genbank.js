@@ -1,10 +1,7 @@
 import rejectingFetch from './rejectingFetch';
 import invariant from 'invariant';
 import { headersGet, headersPost, headersPut, headersDelete } from './headers';
-import { serverRoot, extensionsPath } from './paths';
-
-const importPath = (id) => serverRoot + 'import/' + id;
-const exportPath = (id) => serverRoot + 'export/' + id;
+import { importPath, exportPath } from './paths';
 
 const contentTypeTextHeader = { headers: { 'Content-Type': 'text/plain' } };
 

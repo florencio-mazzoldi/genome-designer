@@ -136,3 +136,14 @@ export const getAllBlockRoles = (userId) => {
       return obj;
     });
 };
+
+export const getOrderIds = (projectId) => {
+  const directory = filePaths.createOrderDirectoryPath(projectId);
+  return persistence.projectExists(projectId)
+    .then(() => fileSystem.directoryContents(directory));
+};
+
+export const getOrders = (projectId) => {
+  return getOrderIds(projectId)
+    .then(orderIds => Promise.all(orderIds.map(orderId => persistence.orderGet(orderId, projectId))));
+};

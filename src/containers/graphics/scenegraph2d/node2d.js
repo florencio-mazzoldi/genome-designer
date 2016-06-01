@@ -6,6 +6,7 @@ import invariant from 'invariant';
 import NodeText2D from './nodetext2d';
 import RectangleGlyph2D from './glyphs/html/rectangleglyph2d';
 import RoleGlyph2D from './glyphs/html/roleglyph2d';
+import ListItemGlyph2D from './glyphs/html/listitemglyph2d';
 import LineGlyph2D from './glyphs/html/lineglyph2d';
 import ContextDots2D from './glyphs/html/contextdots2d';
 import ConstructBanner from './glyphs/canvas/constructbanner';
@@ -71,6 +72,9 @@ export default class Node2D {
       break;
     case 'line':
       this.glyphObject = new LineGlyph2D(this);
+      break;
+    case 'listitem':
+      this.glyphObject = new ListItemGlyph2D(this);
       break;
 
     case 'none':

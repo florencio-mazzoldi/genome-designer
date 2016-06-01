@@ -1,7 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { inventoryToggleVisibility, inventorySelectTab } from '../actions/ui';
-import inventoryAndrea from '../inventory/andrea';
 import InventoryGroup from '../components/Inventory/InventoryGroup';
 
 import '../styles/Inventory.css';
@@ -9,6 +8,7 @@ import '../styles/SidePanel.css';
 
 export class Inventory extends Component {
   static propTypes = {
+    showingGrunt: PropTypes.bool,
     projectId: PropTypes.string,
     isVisible: PropTypes.bool.isRequired,
     currentTab: PropTypes.string,
@@ -22,10 +22,12 @@ export class Inventory extends Component {
 
   render() {
     //may be better way to pass in projectId
-    const { isVisible, projectId, currentTab, inventorySelectTab } = this.props;
+    const { showingGrunt, isVisible, projectId, currentTab, inventorySelectTab } = this.props;
 
     return (
-      <div className={'SidePanel Inventory' + (isVisible ? ' visible' : '')}>
+      <div className={'SidePanel Inventory' +
+      (isVisible ? ' visible' : '') +
+      (showingGrunt ? ' gruntPushdown' : '')}>
         <div className="SidePanel-heading">
           <span className="SidePanel-heading-trigger Inventory-trigger"
                 onClick={() => this.toggle()}/>
@@ -43,11 +45,6 @@ export class Inventory extends Component {
                             type="search"
                             isActive={currentTab === 'search' || !currentTab}
                             setActive={() => inventorySelectTab('search')}/>
-            <InventoryGroup title="EGF Parts"
-                            type="block"
-                            isActive={currentTab === 'egf'}
-                            setActive={() => inventorySelectTab('egf')}
-                            items={inventoryAndrea}/>
             <InventoryGroup title="My Projects"
                             type="projects"
                             currentProject={projectId}
@@ -66,8 +63,10 @@ export class Inventory extends Component {
 
 function mapStateToProps(state, props) {
   const { isVisible, currentTab } = state.ui.inventory;
+  const showingGrunt = !!state.ui.modals.gruntMessage;
 
   return {
+    showingGrunt,
     isVisible,
     currentTab,
   };

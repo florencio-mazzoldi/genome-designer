@@ -6,7 +6,7 @@ import { simpleStore } from '../store/mocks';
 import Block from '../../src/models/Block';
 
 describe('Block Actions', () => {
-  //todo - scaffold with projectId field - need to update store to have focus / projects fields
+  //todo - scaffold with projectId field - need to update mock store to have focus / projects fields
   const storeBlock = new Block();
   const grandchildA1 = new Block();
   const grandchildA2 = new Block();

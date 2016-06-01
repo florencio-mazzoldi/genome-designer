@@ -158,15 +158,17 @@ class AccountForm extends Component {
       });
       return;
     }
-    if (json.message === 'password minimum length not met') {
+
+    if (json.message === 'new password minimum length not met') {
       this.setState({
         password1Error: {
           visible: true,
-          text: 'Passwords must be at least 6 characters',
+          text: 'Passwords must be at least six characters.',
         },
       });
       return;
     }
+
     if (json.message === 'email domain is missing suffix' || json.message === 'email address is not valid') {
       this.setState({
         email1Error: {
@@ -177,9 +179,9 @@ class AccountForm extends Component {
       return;
     }
 
-    // any unrecognized errors are displayed below the tos
+    // any unrecognized errors are displayed below the passwords fields above the update button
     this.setState({
-      tosError: {
+      password2Error: {
         visible: true,
         text: json.message,
       },

@@ -16,6 +16,7 @@ import '../styles/SceneGraphPage.css';
 
 class ProjectPage extends Component {
   static propTypes = {
+    showingGrunt: PropTypes.bool,
     projectId: PropTypes.string.isRequired,
     project: PropTypes.object, //if have a project (not fetching)
     constructs: PropTypes.array, //if have a project (not fetching)
@@ -41,7 +42,7 @@ class ProjectPage extends Component {
 
   componentWillReceiveProps(nextProps) {
     //set state.focus.project -- might be a better way to do this, but hard otuside components with react-router
-    if (!this.lastProjectId || nextProps.projectId !== this.props.projectId) {
+    if (nextProps.project && nextProps.project.metadata && (!this.lastProjectId || nextProps.projectId !== this.props.projectId)) {
       this.lastProjectId = nextProps.projectId;
       this.props.focusProject(nextProps.projectId);
     }
@@ -63,7 +64,7 @@ class ProjectPage extends Component {
   };
 
   render() {
-    const { project, projectId, constructs } = this.props;
+    const { showingGrunt, project, projectId, constructs } = this.props;
 
     //handle project not loaded
     if (!project || !project.metadata) {
@@ -101,7 +102,7 @@ class ProjectPage extends Component {
     });
 
     return (
-      <div className="ProjectPage">
+      <div className={'ProjectPage' + (showingGrunt ? ' gruntPushdown' : '')}>
         <Inventory projectId={projectId}/>
 
         <div className="ProjectPage-content">
@@ -125,15 +126,18 @@ class ProjectPage extends Component {
 function mapStateToProps(state, ownProps) {
   const projectId = ownProps.params.projectId;
   const project = state.projects[projectId];
+  const showingGrunt = !!state.ui.modals.gruntMessage;
 
   if (!project) {
     return {
+      showingGrunt,
       projectId,
     };
   }
 
   const constructs = project.components.map(componentId => state.blocks[componentId]);
   return {
+    showingGrunt,
     projectId,
     project,
     constructs,

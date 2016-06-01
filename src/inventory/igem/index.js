@@ -33,3 +33,7 @@ export const get = (id) => {
     .then(resp => resp.json())
     .then(result => parseFullResult(result));
 };
+
+export const sourceUrl = ({url, id}) => {
+  return url || `http://parts.igem.org/Part:${id}`;
+};

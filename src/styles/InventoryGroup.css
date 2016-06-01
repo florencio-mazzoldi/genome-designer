@@ -14,7 +14,7 @@
     flex-shrink: 0;
     cursor: pointer;
     user-select: none;
-    border-top: 1px solid var(--colors-greyLight);
+    border-top: 1px solid var(--colors-grey);
 
     &:hover {
       background-color: var(--colors-blueGreyDark);

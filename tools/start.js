@@ -5,6 +5,7 @@ import webpackHotMiddleware from 'webpack-hot-middleware';
 import run from './run';
 import runServer from './runServer';
 import { serverConfig, clientConfig } from './webpack.config';
+import setup from './setup';
 import clean from './clean';
 import copy from './copy';
 import bundleServer from './bundleServer';
@@ -13,6 +14,7 @@ const DEBUG = !process.argv.includes('--release');
 
 async function start() {
   await run(clean);
+  await run(setup);
   await run(copy.bind(undefined, { watch: true }));
   //await run(bundleServer);
   await new Promise(resolve => {

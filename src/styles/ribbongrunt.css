@@ -1,5 +1,6 @@
+@import 'variables.css';
+
 :root {
---element-height: 2.5rem;
 --background: #FFFA81;
 --color: #67654D;
 --fontsize: 1rem;
@@ -7,24 +8,25 @@
 }
 
 .ribbongrunt {
-  height: var(--element-height);
-  line-height: var(--element-height);
+  height: var(--grunt-height);
+  line-height: var(--grunt-height);
   font-size: var(--fontsize);
   background-color: var(--background);
   color: var(--color);
   text-align: center;
-  position: fixed;
-  top: 4rem;
+  position: absolute;
+  bottom: 0;
+  transform: translateY(100%);
   z-index: 1;
   width: 100%;
 }
 .ribbongrunt button {
   float: right;
   width: var(--close-size);
-  height: var(--element-height);
+  height: var(--grunt-height);
   padding: 0;
   margin: 0;
-  font-size: ;
+  font-size: 1em;
   font-size: var(--close-size);
   line-height: var(--close-size);
   background-color: transparent;

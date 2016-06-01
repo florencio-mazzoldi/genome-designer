@@ -1,0 +1,11 @@
+.ListOptions {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding-bottom: 0.5em;
+  overflow-y: scroll;
+
+  &:empty {
+    display: none;
+  }
+}

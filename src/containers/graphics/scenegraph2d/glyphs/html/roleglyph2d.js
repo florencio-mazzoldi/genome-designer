@@ -13,7 +13,7 @@ export default class RoleGlyph2D extends Glyph2D {
     super(node);
     // basic div block
     this.el = document.createElement('div');
-    this.el.className = 'role-glyph';
+    this.el.className = 'glyph';
     // possible role symbol, the div is a container for a SVG which we will clone
     // and style from an in document template
     this.svgContainer = document.createElement('div');

@@ -3,6 +3,7 @@ import Vector2D from '../geometry/vector2d';
 import Line2D from '../geometry/line2d';
 import Node2D from '../scenegraph2d/node2d';
 import Role2D from '../scenegraph2d/role2d';
+import ListItem2D from '../scenegraph2d/listitem2d';
 import LineNode2D from '../scenegraph2d/line2d';
 import kT from './layoutconstants';
 import objectValues from '../../../utils/object/values';
@@ -23,7 +24,6 @@ export default class Layout {
     this.sceneGraph = sceneGraph;
     // extend this with options
     Object.assign(this, {
-      layoutAlgorithm: kT.layoutWrap,
       baseColor: 'white',
       showHeader: true,
       insetX: 0,
@@ -36,10 +36,10 @@ export default class Layout {
     this.rows = [];
     this.nodes2parts = {};
     this.parts2nodes = {};
-    this.partTypes = {};
     this.partUsage = {};
     this.nestedLayouts = {};
     this.connectors = {};
+    this.listNodes = {};
 
     // this reference is incremented for each update. Blocks, lines are given
     // the latest reference whenever they are updated. Any elements without
@@ -73,6 +73,11 @@ export default class Layout {
     // we should only autosize the nodes representing parts
     objectValues(this.parts2nodes).forEach(node => {
       aabb = aabb.union(node.getAABB());
+      // add in any part list items for this block
+      const blockId = this.elementFromNode(node);
+      objectValues(this.listNodes[blockId]).forEach(node => {
+        aabb = aabb.union(node.getAABB());
+      });
     });
     // add any nested constructs
     objectValues(this.nestedLayouts).forEach(layout => {
@@ -83,14 +88,10 @@ export default class Layout {
 
   /**
    * setup the bi drectional mapping between nodes / elements
-   * @param  {[type]} part    [description]
-   * @param  {[type]} node [description]
-   * @return {[type]}      [description]
    */
   map(part, node) {
     this.nodes2parts[node.uuid] = part;
     this.parts2nodes[part] = node;
-    this.partTypes[part] = this.isSBOL(part) ? roleType : blockType;
   }
   /**
    * flag the part as currently in use i.e. should be rendered.
@@ -113,11 +114,72 @@ export default class Layout {
         if (node) {
           delete this.nodes2parts[node.uuid];
           delete this.parts2nodes[part];
-          delete this.partTypes[part];
           delete this.partUsage[part];
           node.parent.removeChild(node);
         }
+        // drop any associated list items with the part.
+        //this.dropPartListItems(part);
       }
+    });
+  }
+
+  /**
+   * create a list part for the block
+   */
+  listBlockFactory(blockId) {
+    const block = this.blocks[blockId];
+    const props = Object.assign({}, {
+      dataAttribute: {name: 'nodetype', value: 'part'},
+      sg: this.sceneGraph,
+    }, kT.partAppearance);
+    return new ListItem2D(props);
+  }
+  /**
+   * create / update the list items for the block
+   */
+  updateListForBlock(block, pW) {
+    const parentNode = this.nodeFromElement(block.id);
+
+    Object.keys(block.options).filter(opt => block.options[opt]).forEach((blockId, index) => {
+      // ensure we have a hash of list nodes for this block.
+      let nodes = this.listNodes[block.id];
+      if (!nodes) {
+        nodes = this.listNodes[block.id] = {};
+      }
+      // get the block in the list
+      const listBlock = this.getListBlock(blockId);
+
+      // create node as necessary for this block
+      let listNode = nodes[blockId];
+      if (!listNode) {
+        listNode = nodes[blockId] = this.listBlockFactory(blockId);
+        parentNode.appendChild(listNode);
+      }
+      // update position and other visual attributes of list part
+      listNode.set({
+        bounds: new Box2D(0, (index + 1) * kT.blockH, pW, kT.blockH),
+        text: listBlock.metadata.name,
+        fill: this.fillColor(block.id),
+        color: this.fontColor(block.id),
+        updateReference: this.updateReference,
+      });
+    });
+  }
+
+  /**
+   * drop any list nodes that are not up tp date with the updateReference
+   */
+  dropListItems() {
+    // outer loop will iterate over a hash of list node each block with list items
+    Object.keys(this.listNodes).forEach(blockId => {
+      const nodeHash = this.listNodes[blockId];
+      Object.keys(nodeHash).forEach(key => {
+        const node = nodeHash[key];
+        if (node.updateReference !== this.updateReference) {
+          node.parent.removeChild(node);
+          delete nodeHash[key];
+        }
+      });
     });
   }
 
@@ -310,7 +372,7 @@ export default class Layout {
       }
 
       // update title to current position and text and width
-      const text = this.construct.getName();
+      const text = this.construct.getName('New Construct');
       const width = this.titleNode.measureText(text).x + kT.textPad + kT.contextDotsW;
 
       this.titleNode.set({
@@ -409,40 +471,23 @@ export default class Layout {
    * display elements as required
    * @return {[type]} [description]
    */
-  update(construct, layoutAlgorithm, blocks, currentBlocks, currentConstructId) {
+  update(construct, blocks, currentBlocks, currentConstructId) {
     this.construct = construct;
     this.currentConstructId = currentConstructId;
-    this.layoutAlgorithm = layoutAlgorithm;
     this.blocks = blocks;
     this.currentBlocks = currentBlocks;
     this.baseColor = this.construct.metadata.color;
 
-    // regardless of layout algorithm we return the height
-    // used to render the construct / nested construct
+    // perform layout and remember how much vertical was required
+    const heightUsed = this.layoutWrap();
 
-    let heightUsed = 0;
-
-    switch (this.layoutAlgorithm) {
-    case kT.layoutWrap:
-      heightUsed = this.layoutWrap();
-      break;
-
-    case kT.layoutFull:
-      heightUsed = this.layoutFull();
-      break;
-
-    case kT.layoutFit:
-      heightUsed = this.layoutFit();
-      break;
-
-    default: throw new Error('Not a valid layout algorithm');
-    }
     // update connections etc after layout
     this.postLayout();
 
     // auto size scene after layout
     this.autoSizeSceneGraph();
 
+    // nest layouts need to the vertical space required
     return heightUsed;
   }
 
@@ -456,22 +501,11 @@ export default class Layout {
       condensed: false,
     });
   }
-  layoutFull() {
-    return this.layout({
-      xlimit: Number.MAX_VALUE,
-      condensed: false,
-    });
-  }
-  layoutFit() {
-    return this.layout({
-      xlimit: this.sceneGraph.availableWidth - this.insetX,
-      condensed: true,
-    });
-  }
   /**
    */
-  measureText(node, str, condensed) {
-    return node.getPreferredSize(str, condensed);
+
+  measureText(node, str) {
+    return node.getPreferredSize(str);
   }
   /**
    * return the point where layout of actual blocks begins
@@ -479,6 +513,15 @@ export default class Layout {
    */
   getInitialLayoutPoint() {
     return new Vector2D(this.insetX + kT.rowBarW, this.insetY + (this.showHeader ? kT.bannerHeight + kT.titleH + kT.rowBarH : kT.rowBarH));
+  }
+
+  /**
+   * get list block from ether
+   */
+  getListBlock(id) {
+    const item = this.blocks[id];
+    invariant(item, 'list item not found');
+    return item;
   }
   /**
    * layout, configured with various options:
@@ -514,12 +557,17 @@ export default class Layout {
     // additional vertical space consumed on every row for nested constructs
     let nestedVertical = 0;
 
+    // additional height required by the tallest list on the row
+    let maxListHeight = 0;
+
     // width of first row is effected by parent block, so we have to track
     // which row we are on.
     let rowIndex = 0;
+    // display only non hidden blocks
+    const components = ct.components.filter(part => !this.blocks[part].isHidden());
+    // layout all non hidden blocks
+    components.forEach(part => {
 
-    // update / make all the parts
-    ct.components.forEach(part => {
       // create a row bar as neccessary
       if (!row) {
         row = this.rowFactory(new Box2D(this.insetX, yp - kT.rowBarH, 0, kT.rowBarH));
@@ -537,6 +585,7 @@ export default class Layout {
       const node = this.nodeFromElement(part);
       const block = this.blocks[part];
       const name = this.partName(part);
+      const listN = Object.keys(block.options).filter(opt => block.options[opt]).length;
 
       // set role part name if any
       node.set({
@@ -544,24 +593,37 @@ export default class Layout {
       });
 
       // measure element text or used condensed spacing
-      const td = this.measureText(node, name, layoutOptions.condensed);
+      let td = this.measureText(node, name);
 
       // if position would exceed x limit then wrap
       if (xp + td.x > mx) {
         xp = startX;
-        yp += kT.rowH + nestedVertical;
+        yp += kT.rowH + nestedVertical + maxListHeight;
         nestedVertical = 0;
+        maxListHeight = 0;
         row = this.rowFactory(new Box2D(xp, yp - kT.rowBarH, 0, kT.rowBarH));
         rowIndex += 1;
       }
 
-      // update part, including its text and color
+      // measure the max required width of any list blocks
+      Object.keys(block.options).filter(opt => block.options[opt]).forEach(blockId => {
+        td.x = Math.max(td.x, this.measureText(node, this.getListBlock(blockId).metadata.name).x);
+      });
+
+      // update maxListHeight based on how many list items this block has
+      maxListHeight = Math.max(maxListHeight, listN * kT.blockH);
+      invariant(isFinite(maxListHeight) && maxListHeight >= 0, 'expected a valid number');
+
+      // update part, including its text and color and with height to accomodate list items
       node.set({
         bounds: new Box2D(xp, yp, td.x, kT.blockH),
         text: name,
         fill: this.fillColor(part),
         color: this.fontColor(part),
       });
+
+      // update any list parts for this blocks
+      this.updateListForBlock(block, td.x);
 
       // render children ( nested constructs )
       if (this.hasChildren(part) && node.showChildren) {
@@ -572,7 +634,6 @@ export default class Layout {
         let nestedLayout = this.nestedLayouts[part];
         if (!nestedLayout) {
           nestedLayout = this.nestedLayouts[part] = new Layout(this.constructViewer, this.sceneGraph, {
-            layoutAlgorithm: this.layoutAlgorithm,
             showHeader: false,
             insetX: nestedX,
             insetY: nestedY,
@@ -593,7 +654,6 @@ export default class Layout {
         // layout with same options as ourselves
         nestedVertical += nestedLayout.update(
           this.blocks[part],
-          this.layoutAlgorithm,
           this.blocks,
           this.currentBlocks,
           this.currentConstructId) + kT.nestedInsetY;
@@ -624,6 +684,9 @@ export default class Layout {
     // drop unused parts and nodes
     this.dropParts();
 
+    // drop unused list items
+    this.dropListItems();
+
     // create/show vertical bar
     this.verticalFactory();
 
@@ -646,7 +709,7 @@ export default class Layout {
     // apply selections to scene graph
     this.sceneGraph.ui.setSelections(selectedNodes);
 
-    // return the height consumed by the layout
+    // for nesting return the height consumed by the layout
     return heightUsed + nestedVertical + kT.rowBarH;
   }
 
@@ -751,4 +814,5 @@ export default class Layout {
       node.parent.removeChild(node);
     }
   }
+
 }

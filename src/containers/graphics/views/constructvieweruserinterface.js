@@ -451,6 +451,7 @@ export default class ConstructViewerUserInterface extends UserInterface {
    * to the DND manager to handle
    */
   mouseDrag(evt, point, startPoint, distance) {
+
     // ignore drags until they reach a certain vector threshold
     if (distance > dragThreshold && !this.fence) {
       // start a block drag if we have one
@@ -459,6 +460,10 @@ export default class ConstructViewerUserInterface extends UserInterface {
       if (block) {
         // cancel our own mouse operations for now
         this.mouseTrap.cancelDrag();
+        // no mutation of frozen or fixed constructs
+        if (this.construct.isFrozen() || this.construct.isFixed()) {
+          return;
+        }
         // open an undo/redo transaction
         dispatch(transact());
         // if the block being dragging is one of the selections then single select it
@@ -571,6 +576,10 @@ export default class ConstructViewerUserInterface extends UserInterface {
   onDragOver(globalPosition, payload, proxySize) {
     // select construct on drag over
     this.selectConstruct();
+    // no drop on frozen or fixed constructs
+    if (this.construct.isFrozen() || this.construct.isFixed()) {
+      return;
+    }
     // convert global point to local space via our mousetrap
     const localPosition = this.mouseTrap.globalToLocal(globalPosition, this.el);
     // user might be targeting the edge or center of block, or no block at all
@@ -590,6 +599,11 @@ export default class ConstructViewerUserInterface extends UserInterface {
    * to our actual constructViewer which has all the necessary props
    */
   onDrop(globalPosition, payload, event) {
+    // no drop on frozen or fixed constructs
+    if (this.construct.isFrozen() || this.construct.isFixed()) {
+      return;
+    }
+
     // flatten dropped object and treats as new construct if we are empty.
     const blockids = this.constructViewer.addItemAtInsertionPoint(payload, this.insertion, event);
     this.constructViewer.blockSelected(blockids);

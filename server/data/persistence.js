@@ -2,12 +2,18 @@ import invariant from 'invariant';
 import path from 'path';
 import merge from 'lodash.merge';
 import { errorDoesNotExist, errorAlreadyExists, errorInvalidModel, errorVersioningSystem } from '../utils/errors';
-import { validateBlock, validateProject } from '../utils/validation';
+import { validateBlock, validateProject, validateOrder } from '../utils/validation';
 import * as filePaths from './../utils/filePaths';
 import * as versioning from './versioning';
 import * as commitMessages from './commitMessages';
 import { fileExists, fileRead, fileWrite, fileDelete, directoryMake, directoryDelete } from '../utils/fileSystem';
 import * as permissions from './permissions';
+
+/*********
+ Helpers
+ *********/
+
+// EXISTENCE
 
 const _projectExists = (projectId, sha) => {
   const manifestPath = filePaths.createProjectManifestPath(projectId);
@@ -29,6 +35,13 @@ const _blockExists = (blockId, projectId, sha) => {
   }
   return versioning.versionExists(projectDataPath, sha, relativePath);
 };
+
+const _orderExists = (orderId, projectId) => {
+  const manifestPath = filePaths.createOrderManifestPath(orderId, projectId);
+  return fileExists(manifestPath);
+};
+
+// READING
 
 const _projectRead = (projectId, sha) => {
   const manifestPath = filePaths.createProjectManifestPath(projectId);
@@ -56,13 +69,22 @@ const _blockRead = (blockId, projectId, sha) => {
     .then(string => JSON.parse(string));
 };
 
+export const _orderRead = (orderId, projectId) => {
+  const manifestPath = filePaths.createOrderManifestPath(orderId, projectId);
+  return fileRead(manifestPath);
+};
+
+// SETUP
+
 const _projectSetup = (projectId, userId) => {
   const projectPath = filePaths.createProjectPath(projectId);
   const projectDataPath = filePaths.createProjectDataPath(projectId);
+  const orderDirectory = filePaths.createOrderDirectoryPath(projectId);
   const blockDirectory = filePaths.createBlockDirectoryPath(projectId);
 
   return directoryMake(projectPath)
     .then(() => directoryMake(projectDataPath))
+    .then(() => directoryMake(orderDirectory))
     .then(() => directoryMake(blockDirectory))
     .then(() => permissions.createProjectPermissions(projectId, userId))
     .then(() => versioning.initialize(projectDataPath));
@@ -73,6 +95,8 @@ const _blockSetup = (blockId, projectId) => {
   return directoryMake(blockPath);
 };
 
+// WRITING
+
 const _projectWrite = (projectId, project = {}) => {
   const manifestPath = filePaths.createProjectManifestPath(projectId);
   return fileWrite(manifestPath, project);
@@ -82,6 +106,13 @@ const _blockWrite = (blockId, block = {}, projectId) => {
   const manifestPath = filePaths.createBlockManifestPath(blockId, projectId);
   return fileWrite(manifestPath, block);
 };
+
+const _orderWrite = (orderId, order = {}, projectId) => {
+  const manifestPath = filePaths.createOrderManifestPath(orderId, projectId);
+  return fileWrite(manifestPath, order);
+};
+
+// COMMITS
 
 //expects a well-formed commit message from commitMessages.js
 const _projectCommit = (projectId, message) => {
@@ -98,6 +129,10 @@ const _blockCommit = (blockId, projectId, message) => {
   return versioning.commit(projectDataPath, commitMessage)
     .then(sha => versioning.getCommit(path, sha));
 };
+
+/*********
+ API
+ *********/
 
 //SAVE
 
@@ -123,6 +158,10 @@ export const blockExists = (blockId, projectId, sha) => {
   return _blockExists(blockId, projectId, sha);
 };
 
+export const orderExists = (orderId, projectId) => {
+  return _orderExists(orderId, projectId);
+};
+
 const projectAssertNew = (projectId) => {
   return projectExists(projectId)
     .then(() => Promise.reject(errorAlreadyExists))
@@ -145,6 +184,17 @@ const blockAssertNew = (blockId, projectId) => {
     });
 };
 
+const orderAssertNew = (orderId, projectId) => {
+  return orderExists(orderId, projectId)
+    .then(() => Promise.reject(errorAlreadyExists))
+    .catch((err) => {
+      if (err === errorDoesNotExist) {
+        return Promise.resolve(orderId);
+      }
+      return Promise.reject(err);
+    });
+};
+
 //GET
 //resolve with null if does not exist
 
@@ -162,6 +212,16 @@ export const projectGet = (projectId, sha) => {
 
 export const blockGet = (blockId, projectId, sha) => {
   return _blockRead(blockId, projectId, sha)
+    .catch(err => {
+      if (err === errorDoesNotExist) {
+        return Promise.resolve(null);
+      }
+      return Promise.reject(err);
+    });
+};
+
+export const orderGet = (orderId, projectId) => {
+  return _orderRead(orderId, projectId)
     .catch(err => {
       if (err === errorDoesNotExist) {
         return Promise.resolve(null);
@@ -218,7 +278,10 @@ export const projectMerge = (projectId, project, userId) => {
 };
 
 export const blockWrite = (blockId, block, projectId) => {
-  const idedBlock = Object.assign({}, block, { id: blockId });
+  const idedBlock = Object.assign({}, block, {
+    projectId,
+    id: blockId,
+  });
 
   if (!validateBlock(idedBlock)) {
     return Promise.reject(errorInvalidModel);
@@ -235,9 +298,27 @@ export const blockWrite = (blockId, block, projectId) => {
 export const blockMerge = (blockId, block, projectId) => {
   return blockGet(blockId, projectId)
     .then(oldBlock => {
-      const merged = merge({}, oldBlock, block, { id: blockId });
+      const merged = merge({}, oldBlock, block, {
+        projectId,
+        id: blockId,
+      });
       return blockWrite(blockId, merged, projectId);
     });
+};
+
+export const orderWrite = (orderId, order, projectId) => {
+  const idedOrder = Object.assign({}, order, {
+    projectId,
+    id: orderId,
+  });
+
+  if (!validateOrder(idedOrder)) {
+    return Promise.reject(errorInvalidModel);
+  }
+
+  return orderAssertNew(orderId, projectId)
+    .then(() => _orderWrite(orderId, idedOrder, projectId))
+    .then(() => idedOrder);
 };
 
 //DELETE
@@ -245,12 +326,21 @@ export const blockMerge = (blockId, block, projectId) => {
 export const projectDelete = (projectId) => {
   return projectExists(projectId)
     .then(() => {
-      const projectPath = filePaths.createProjectPath(projectId);
-      return directoryDelete(projectPath);
+      //const projectPath = filePaths.createProjectPath(projectId);
+      //return directoryDelete(projectPath);
+
+      //dont want to actually delete it.. just delete the permissions (move to a new file)
+      const projectPermissionsPath = filePaths.createProjectPermissionsPath(projectId);
+      const deletedOwnerPath = filePaths.createProjectPath(projectId, 'priorOwner.json');
+      return fileRead(projectPermissionsPath)
+        .then(contents => {
+          return fileDelete(projectPermissionsPath)
+          //but also should track somewhere who used to own it...
+            .then(() => fileWrite(deletedOwnerPath, contents));
+        });
     })
+    //no need to commit... its deleted (and permissions out of scope of data folder)
     .then(() => projectId);
-  //no need to commit... its deleted
-  //todo - do we want to keep it around? Probably want to be able to reference it later...
 };
 
 export const blockDelete = (blockId, projectId) => {
@@ -259,6 +349,14 @@ export const blockDelete = (blockId, projectId) => {
     .then(() => directoryDelete(blockPath))
     //.then(() => _projectCommit(projectId, commitMessages.messageDeleteBlock(blockId)))
     .then(() => blockId);
+};
+
+//not sure why you would do this...
+export const orderDelete = (orderId, projectId) => {
+  const orderPath = filePaths.createOrderManifestPath(orderId, projectId);
+  return orderId(orderId, projectId)
+    .then(() => fileDelete(orderPath))
+    .then(() => orderId);
 };
 
 //sequence

@@ -4,6 +4,7 @@ var importdna = function(browser) {
     .click('.menu-dropdown:nth-of-type(2)')
     .waitForElementPresent('.menu-header-open', 5000, 'expected an open menu')
     // click import DNA
+    .pause(250)
     .click('.menu-dropdown:nth-of-type(2) .menu-item:nth-of-type(7)')
     .waitForElementNotPresent('.menu-header-open', 5000, 'expected a closed menu')
     // forms have a transition, wait for it to complete

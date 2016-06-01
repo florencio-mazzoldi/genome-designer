@@ -1,7 +1,13 @@
 import * as ActionTypes from '../constants/ActionTypes';
 import { project as testProject } from './testProject';
+import { project as combiProject } from './testCombinatorial';
 
 const initialState = {};
+
+//testing = combinatorial
+Object.assign(initialState, {
+  combinatorial: combiProject,
+});
 
 if (process.env.NODE_ENV === 'test') {
   Object.assign(initialState, {
@@ -32,6 +38,13 @@ export default function projects(state = initialState, action) {
     const zippedProjects = projects.reduce((acc, project) => Object.assign(acc, { [project.id]: project }), {});
     //prefer state versions to zipped versions
     return Object.assign({}, zippedProjects, state);
+
+  case ActionTypes.PROJECT_DELETE : {
+    const { projectId } = action;
+    const nextState = Object.assign({}, state);
+    delete nextState[projectId];
+    return nextState;
+  }
 
   default :
     return state;

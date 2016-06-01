@@ -12,6 +12,16 @@ export const symbolMap = {
   rnaStability: 'RNA stability',
 };
 
+/*
+ proposed roles:
+
+ connector
+ reporter
+ regulatory
+ selection
+ structural
+ */
+
 function makeImagePath(fileName, folder = 'thin') {
   return '/images/roleSymbols/' + folder + '/' + fileName + '.svg';
 }

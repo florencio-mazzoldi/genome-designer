@@ -6,7 +6,7 @@ import {
   errorInvalidRoute,
   errorDoesNotExist,
   errorCouldntFindProjectId,
-  errorVersioningSystem
+  errorVersioningSystem,
 } from './../utils/errors';
 import * as querying from './querying';
 import * as persistence from './persistence';
@@ -17,7 +17,7 @@ import errorHandlingMiddleware from '../utils/errorHandlingMiddleware';
 const router = express.Router(); //eslint-disable-line new-cap
 const jsonParser = bodyParser.json({
   strict: false, //allow values other than arrays and objects,
-  limit: 10 * 1024 * 1024,
+  limit: 20 * 1024 * 1024,
 });
 
 /***************************
@@ -123,6 +123,9 @@ router.route('/info/:type/:detail?')
     const { user } = req;
     const { type, detail } = req.params;
 
+    //expect blockIds, not projectId
+    //todo - ideally would pass in the project on all of these so dont need to look it up each time... should have it when make the reuqest anyway
+
     switch (type) {
     case 'role' :
       if (detail) {
@@ -135,10 +138,18 @@ router.route('/info/:type/:detail?')
           .catch(err => next(err));
       }
       break;
+    case 'contents' :
+      rollup.getContents(detail)
+        .then(info => res.status(200).json(info))
+        .catch(err => next(err));
+      break;
     case 'components' :
-      //todo - support a project, but for now expect this to be a block (and not validating)
-      //todo - permissions check
-      rollup.getComponentsRecursively(detail)
+      rollup.getComponents(detail)
+        .then(info => res.status(200).json(info))
+        .catch(err => next(err));
+      break;
+    case 'options' :
+      rollup.getOptions(detail)
         .then(info => res.status(200).json(info))
         .catch(err => next(err));
       break;
@@ -148,7 +159,7 @@ router.route('/info/:type/:detail?')
   });
 
 // routes for non-atomic operations
-// response/request with data in format {project: {}, blocks: [], ...}
+// response/request with data in rollup format {project: {}, blocks: [], ...}
 // e.g. used in autosave, loading / saving whole project
 router.route('/projects/:projectId')
   .all(jsonParser, permissionsMiddleware)
@@ -275,6 +286,8 @@ router.route('/:projectId/:blockId')
       .catch(err => next(err));
   });
 
+//todo - should probably validate message body is project / param is actually an ID (or use a regex) for this catch-all route
+
 router.route('/:projectId')
   .all(permissionsMiddleware)
   .get((req, res, next) => {
@@ -324,7 +337,7 @@ router.route('/:projectId')
     const { projectId } = req;
 
     persistence.projectDelete(projectId)
-      .then(() => res.status(200).send(projectId))
+      .then(() => res.status(200).json({ projectId }))
       .catch(err => next(err));
   });
 

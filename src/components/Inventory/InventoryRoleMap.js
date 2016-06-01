@@ -93,5 +93,5 @@ export class InventoryRoleMap extends Component {
 
 export default connect(() => ({}), {
   blockStash,
-  blockLoad
+  blockLoad,
 })(InventoryRoleMap);

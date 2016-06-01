@@ -4,15 +4,15 @@ import SchemaDefinition from './SchemaDefinition';
 
 const MetadataDefinition = new SchemaDefinition({
   name: [
-    fields.string(),
+    fields.string({ max: 256 }),
     'Name of the instance',
   ],
   description: [
-    fields.string(),
+    fields.string({ max: 2048 }),
     'Description of instance',
   ],
   authors: [
-    fields.arrayOf(validators.id(), {required: true}).required,
+    fields.arrayOf(validators.id(), { required: true }).required,
     'IDs of authors',
   ],
   tags: [

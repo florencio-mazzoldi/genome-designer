@@ -13,6 +13,7 @@ export const sequencePath = 'sequence';
 export const blockPath = 'blocks';
 export const projectPath = 'projects';
 export const projectDataPath = 'data';
+export const orderPath = 'orders';
 
 export const permissionsFilename = 'permissions.json';
 export const manifestFilename = 'manifest.json';
@@ -52,11 +53,11 @@ export const createProjectManifestPath = (projectId) => {
   return createProjectDataPath(projectId, manifestFilename);
 };
 
+//BLOCKS
+
 export const createBlockDirectoryPath = (projectId, ...rest) => {
   return createProjectDataPath(projectId, blockPath, ...rest);
 };
-
-//BLOCKS
 
 export const createBlockPath = (blockId, projectId, ...rest) => {
   invariant(blockId, 'Block ID required');
@@ -68,6 +69,20 @@ export const createBlockPath = (blockId, projectId, ...rest) => {
 
 export const createBlockManifestPath = (blockId, projectId) => {
   return createBlockPath(blockId, projectId, manifestFilename);
+};
+
+//ORDERS
+
+export const createOrderDirectoryPath = (projectId, ...rest) => {
+  return createProjectPath(projectId, orderPath, ...rest);
+};
+
+//orders dont have their own directory, they are just files named by orderId
+export const createOrderManifestPath = (orderId, projectId) => {
+  invariant(orderId, 'Order ID required');
+  invariant(projectId, 'Project ID required');
+
+  return createOrderDirectoryPath(projectId, `${orderId}.json`);
 };
 
 //SEQUENCE

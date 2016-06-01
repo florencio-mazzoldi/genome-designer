@@ -3,11 +3,11 @@ import invariant from 'invariant';
 import { headersGet, headersPost, headersDelete } from './headers';
 import { fileApiPath } from './paths';
 
-//note - you need to unpack the responses yourself (e.g. resp => resp.json())
+const contentTypeTextHeader = { headers: { 'Content-Type': 'text/plain' } };
 
-//returns a fetch object, for you to parse yourself (doesnt automatically convert to json)
+//returns a fetch object, for you to parse yourself (doesnt automatically convert to json / text)
 export const readFile = (fileName) => {
-  return rejectingFetch(fileApiPath(fileName), headersGet());
+  return rejectingFetch(fileApiPath(fileName), headersGet(contentTypeTextHeader));
 };
 
 // if contents === null, then the file is deleted
@@ -21,5 +21,5 @@ export const writeFile = (fileName, contents) => {
     return rejectingFetch(filePath, headersDelete());
   }
 
-  return rejectingFetch(filePath, headersPost(contents));
+  return rejectingFetch(filePath, headersPost(contents, contentTypeTextHeader));
 };

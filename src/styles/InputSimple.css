@@ -20,7 +20,7 @@
       cursor: text;
       background: white;
       color: var(--colors-blueGreyDark);
-      background-color: var(--colors-blueGreyLighter);
+      background-color: white;
     }
   }
 

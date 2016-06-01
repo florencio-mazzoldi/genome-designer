@@ -1,0 +1,954 @@
+[
+  {
+    "id": "block-7b6bd283-5b83-4fae-b0ff-3800c600d243",
+    "parents": [],
+    "metadata": {
+      "name": "conn A-B",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#e7aaa9",
+      "egfPosition": "1"
+    },
+    "sequence": {
+      "md5": "05d82c21c4044eda4122852b38c7f781",
+      "length": 40,
+      "annotations": [],
+      "initialBases": "CCCAC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn A-B"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-76804749-3e94-44ea-b8cc-27ca6106459a",
+    "parents": [],
+    "metadata": {
+      "name": "conn A-C",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#D28482",
+      "egfPosition": "1-2"
+    },
+    "sequence": {
+      "md5": "f508913af832d4b5832350cfde43af35",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TCTTG"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn A-C"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-ec75528a-f205-4478-a039-3b668992d54a",
+    "parents": [],
+    "metadata": {
+      "name": "conn B-C",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#E9BA9b",
+      "egfPosition": "2"
+    },
+    "sequence": {
+      "md5": "790085843128697a490f68d1ba1a4aaa",
+      "length": 40,
+      "annotations": [],
+      "initialBases": "ACTGT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn B-C"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-979e9d60-c3de-4b6a-8491-a2d64bcce032",
+    "parents": [],
+    "metadata": {
+      "name": "conn B-F",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#efac7e",
+      "egfPosition": "2-5"
+    },
+    "sequence": {
+      "md5": "a88d8eda685f2b47ecd203d1ba79fb1f",
+      "length": 40,
+      "annotations": [],
+      "initialBases": "ACGGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn B-F"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-c6ca4436-02f6-4f94-af15-748142fe3e67",
+    "parents": [],
+    "metadata": {
+      "name": "conn B-L",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#EFD79A",
+      "egfPosition": "2-11"
+    },
+    "sequence": {
+      "md5": "9a0906a1b179c0a57ff8c4eb830757b9",
+      "length": 40,
+      "annotations": [],
+      "initialBases": "TTGAG"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn B-L"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-4f2fc8ca-cce5-4366-b077-59511b9b663a",
+    "parents": [],
+    "metadata": {
+      "name": "conn D-E",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#F1D26C",
+      "egfPosition": "4"
+    },
+    "sequence": {
+      "md5": "14ea8239634bdc1f90ede523bc312b84",
+      "length": 42,
+      "annotations": [],
+      "initialBases": "TTAGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn D-E"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-9b10d3b4-bf0b-44b6-8451-7d2f5c8a297e",
+    "parents": [],
+    "metadata": {
+      "name": "conn D-F",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#E4E480",
+      "egfPosition": "4-5"
+    },
+    "sequence": {
+      "md5": "14ea8239634bdc1f90ede523bc312b84",
+      "length": 42,
+      "annotations": [],
+      "initialBases": "TTAGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn D-F"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-a7f51f32-6793-403f-b3a3-1d6a6cfa58ae",
+    "parents": [],
+    "metadata": {
+      "name": "conn E-F",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#D3D34F",
+      "egfPosition": "5"
+    },
+    "sequence": {
+      "md5": "14ea8239634bdc1f90ede523bc312b84",
+      "length": 42,
+      "annotations": [],
+      "initialBases": "TTAGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn E-F"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-89c868e7-fd27-4b2e-b00e-71d8013df7b9",
+    "parents": [],
+    "metadata": {
+      "name": "conn H-Ha",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#9CC6C0",
+      "egfPosition": "8a"
+    },
+    "sequence": {
+      "md5": "a78bebe7441e377d6b0a49c996740d58",
+      "length": 48,
+      "annotations": [],
+      "initialBases": "TAATA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn H-Ha"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-5cdc1711-7550-491e-ae0c-06f1b0aece77",
+    "parents": [],
+    "metadata": {
+      "name": "conn H-J",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#6DA19C",
+      "egfPosition": "8-9"
+    },
+    "sequence": {
+      "md5": "a78bebe7441e377d6b0a49c996740d58",
+      "length": 48,
+      "annotations": [],
+      "initialBases": "TAATA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn H-J"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-03d753ae-709a-47f7-8630-a0edae1274bc",
+    "parents": [],
+    "metadata": {
+      "name": "conn H-K",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#B1CED0",
+      "egfPosition": "8-10"
+    },
+    "sequence": {
+      "md5": "a78bebe7441e377d6b0a49c996740d58",
+      "length": 48,
+      "annotations": [],
+      "initialBases": "TAATA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn H-K"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-69a24816-fb3d-4d1c-b54f-5caa6e3e9d76",
+    "parents": [],
+    "metadata": {
+      "name": "conn Ha-J",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#65AAB1",
+      "egfPosition": "8b-9"
+    },
+    "sequence": {
+      "md5": "4c658a8c4199c415e18be35d7eae2ecf",
+      "length": 42,
+      "annotations": [],
+      "initialBases": "GAGGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Ha-J"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-fb89d3a5-6eaf-4bf7-a53b-db18b5f8597d",
+    "parents": [],
+    "metadata": {
+      "name": "conn Ha-K",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#8EC78D",
+      "egfPosition": "8b-10"
+    },
+    "sequence": {
+      "md5": "4c658a8c4199c415e18be35d7eae2ecf",
+      "length": 42,
+      "annotations": [],
+      "initialBases": "GAGGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Ha-K"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-ba5c44e6-13f9-40cb-9f22-235350386b06",
+    "parents": [],
+    "metadata": {
+      "name": "conn J-K",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#53B15F",
+      "egfPosition": "10"
+    },
+    "sequence": {
+      "md5": "4c658a8c4199c415e18be35d7eae2ecf",
+      "length": 42,
+      "annotations": [],
+      "initialBases": "GAGGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn J-K"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-4f986ceb-6063-4404-b3ce-127f65fb3d48",
+    "parents": [],
+    "metadata": {
+      "name": "conn L-M",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#C5C4C1",
+      "egfPosition": "12"
+    },
+    "sequence": {
+      "md5": "671992ff4c7ce83ca1d04cca1792861f",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TATGA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn L-M"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-646e1ff9-13f8-4d43-9ff6-199288383fc8",
+    "parents": [],
+    "metadata": {
+      "name": "conn L-N",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#A5A6A2",
+      "egfPosition": "12-13"
+    },
+    "sequence": {
+      "md5": "671992ff4c7ce83ca1d04cca1792861f",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TATGA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn L-N"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-8f187e94-18fa-404b-b3ad-73c17d7c9a15",
+    "parents": [],
+    "metadata": {
+      "name": "conn L-R",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#e7aaa9",
+      "egfPosition": "12-17"
+    },
+    "sequence": {
+      "md5": "671992ff4c7ce83ca1d04cca1792861f",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TATGA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn L-R"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-06324bd0-f685-42ed-b3e1-335fec1cc1f2",
+    "parents": [],
+    "metadata": {
+      "name": "conn L-W",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#D28482",
+      "egfPosition": "12-22"
+    },
+    "sequence": {
+      "md5": "671992ff4c7ce83ca1d04cca1792861f",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TATGA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn L-W"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-123ee5d4-c690-40dc-a61f-939b93aeace0",
+    "parents": [],
+    "metadata": {
+      "name": "conn L-Y",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#E9BA9b",
+      "egfPosition": "12-24"
+    },
+    "sequence": {
+      "md5": "671992ff4c7ce83ca1d04cca1792861f",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TATGA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn L-Y"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-303f83b6-be54-4161-bf21-b6e280b5c0a4",
+    "parents": [],
+    "metadata": {
+      "name": "conn M-R",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#efac7e",
+      "egfPosition": "13-17"
+    },
+    "sequence": {
+      "md5": "a02891792ac028d93274d1546f96982d",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "GACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn M-R"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-2875778d-963d-4cf2-bb7f-11997e49e892",
+    "parents": [],
+    "metadata": {
+      "name": "conn N-R",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#EFD79A",
+      "egfPosition": "14-17"
+    },
+    "sequence": {
+      "md5": "a02891792ac028d93274d1546f96982d",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "GACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn N-R"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-66a01506-6f3f-4388-873f-0940e16621c4",
+    "parents": [],
+    "metadata": {
+      "name": "conn Q-R",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#F1D26C",
+      "egfPosition": "17"
+    },
+    "sequence": {
+      "md5": "a02891792ac028d93274d1546f96982d",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "GACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Q-R"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-a10a4295-4576-451c-bc67-7f1db4725cb6",
+    "parents": [],
+    "metadata": {
+      "name": "conn Q-W",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#E4E480",
+      "egfPosition": "17-22"
+    },
+    "sequence": {
+      "md5": "a02891792ac028d93274d1546f96982d",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "GACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Q-W"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-c3944194-d70b-4a19-b331-1cd4d227cfd9",
+    "parents": [],
+    "metadata": {
+      "name": "conn R-W",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#D3D34F",
+      "egfPosition": "18-22"
+    },
+    "sequence": {
+      "md5": "b77e47402863d658a18eeaa2b2aca961",
+      "length": 40,
+      "annotations": [],
+      "initialBases": "CCTAC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn R-W"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-3c7bd9fe-c0ab-41f0-9314-6d7f4f120e6d",
+    "parents": [],
+    "metadata": {
+      "name": "conn T-V",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#9CC6C0",
+      "egfPosition": "20-21"
+    },
+    "sequence": {
+      "md5": "844e411f897c04ec2d8086f394fc57fb",
+      "length": 40,
+      "annotations": [],
+      "initialBases": "GCTAA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn T-V"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-aae5028b-80c3-4ecc-8b98-15f040090d6a",
+    "parents": [],
+    "metadata": {
+      "name": "conn U-V",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#6DA19C",
+      "egfPosition": "21"
+    },
+    "sequence": {
+      "md5": "74239e1d3fee1b081130ca59516805eb",
+      "length": 36,
+      "annotations": [],
+      "initialBases": "TAATC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn U-V"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-ac04ee94-5d6c-48c6-a770-5044d3817b4e",
+    "parents": [],
+    "metadata": {
+      "name": "conn W-X",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#B1CED0",
+      "egfPosition": "23"
+    },
+    "sequence": {
+      "md5": "f508913af832d4b5832350cfde43af35",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TCTTG"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn W-X"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-153a6acb-2eb1-4366-9c95-7a3123683c33",
+    "parents": [],
+    "metadata": {
+      "name": "conn W-Y",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#65AAB1",
+      "egfPosition": "23-24"
+    },
+    "sequence": {
+      "md5": "c9d5d8646af857b53f03ed003ff27895",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "CACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn W-Y"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-765fe6bc-a1a9-4d80-babe-e1ae2d5e2327",
+    "parents": [],
+    "metadata": {
+      "name": "conn W-Z",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#8EC78D",
+      "egfPosition": "23-25"
+    },
+    "sequence": {
+      "md5": "c9d5d8646af857b53f03ed003ff27895",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "CACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn W-Z"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-c6bcf515-eadf-4b1d-8f0a-8e42c97b7618",
+    "parents": [],
+    "metadata": {
+      "name": "conn Y-Z",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#53B15F",
+      "egfPosition": "25"
+    },
+    "sequence": {
+      "md5": "c9d5d8646af857b53f03ed003ff27895",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "CACAT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Y-Z"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-db828f60-454a-492d-9e66-87cd95627a69",
+    "parents": [],
+    "metadata": {
+      "name": "conn A-B BsaI-1",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#C5C4C1",
+      "egfPosition": "1"
+    },
+    "sequence": {
+      "md5": "82d7d8ac686af6c45c58cdb324b7dbd5",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "CGGAA"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn A-B BsaI-1"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-5b57fbfd-310c-4faf-a28b-dedfde24eba7",
+    "parents": [],
+    "metadata": {
+      "name": "conn A-B BsaI-3",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#A5A6A2",
+      "egfPosition": "1"
+    },
+    "sequence": {
+      "md5": "fe3a0eb683839d8e80c64581e744c160",
+      "length": 110,
+      "annotations": [],
+      "initialBases": "AGAGC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn A-B BsaI-3"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-d404b62e-d47f-45b4-8293-193c0747e7ea",
+    "parents": [],
+    "metadata": {
+      "name": "conn Y-Z BsaI-2",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#e7aaa9",
+      "egfPosition": "25"
+    },
+    "sequence": {
+      "md5": "b9e717bfccf655ebaf49f832678deed0",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "ATCAC"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Y-Z BsaI-2"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  },
+  {
+    "id": "block-994a8523-1e96-4210-9cf2-6476485079b4",
+    "parents": [],
+    "metadata": {
+      "name": "conn Y-Z BsaI-4",
+      "description": "",
+      "authors": [],
+      "tags": {},
+      "color": "#D28482",
+      "egfPosition": "25"
+    },
+    "sequence": {
+      "md5": "6c01e2a385689fb85ba4b509258ca60a",
+      "length": 92,
+      "annotations": [],
+      "initialBases": "TGCTT"
+    },
+    "source": {
+      "source": "egf",
+      "id": "conn Y-Z BsaI-4"
+    },
+    "rules": {
+      "role": "connector"
+    },
+    "components": [],
+    "options": {},
+    "notes": {}
+  }
+]

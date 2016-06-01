@@ -3,7 +3,7 @@ import mapValues from '../utils/object/mapValues';
 
 const dispatchWrapper = (action) => (...args) => dispatch(action(...args));
 
-const sections = ['blocks', 'clipboard', 'projects', 'ui', 'focus', 'inventory', 'inspector'];
+const sections = ['blocks', 'clipboard', 'projects', 'ui', 'focus', 'inventory', 'inspector', 'orders'];
 
 export default sections.reduce((acc, section) => {
   //dont need to use static imports so long as we're using babel...

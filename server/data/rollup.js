@@ -41,13 +41,6 @@ export const writeProjectRollup = (projectId, rollup, userId) => {
       }
       return Promise.reject(err);
     })
-    .then(() => getAllBlockIdsInProject(projectId))
-    .then(extantBlockIds => {
-      const differenceIds = extantBlockIds.filter(blockId => newBlockIds.indexOf(blockId) < 0);
-      return Promise.all([
-        ...differenceIds.map(blockId => persistence.blockDelete(blockId, projectId)),
-      ]);
-    })
     .then(() => {
       //validate all the blocks and project before we save
       const projectValid = validateProject(project);
@@ -56,6 +49,13 @@ export const writeProjectRollup = (projectId, rollup, userId) => {
         return Promise.reject(errorInvalidModel);
       }
     })
+    .then(() => getAllBlockIdsInProject(projectId))
+    .then(extantBlockIds => {
+      const differenceIds = extantBlockIds.filter(blockId => newBlockIds.indexOf(blockId) < 0);
+      return Promise.all([
+        ...differenceIds.map(blockId => persistence.blockDelete(blockId, projectId)),
+      ]);
+    })
     .then(() => Promise.all([
       persistence.projectWrite(projectId, project),
       ...blocks.map(block => persistence.blockWrite(block.id, block, projectId)),
@@ -63,10 +63,17 @@ export const writeProjectRollup = (projectId, rollup, userId) => {
     .then(() => rollup);
 };
 
-//helper for getComponentsRecursively
+//helper
 const getBlockInRollById = (id, roll) => roll.blocks.find(block => block.id === id);
 
-//given a rollup and rootId, recursively gets components of root block
+//given block ID and rollup, gets all options
+const getOptionsGivenRollup = (id, roll) => {
+  const block = getBlockInRollById(id, roll);
+  const { options } = block;
+  return Object.keys(options).map(optionId => getBlockInRollById(id, roll));
+};
+
+//given a rollup and rootId, recursively gets components of root block (and root block itself)
 const getComponentsRecursivelyGivenRollup = (rootId, projectRollup, acc = {}) => {
   const root = getBlockInRollById(rootId, projectRollup);
   acc[rootId] = root;
@@ -77,19 +84,48 @@ const getComponentsRecursivelyGivenRollup = (rootId, projectRollup, acc = {}) =>
   return acc;
 };
 
-/**
- * @description Recursively get children of a block (and returns block itself)
- * todo - handle projectId as input, not just block
- * @param rootId {ID} root to get components of
- * @param forceProjectId {ID=} Id of project, internal use (or force one)
- * @returns {object} with keys of blocks
- */
-export const getComponentsRecursively = (rootId, forceProjectId) => {
+export const getContents = (rootId, forceProjectId) => {
   const projectIdPromise = forceProjectId ?
     Promise.resolve(forceProjectId) :
     findProjectFromBlock(rootId);
 
   return projectIdPromise
     .then(projectId => getProjectRollup(projectId))
-    .then(rollup => getComponentsRecursivelyGivenRollup(rootId, rollup));
+    .then(rollup => {
+      const components = getComponentsRecursivelyGivenRollup(rootId, rollup);
+
+      const options = Object.keys(components)
+        .map(compId => components[compId])
+        .filter(comp => comp.rules.list === true)
+        .reduce((acc, component) => acc.concat(getOptionsGivenRollup(component.id, rollup)), []);
+
+      return {
+        components,
+        options,
+      };
+    });
 };
+
+/**
+ * @description Recursively get children of a block (and returns block itself)
+ * @param rootId {ID} root to get components of
+ * @param forceProjectId {ID=} Id of project, internal use (or force one)
+ * @returns {object} with keys of blocks
+ */
+export const getComponents = (rootId, forceProjectId) => {
+  return getContents(rootId, forceProjectId)
+    .then(({components}) => components);
+};
+
+/**
+ * @description Recursively get all options of a block and its components. Does not include block itself
+ * @param rootId {ID} root to get components of
+ * @param forceProjectId {ID=} Id of project, internal use (or force one)
+ * @returns {object} with keys of blocks
+ */
+export const getOptions = (rootId, forceProjectId) => {
+  return getContents(rootId, forceProjectId)
+    .then(({options}) => options);
+};
+
+//future - function which only returns the components of a project, not the list options? not sure what use case is though....

@@ -40,7 +40,7 @@ class App extends Component {
   }
 
   render() {
-    const DevTools = (!!process.env.DEBUGMODE) ? require('./DevTools') : 'div';
+    const DevTools = (!!process.env.DEBUGMODE) ? require('./DevTools') : 'noscript';
     const onProjectPage = this.props.location.pathname.indexOf('project/') >= 0;
 
     return (

@@ -1,5 +1,6 @@
 import run from './run';
 import runServer from './runServer';
+import setup from './setup';
 import bundle from './bundle';
 import clean from './clean';
 import copy from './copy';
@@ -8,6 +9,7 @@ import copy from './copy';
 
 async function startInstance() {
   await run(clean);
+  await run(setup);
   await run(copy.bind(undefined, { watch: true }));
   await run(bundle);
 

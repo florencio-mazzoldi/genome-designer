@@ -115,16 +115,6 @@ class GlobalNav extends Component {
       this.props.inventoryToggleVisibility(true);
       this.props.inventorySelectTab('search');
     });
-    KeyboardTrap.bind('mod+e', (evt) => {
-      evt.preventDefault();
-      this.props.inventoryToggleVisibility(true);
-      this.props.inventorySelectTab('egf');
-    });
-    KeyboardTrap.bind('mod+b', (evt) => {
-      evt.preventDefault();
-      this.props.inventoryToggleVisibility(true);
-      this.props.inventorySelectTab('role');
-    });
     KeyboardTrap.bind('option+n', (evt) => {
       evt.preventDefault();
       this.newProject();
@@ -171,6 +161,11 @@ class GlobalNav extends Component {
     KeyboardTrap.bind('mod+u', (evt) => {
       evt.preventDefault();
       this.props.uiToggleDetailView();
+    });
+    KeyboardTrap.bind('mod+b', (evt) => {
+      evt.preventDefault();
+      this.props.inventoryToggleVisibility(true);
+      this.props.inventorySelectTab('role');
     });
   }
 
@@ -276,7 +271,6 @@ class GlobalNav extends Component {
       // sort selected blocks so they are pasted in the same order as they exist now.
       // NOTE: we don't copy the children of any selected parents since they will
       // be cloned along with their parent
-      //const sorted = sortBlocksByIndexAndDepth(this.props.focus.blocks);
       const sorted = sortBlocksByIndexAndDepthExclude(this.props.focus.blockIds);
       // sorted is an array of array, flatten while retaining order
       const currentProjectVersion = this.props.projectGetVersion(this.props.currentProjectId);
@@ -309,6 +303,7 @@ class GlobalNav extends Component {
   saveProject() {
     return this.props.projectSave(this.props.currentProjectId);
   }
+
   /**
    * add a new construct to the current project
    */
@@ -327,15 +322,27 @@ class GlobalNav extends Component {
     // create project and add a default construct
     const project = this.props.projectCreate();
     // add a construct to the new project
-    const block = this.props.blockCreate({projectId: project.id});
+    const block = this.props.blockCreate({ projectId: project.id });
     this.props.projectAddConstruct(project.id, block.id);
     this.props.focusConstruct(block.id);
     this.props.projectOpen(project.id);
   }
 
+  /**
+   * return true if the focused construct is fixrf
+   * @return {Boolean} [description]
+   */
+  focusedConstruct() {
+    if (this.props.focus.constructId) {
+      return this.props.blocks[this.props.focus.constructId];
+    }
+    return null;
+  }
+
   // cut focused blocks to the clipboard, no clone required since we are removing them.
   cutFocusedBlocksToClipboard() {
-    if (this.props.focus.blockIds.length) {
+    if (this.props.focus.blockIds.length && !this.focusedConstruct().isFixed() && this.focusedConstruct().isFrozen()) {
+      // TODO, cut must be prevents on fixed or frozen blocks
       const blockIds = this.props.blockDetach(...this.props.focus.blockIds);
       this.props.clipboardSetData([clipboardFormats.blocks], [blockIds.map(blockId => this.props.blocks[blockId])]);
       this.props.focusBlocks([]);
@@ -344,22 +351,26 @@ class GlobalNav extends Component {
 
   // paste from clipboard to current construct
   pasteBlocksToConstruct() {
+    // verify current construct
+    invariant(this.focusedConstruct(), 'expected a construct');
+    // ignore if construct is immutable
+    if (this.focusedConstruct().isFixed() && this.focusedConstruct().isFrozen()) {
+      return;
+    }
     // paste blocks into construct if format available
     const index = this.props.clipboard.formats.indexOf(clipboardFormats.blocks);
     if (index >= 0) {
+      // TODO, paste must be prevented on fixed or frozen blocks
       const blocks = this.props.clipboard.data[index];
       invariant(blocks && blocks.length && Array.isArray(blocks), 'expected array of blocks on clipboard for this format');
-      // get current construct
-      const construct = this.props.blocks[this.props.focus.constructId];
-      invariant(construct, 'expected a construct');
       // we have to clone the blocks currently on the clipboard since they
       // can't be pasted twice
       const clones = blocks.map(block => {
         return this.props.blockClone(block.id);
       });
       // insert at end of construct if no blocks selected
-      let insertIndex = construct.components.length;
-      let parentId = construct.id;
+      let insertIndex = this.focusedConstruct().components.length;
+      let parentId = this.focusedConstruct().id;
       if (this.props.focus.blockIds.length) {
         const insertInfo = this.findInsertBlock();
         insertIndex = insertInfo.index;
@@ -380,7 +391,7 @@ class GlobalNav extends Component {
           text: 'FILE',
           items: [
             {
-              text: 'Snapshot Project',
+              text: 'Save Project',
               shortcut: stringToShortcut('meta S'),
               action: () => {
                 this.saveProject();
@@ -400,22 +411,6 @@ class GlobalNav extends Component {
               action: () => {
                 this.props.inventoryToggleVisibility(true);
                 this.props.inventorySelectTab('search');
-              },
-            },
-            {
-              text: 'EGF Library',
-              shortcut: stringToShortcut('meta E'),
-              action: () => {
-                this.props.inventoryToggleVisibility(true);
-                this.props.inventorySelectTab('egf');
-              },
-            },
-            {
-              text: 'Sketch Library',
-              shortcut: stringToShortcut('meta B'),
-              action: () => {
-                this.props.inventoryToggleVisibility(true);
-                this.props.inventorySelectTab('role');
               },
             },
             {},
@@ -473,7 +468,7 @@ class GlobalNav extends Component {
             }, {
               text: 'Cut',
               shortcut: stringToShortcut('meta X'),
-              disabled: !this.props.focus.blockIds.length,
+              disabled: !this.props.focus.blockIds.length || !this.focusedConstruct() || this.focusedConstruct().isFixed() || this.focusedConstruct().isFrozen(),
               action: () => {
                 this.cutFocusedBlocksToClipboard();
               },
@@ -487,7 +482,7 @@ class GlobalNav extends Component {
             }, {
               text: 'Paste',
               shortcut: stringToShortcut('meta V'),
-              disabled: !this.props.clipboard.formats.includes(clipboardFormats.blocks),
+              disabled: !this.props.clipboard.formats.includes(clipboardFormats.blocks) || !this.focusedConstruct() || this.focusedConstruct().isFixed() || this.focusedConstruct().isFrozen(),
               action: () => {
                 this.pasteBlocksToConstruct();
               },
@@ -534,11 +529,13 @@ class GlobalNav extends Component {
               },
               checked: this.props.detailViewVisible,
               shortcut: stringToShortcut('meta u'),
-            }, {}, {
-              text: 'Select Empty Blocks',
-              disabled: !this.props.focus.constructId,
+            }, {},
+            {
+              text: 'Sketch Library',
+              shortcut: stringToShortcut('meta B'),
               action: () => {
-                this.selectEmptyBlocks();
+                this.props.inventoryToggleVisibility(true);
+                this.props.inventorySelectTab('role');
               },
             },
           ],
@@ -599,7 +596,7 @@ class GlobalNav extends Component {
         <span className="GlobalNav-title">GD</span>
         {showMenu && this.menuBar()}
         <span className="GlobalNav-spacer"/>
-        {showMenu && <AutosaveTracking projectId={currentProjectId} />}
+        {showMenu && <AutosaveTracking projectId={currentProjectId}/>}
         <UserWidget/>
       </div>
     );

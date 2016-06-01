@@ -84,7 +84,7 @@ const createBlockStructureAndSaveSequence = (block, sourceId) => {
 // Creates a structure of GD blocks given the structure coming from Python
 // We chunk here because otherwise the OS complains of too many open files
 const createAllBlocks = (outputBlocks, sourceId) => {
-  const batches = chunk(Object.keys(outputBlocks), 200);
+  const batches = chunk(Object.keys(outputBlocks), 50);
 
   return batches.reduce((acc, batch) => {
     return acc.then((allBlocks) => {

@@ -19,6 +19,7 @@ export class InventoryItem extends Component {
         image: PropTypes.string,
       }).isRequired,
     }).isRequired,
+    glyph: PropTypes.string, //e.g. lock icon for templates
     svg: PropTypes.string, //right now, SBOL SVG ID
     defaultName: PropTypes.string,
     onDrop: PropTypes.func, //can return promise (e.g. update store), value is used for onDrop in DnD registered drop target. Can pass value from promise to use for drop as payload, or undefined
@@ -73,7 +74,7 @@ export class InventoryItem extends Component {
   makeDnDProxy() {
     const proxy = document.createElement('div');
     proxy.className = 'InventoryItemProxy';
-    proxy.innerHTML = this.props.item.metadata.name;
+    proxy.innerHTML = this.props.item.metadata.name || this.props.defaultName;
     const svg = this.itemElement.querySelector('svg');
     if (svg) {
       const svgClone = svg.cloneNode(true);
@@ -95,7 +96,7 @@ export class InventoryItem extends Component {
   };
 
   render() {
-    const { item, svg, defaultName } = this.props;
+    const { item, svg, glyph, defaultName } = this.props;
     const isSelected = this.props.forceBlocks.indexOf(item) >= 0;
 
     const hasSequence = item.sequence && item.sequence.length > 0;
@@ -109,6 +110,7 @@ export class InventoryItem extends Component {
         <a className="InventoryItem-item"
            onClick={this.handleClick}>
           {svg ? <RoleSvg symbolName={svg} color="white"/> : null}
+          {!!glyph ? <span className="InventoryItem-glyph">{glyph}</span> : null}
           <span className="InventoryItem-text">
             {itemName}
           </span>

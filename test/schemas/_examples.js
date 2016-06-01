@@ -18,7 +18,7 @@ export const Block = {
     annotations: [],
   },
   source: {},
-  options: [],
+  options: {},
   components: [],
   rules: {},
   notes: {},

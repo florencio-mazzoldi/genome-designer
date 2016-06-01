@@ -12,6 +12,7 @@ import inventory from './inventory';
 import inspector from './inspector';
 import ui from './ui';
 import focus from './focus';
+import orders from './orders';
 import user from './user';
 import clipboard from './clipboard';
 
@@ -24,6 +25,8 @@ const undoReducerEnhancer = undoReducerEnhancerCreator({
   purgeOn: (action) => purgingEvents.some(type => type === action.type),
 });
 
+//combined reducers
+
 export const rootReducer = combineReducers({
   blocks: autosaveReducerEnhancer(undoReducerEnhancer(blocks, 'blocks')),
   projects: autosaveReducerEnhancer(undoReducerEnhancer(projects, 'projects')),
@@ -34,6 +37,7 @@ export const rootReducer = combineReducers({
   clipboard,
   focus,
   user,
+  orders,
   undo: undoReducer,
 });
 

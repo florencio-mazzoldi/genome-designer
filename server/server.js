@@ -4,15 +4,13 @@ import express from 'express';
 import morgan from 'morgan';
 
 import dataRouter from './data/index';
+import orderRouter from './order/index';
 import fileRouter from './file/index';
 import extensionsRouter from './extensions/index';
 import bodyParser from 'body-parser';
 
 import importRouter from '../plugins/convert/import';
 import exportRouter from '../plugins/convert/export';
-
-import { directoryMake } from './utils/fileSystem';
-import { createStorageUrl } from './utils/filePaths';
 
 const DEFAULT_PORT = 3000;
 const port = parseInt(process.argv[2], 10) || process.env.PORT || DEFAULT_PORT;
@@ -28,12 +26,14 @@ const pathImages = createBuildPath('images', '../src/images');
 const pathPublic = createBuildPath('public', '../src/public');
 const pathClientBundle = createBuildPath('client.js', '../build/client.js');
 
+//create server app
 const app = express();
-app.use(bodyParser({
-  limit: '50mb',  // default limit is 100K, not nearly large enough for our projects.
-  strict: false,  // accept anything that JSON.parse will swallow
-}));
 
+//use large body limit at root so that 100kb default doesnt propagate / block downstream
+app.use(bodyParser.json({
+  limit: '50mb',
+  strict: false,
+}));
 
 //error logging middleware
 if (process.env.NODE_ENV !== 'production') {
@@ -88,6 +88,7 @@ if (process.env.BIO_NANO_AUTH) {
 
 //primary routes
 app.use('/data', dataRouter);
+app.use('/order', orderRouter);
 app.use('/file', fileRouter);
 app.use('/extensions', extensionsRouter);
 
@@ -126,9 +127,7 @@ app.get('*', (req, res) => {
   }
 });
 
-directoryMake(createStorageUrl('temp'));
-directoryMake(createStorageUrl('genbank'));
-directoryMake(createStorageUrl('csv'));
+/*** running ***/
 
 //i have no idea why, but sometimes the server tries to build when the port is already in use, so lets just check if port is in use and if it is, then dont try to listen on it.
 const isPortFree = (port, cb) => {
@@ -160,7 +159,7 @@ const startServer = () => app.listen(port, hostname, (err) => {
   }
 
   /* eslint-disable no-console */
-  console.log(`Building, will serve at http://${hostname}:${port}/`);
+  console.log(`Server listening at http://${hostname}:${port}/`);
 });
 
 //start the server by default, if port is not taken

@@ -32,24 +32,19 @@ class AuthenticationForms extends Component {
     default: form = null; break;
     }
 
-    let modal = null;
-    if (form) {
-      modal = (<ModalWindow
-                open
-                title="Auth Modal"
-                payload={form}
-                closeOnClickOutside
-                closeModal={(buttonText) => {
-                  this.props.uiShowAuthenticationForm('none');
-                }}
-              />);
-    }
-
-    return (
-      <div>
-        {modal}
-      </div>
-    );
+    return !form
+      ?
+      <noscript />
+      :
+      (
+        <ModalWindow open
+                     title="Auth Modal"
+                     payload={form}
+                     closeOnClickOutside
+                     closeModal={(buttonText) => {
+                       this.props.uiShowAuthenticationForm('none');
+                     }}/>
+      );
   }
 }
 

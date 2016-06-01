@@ -4,6 +4,7 @@
   line-height: 0;
   display: inline-block;
   margin-right: 5px;
+  user-select: none;
 
   &-current {
     display: inline-block;
@@ -109,7 +110,7 @@
 
     &.active svg {
       opacity: 1;
-    }    
+    }
   }
 
   &.readOnly {
@@ -117,7 +118,11 @@
       cursor: default;
 
       &:hover {
-        border-color: inherit;
+        border-color: transparent;
+
+        svg {
+          opacity: 0.5;
+        }
       }
     }
   }
