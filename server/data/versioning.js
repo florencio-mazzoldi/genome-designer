@@ -16,7 +16,7 @@ const describeCommit = (commit) => ({
   time: commit.timeMs(),
 });
 
-export const initialize = (path) => {
+export const initialize = (path, userId = 'Author') => {
   const repoPath = makePath(path);
   return nodegit.Repository.init(repoPath, 0)
     .then(repo => {
@@ -30,7 +30,7 @@ export const initialize = (path) => {
             .then(() => index.write())
             .then(() => index.writeTree())
             .then(oid => {
-              const author = nodegit.Signature.now('Person', 'email');
+              const author = nodegit.Signature.now(userId, 'email');
               const committer = author;
               return repo.createCommit('HEAD', author, committer, 'Initialize', oid, []);
             });
@@ -52,7 +52,7 @@ export const isInitialized = (path) => {
 
 //todo - prevent conflicts -- shouldn't be an issue with only one branch
 //todo - ensure HEAD is latest on master
-export const commit = (path, message = 'commit message') => {
+export const commit = (path, message = 'commit message', userId = 'Author') => {
   const repoPath = makePath(path);
   return nodegit.Repository.open(repoPath)
     .then(repo => {
@@ -67,7 +67,7 @@ export const commit = (path, message = 'commit message') => {
               return nodegit.Reference.nameToId(repo, 'HEAD')
                 .then((head) => repo.getCommit(head))
                 .then(parent => {
-                  const author = nodegit.Signature.now('Person', 'email');
+                  const author = nodegit.Signature.now(userId, 'email');
                   const committer = author;
                   return repo.createCommit('HEAD', author, committer, message, oid, [parent]);
                 });

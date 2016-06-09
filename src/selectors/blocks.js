@@ -1,5 +1,5 @@
 import invariant from 'invariant';
-import BlockDefinition from '../schemas/Block';
+import BlockSchema from '../schemas/Block';
 import { values, flatten } from 'lodash';
 
 /***************************************
@@ -19,30 +19,50 @@ const _getParentFromStore = (blockId, store, def = null) => {
 };
 
 //todo - move to object
-const _getChildrenShallow = (blockId, store) => {
+const _getComponentsShallow = (blockId, store) => {
   const block = _getBlockFromStore(blockId, store);
   return block.components.map(id => _getBlockFromStore(id, store));
 };
 
 //todo - move to object
-const _getAllChildren = (rootId, store, children = []) => {
-  const kids = _getChildrenShallow(rootId, store);
+const _getAllComponents = (rootId, store, children = []) => {
+  const kids = _getComponentsShallow(rootId, store);
   if (kids.length) {
     children.push(...kids);
-    kids.forEach(kid => _getAllChildren(kid.id, store, children));
+    kids.forEach(kid => _getAllComponents(kid.id, store, children));
   }
   return children;
 };
 
-const _getAllChildrenByDepth = (rootId, store, children = {}, depth = 1) => {
-  const kids = _getChildrenShallow(rootId, store);
+const _getAllComponentsByDepth = (rootId, store, children = {}, depth = 1) => {
+  const kids = _getComponentsShallow(rootId, store);
   if (kids.length) {
     kids.forEach(kid => {
       children[kid.id] = depth;
-      _getAllChildrenByDepth(kid.id, store, children, depth + 1);
+      _getAllComponentsByDepth(kid.id, store, children, depth + 1);
     });
   }
   return children;
+};
+
+//returns map
+const _getOptionsShallow = (blockId, store) => {
+  const block = _getBlockFromStore(blockId, store);
+  return Object.keys(block.options)
+    .map(id => _getBlockFromStore(id, store))
+    .reduce((acc, block) => Object.assign(acc, { [block.id ]: block }), {});
+};
+
+//returns map
+const _getAllOptions = (rootId, store, includeUnselected) => {
+  const components = _getAllComponents(rootId, store);
+  //for each component (in flat list), create map of options, and assign to accumulator, return accumulator
+  return components.reduce((acc, block) => {
+    return Object.assign(acc,
+      block.getOptions(includeUnselected)
+        .map(optionId => _getBlockFromStore(optionId, store))
+        .reduce((acc, option) => Object.assign(acc, { [option.id]: option }), {}));
+  }, {});
 };
 
 const _filterToLeafNodes = (blocks) => blocks.filter(child => !child.components.length);
@@ -77,7 +97,7 @@ const _getOptions = (blockId, state, includeUnselected = false) => {
 // returns flat array of blocks, not touching list blocks
 const _flattenConstruct = (blockId, state) => {
   const block = _getBlockFromStore(blockId, state);
-  if (!block.components.length) {
+  if (!block.isConstruct()) {
     return [block];
   }
 
@@ -113,15 +133,32 @@ export const blockGetParentRoot = (blockId) => {
   };
 };
 
-export const blockGetChildrenRecursive = (blockId) => {
+export const blockGetComponentsRecursive = (blockId) => {
   return (dispatch, getState) => {
-    return _getAllChildren(blockId, getState());
+    return _getAllComponents(blockId, getState());
   };
 };
 
-export const blockGetChildrenByDepth = (blockId) => {
+export const blockGetComponentsByDepth = (blockId) => {
   return (dispatch, getState) => {
-    return _getAllChildrenByDepth(blockId, getState());
+    return _getAllComponentsByDepth(blockId, getState());
+  };
+};
+
+//returns object
+export const blockGetOptionsRecursive = (blockId) => {
+  return (dispatch, getState) => {
+    return _getAllOptions(blockId, getState());
+  };
+};
+
+//returns object
+export const blockGetContentsRecursive = (blockId) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const options = _getAllOptions(blockId, state);
+    const components = _getAllComponents(blockId, state).reduce((acc, block) => Object.assign(acc, { [block.id] : block }), {});
+    return Object.assign(options, components);
   };
 };
 
@@ -129,7 +166,7 @@ export const blockGetChildrenByDepth = (blockId) => {
 //todo - move to object
 export const blockGetLeaves = (blockId) => {
   return (dispatch, getState) => {
-    return _filterToLeafNodes(_getAllChildren(blockId, getState()));
+    return _filterToLeafNodes(_getAllComponents(blockId, getState()));
   };
 };
 
@@ -143,7 +180,7 @@ export const blockGetSiblings = (blockId) => {
 //this could be optimized...
 const _getBoundingBlocks = (state, ...blockIds) => {
   const construct = _getParentFromStore(blockIds[0], state);
-  const depthMap = _getAllChildrenByDepth(construct.id, state);
+  const depthMap = _getAllComponentsByDepth(construct.id, state);
   const idsToDepth = blockIds.reduce((acc, id) => Object.assign(acc, { [id]: depthMap[id] }), {});
   const highestLevel = blockIds.reduce((acc, id) => Math.min(acc, idsToDepth[id]), Number.MAX_VALUE);
   const blocksIdsAtHighest = blockIds.filter(id => idsToDepth[id] === highestLevel);
@@ -154,7 +191,7 @@ const _getBoundingBlocks = (state, ...blockIds) => {
     if (blockIds.indexOf(sibling.id) >= 0) {
       return true;
     }
-    const kids = _getAllChildren(sibling.id, state);
+    const kids = _getAllComponents(sibling.id, state);
     return kids.some(kid => blockIds.indexOf(kid.id) >= 0);
   });
   const relevantSiblingIds = relevantSiblings.map(sib => sib.id);
@@ -212,7 +249,7 @@ export const blockIsSpec = (blockId) => {
 
 export const blockIsValid = (model) => {
   return (dispatch, getState) => {
-    return BlockDefinition.validate(model);
+    return BlockSchema.validate(model);
   };
 };
 
@@ -224,24 +261,24 @@ export const blockHasSequence = blockId => {
 };
 
 /*
-deprecated filters for now
-//expects object block.rules.filter
-export const blockGetFiltered = filters => {
-  return (dispatch, getState) => {
-    invariant(typeof filters === 'object', 'must pass ovject of filters');
-    const blockState = getState().blocks;
+ deprecated filters for now
+ //expects object block.rules.filter
+ export const blockGetFiltered = filters => {
+ return (dispatch, getState) => {
+ invariant(typeof filters === 'object', 'must pass ovject of filters');
+ const blockState = getState().blocks;
 
-    return Object.keys(blockState)
-      .map(id => blockState[id])
-      .filter(block => {
-        return Object.keys(filters).every(key => {
-          const value = filters[key];
-          return pathGet(block, key) === value;
-        });
-      });
-  };
-};
-*/
+ return Object.keys(blockState)
+ .map(id => blockState[id])
+ .filter(block => {
+ return Object.keys(filters).every(key => {
+ const value = filters[key];
+ return pathGet(block, key) === value;
+ });
+ });
+ };
+ };
+ */
 
 //given a construct, returns an array of parts that have sequence / are list blocks, including hidden blocks
 export const blockFlattenConstruct = (blockId) => {
@@ -260,9 +297,9 @@ export const blockFlattenConstruct = (blockId) => {
 
  generates:
  [
-   [A],
-   [block2, block3, block4],
-   [block6],
+ [A],
+ [block2, block3, block4],
+ [block6],
  ]
  */
 export const blockGetPositionalCombinations = (blockId, includeUnselected = false) => {
@@ -290,9 +327,9 @@ export const blockGetPositionalCombinations = (blockId, includeUnselected = fals
 
  generates:
  [
-   [A, block2, block6],
-   [A, block3, block6],
-   [A, block4, block6],
+ [A, block2, block6],
+ [A, block3, block6],
+ [A, block4, block6],
  ]
  */
 //todo - parameters for limiting number combinations, how to select them
@@ -301,14 +338,28 @@ export const blockGetCombinations = (blockId, parameters = {}) => {
     const positions = dispatch(blockGetPositionalCombinations(blockId, false));
 
     //guarantee both accumulator (and positions) array have at least one item to map over
-    const first = positions.shift();
+    const last = positions.pop();
 
     //iterate through positions, essentially generating tree with * N branches for N options at position
-    return positions.reduce((acc, position) => {
+    return positions.reduceRight((acc, position) => {
       // for each extant construct, create one variant which adds each part respectively
       // flatten them for return and repeat!
-      return flatten(position.map(option => acc.map(partialConstruct => partialConstruct.concat(option))));
-    }, [first]);
+      return flatten(position.map(option => acc.map(partialConstruct => [option].concat(partialConstruct))));
+    }, [last]);
   };
 };
 
+export const blockFlattenConstructAndLists = (blockId) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const optionPreferences = state.focus.options;
+    const flattened = _flattenConstruct(blockId, state);
+    return flattened.map(block => {
+      const options = block.getOptions();
+      const preference = optionPreferences[block.id];
+      return (block.isList() && options.length) ?
+        state.blocks[preference || options[0]] :
+        block;
+    });
+  };
+};

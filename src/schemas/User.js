@@ -1,13 +1,13 @@
 import fields from './fields/index';
 import * as validators from './fields/validators';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
 /**
- @name UserDefinition
+ @name UserSchema
  @description A user account
 */
 
-const UserDefinition = new SchemaDefinition({
+const fieldDefs = {
   id: [
     fields.id({prefix: 'user'}).required,
     `ID of the User`,
@@ -39,6 +39,13 @@ const UserDefinition = new SchemaDefinition({
     })),
     `List of social media accounts`,
   ],
-});
+};
 
-export default UserDefinition;
+export class UserSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, fieldDefs, fieldDefinitions));
+  }
+}
+
+export default new UserSchemaClass();
+

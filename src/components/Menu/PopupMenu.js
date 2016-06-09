@@ -43,9 +43,15 @@ export default class Menu extends Component {
             };
             return (
               item.text ?
-                (<MenuItem key={item.text} disabled={item.disabled} classes={item.classes} text={item.text} action={boundAction}/>) :
-                (<MenuSeparator key={index} />)
-              );
+                (<MenuItem key={item.text}
+                           disabled={item.disabled}
+                           classes={item.classes}
+                           text={item.text}
+                           action={boundAction}
+                           checked={item.checked}/>)
+                :
+                (<MenuSeparator key={index}/>)
+            );
           })}
         </div>
       </div>

@@ -11,7 +11,7 @@ export default class ListItem2D extends Node2D {
     super(Object.assign({}, props, {
       glyph: 'listitem',
       textAlign: 'left',
-      textIndent: kT.textPad,
+      textIndent: kT.textPad + kT.optionDotW,
       color: '#1D222D',
     }));
   }
@@ -29,4 +29,5 @@ export default class ListItem2D extends Node2D {
   getPreferredSize(str) {
     throw new Error('Not valid to call on a list item');
   }
+
 }

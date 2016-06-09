@@ -12,7 +12,6 @@ import * as querying from './querying';
 import * as persistence from './persistence';
 import * as rollup from './rollup';
 import { permissionsMiddleware } from './permissions';
-import errorHandlingMiddleware from '../utils/errorHandlingMiddleware';
 
 const router = express.Router(); //eslint-disable-line new-cap
 const jsonParser = bodyParser.json({
@@ -25,8 +24,6 @@ const jsonParser = bodyParser.json({
  ****************************/
 
 router.use(jsonParser);
-
-router.use(errorHandlingMiddleware);
 
 // allow the route /block/<blockId> and find the projectId
 // not recommended e.g. for POST
@@ -179,7 +176,7 @@ router.route('/projects/:projectId')
     const roll = req.body;
 
     rollup.writeProjectRollup(projectId, roll, user.uuid)
-      .then(() => persistence.projectSave(projectId))
+      .then(() => persistence.projectSave(projectId, user.uuid))
       .then(commit => res.status(200).json(commit))
       .catch(err => next(err));
   });
@@ -206,8 +203,9 @@ router.route('/:projectId/commit/:sha?')
         .then(project => res.status(200).json(project))
         .catch(err => next(err));
     } else {
-      //todo - get project history
-      res.status(501).send('not supported yet');
+      querying.getProjectVersions(projectId)
+        .then(log => res.status(200).json(log))
+        .catch(err => next(err));
     }
   })
   .post((req, res, next) => {
@@ -223,7 +221,7 @@ router.route('/:projectId/commit/:sha?')
       Promise.resolve();
 
     writePromise
-      .then(() => persistence.projectSnapshot(projectId, message))
+      .then(() => persistence.projectSnapshot(projectId, user.uuid, message))
       .then(commit => res.status(200).json(commit))
       //may want better error handling here
       .catch(err => {
@@ -285,8 +283,6 @@ router.route('/:projectId/:blockId')
       .then(() => res.status(200).send(blockId))
       .catch(err => next(err));
   });
-
-//todo - should probably validate message body is project / param is actually an ID (or use a regex) for this catch-all route
 
 router.route('/:projectId')
   .all(permissionsMiddleware)

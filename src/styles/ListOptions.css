@@ -1,3 +1,5 @@
+@import './variables.css';
+
 .ListOptions {
   display: flex;
   flex-direction: column;
@@ -7,5 +9,10 @@
 
   &:empty {
     display: none;
+  }
+
+  &-explanation {
+    color: var(--colors-grey);
+    padding: 0.25em 0 0.5em;
   }
 }

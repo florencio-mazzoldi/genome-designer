@@ -8,6 +8,7 @@ import orderRouter from './order/index';
 import fileRouter from './file/index';
 import extensionsRouter from './extensions/index';
 import bodyParser from 'body-parser';
+import errorHandlingMiddleware from './utils/errorHandlingMiddleware';
 
 import importRouter from '../plugins/convert/import';
 import exportRouter from '../plugins/convert/export';
@@ -35,20 +36,7 @@ app.use(bodyParser.json({
   strict: false,
 }));
 
-//error logging middleware
-if (process.env.NODE_ENV !== 'production') {
-  app.use((err, req, res, next) => {
-    console.log('hit error logging middleware', err, req, res, next);
-    if (err) {
-      console.error(err);
-      if (res.headersSent) {
-        return next(err);
-      }
-      res.status(502).send(err);
-    }
-    return next();
-  });
-}
+app.use(errorHandlingMiddleware);
 
 //HTTP logging middleware
 app.use(morgan('dev', {
@@ -120,7 +108,7 @@ app.get('*', (req, res) => {
   } else {
     // setup user properties and discourse base url to flash to client
     const discourse = {
-      discourseDomain: `http://discourse${process.env.BNR_ENV_URL_SUFFIX || ''}.bionano.autodesk.com`,
+      discourseDomain: process.env.BNR_ENV_URL_SUFFIX || `https://forum.bionano.autodesk.com`,
     };
     //so that any routing is delegated to the client
     res.render(path.join(pathContent + '/index.jade'), Object.assign({}, req.user, discourse));

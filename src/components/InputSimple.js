@@ -1,10 +1,12 @@
 import React, { Component, PropTypes } from 'react';
+import ReactDom from 'react-dom';
 
 import '../styles/InputSimple.css';
 
 export default class InputSimple extends Component {
   static propTypes = {
     value: PropTypes.string.isRequired,
+    refKey: PropTypes.any, //can pass a key, if updating with each change, if key is different then will trigger blur/focus on component change
     onChange: PropTypes.func.isRequired,
     placeholder: PropTypes.string,
     readOnly: PropTypes.bool,
@@ -41,12 +43,14 @@ export default class InputSimple extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.value !== this.props.value) {
+    if (nextProps.refKey !== this.props.refKey) {
       if (this.midupdate) {
         this.midupdate();
         this.midupdate = null;
       }
+    }
 
+    if (nextProps.value !== this.props.value) {
       this.setState({ value: nextProps.value });
     }
   }
@@ -90,8 +94,16 @@ export default class InputSimple extends Component {
 
     if (!this.props.updateOnBlur) {
       this.handleSubmission(event.target.value);
-    } else {
-      this.midupdate = this.props.onBlur;
+    }
+
+    if (!this.midupdate) {
+      this.midupdate = () => {
+        //todo - verify calling correct versions of these functions
+        if (document.activeElement === ReactDom.findDOMNode(this.refs.input)) {
+          this.props.onBlur();
+          this.props.onFocus();
+        }
+      };
     }
   };
 

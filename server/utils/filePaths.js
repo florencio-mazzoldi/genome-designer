@@ -2,12 +2,16 @@ import path from 'path';
 import invariant from 'invariant';
 
 const makePath = (...paths) => {
-  if (process.env.BUILD) {
+  if (process.env.STORAGE) {
+    return path.resolve(process.env.STORAGE, ...paths);
+  } else if (process.env.BUILD) {
     return path.resolve(__dirname, '../storage/', ...paths);
   }
+
   return path.resolve(__dirname, '../../storage/', ...paths);
 };
 
+export const trashPath = 'trash';
 export const filePath = 'file';
 export const sequencePath = 'sequence';
 export const blockPath = 'blocks';
@@ -15,8 +19,9 @@ export const projectPath = 'projects';
 export const projectDataPath = 'data';
 export const orderPath = 'orders';
 
-export const permissionsFilename = 'permissions.json';
 export const manifestFilename = 'manifest.json';
+export const permissionsFilename = 'permissions.json';
+export const permissionsDeletedFileName = 'priorOwner.json';
 
 //All files are put in the storage folder (until platform comes along)
 export const createStorageUrl = (...urls) => {
@@ -31,6 +36,10 @@ export const createFilePath = (path) => {
 };
 
 /***** data *****/
+
+// TRASH
+
+export const createTrashPath = (...paths) => createStorageUrl(trashPath, ...paths);
 
 //PROJECTS
 
@@ -73,16 +82,25 @@ export const createBlockManifestPath = (blockId, projectId) => {
 
 //ORDERS
 
+// projects/<projectId>/orders
 export const createOrderDirectoryPath = (projectId, ...rest) => {
   return createProjectPath(projectId, orderPath, ...rest);
 };
 
-//orders dont have their own directory, they are just files named by orderId
-export const createOrderManifestPath = (orderId, projectId) => {
+// projects/<projectId>/orders/<orderId>
+export const createOrderPath = (orderId, projectId, ...rest) => {
   invariant(orderId, 'Order ID required');
   invariant(projectId, 'Project ID required');
+  return createOrderDirectoryPath(projectId, orderId, ...rest);
+};
 
-  return createOrderDirectoryPath(projectId, `${orderId}.json`);
+//orders dont have their own directory, they are just files named by orderId
+export const createOrderManifestPath = (orderId, projectId) => {
+  return createOrderPath(orderId, projectId, manifestFilename);
+};
+
+export const createOrderProjectManifestPath = (orderId, projectId) => {
+  return createOrderPath(orderId, projectId, 'project.json');
 };
 
 //SEQUENCE

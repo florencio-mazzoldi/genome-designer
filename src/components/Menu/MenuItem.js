@@ -11,11 +11,15 @@ import React, { Component, PropTypes } from 'react';
 export default class MenuItem extends Component {
   static propTypes = {
     text: PropTypes.string.isRequired,
-    action: PropTypes.func.isRequired,
+    action: PropTypes.func,
     disabled: PropTypes.bool,
     checked: PropTypes.bool,
     shortcut: PropTypes.string,
     classes: PropTypes.string,
+  };
+
+  static defaultProps = {
+    action: () => {},
   };
 
   render() {
@@ -25,7 +29,6 @@ export default class MenuItem extends Component {
     if (indent) {
       check = <div className={this.props.checked ? 'menu-item-checked' : 'menu-item-unchecked'}></div>;
     }
-
     let classes = 'menu-item' + (this.props.disabled ? ' disabled' : '');
     if (this.props.classes) {
       classes += ` ${this.props.classes}`;
@@ -36,7 +39,7 @@ export default class MenuItem extends Component {
            onClick={() => !this.props.disabled && this.props.action()}>
         {check}
         {this.props.text}
-        <div className="menu-item-shortcut" disabled={this.props.disabled}>{this.props.shortcut}</div>
+        {this.props.shortcut && (<div className="menu-item-shortcut" disabled={this.props.disabled}>{this.props.shortcut}</div>)}
       </div>
     );
   }

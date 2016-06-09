@@ -1,8 +1,8 @@
 import { assert, expect } from 'chai';
 import uuid from 'node-uuid';
 import Block from '../../../src/models/Block';
-import BlockDefinition from '../../../src/schemas/Block';
-import ProjectDefinition from '../../../src/schemas/Project';
+import BlockSchema from '../../../src/schemas/Block';
+import ProjectSchema from '../../../src/schemas/Project';
 import * as fileSystem from '../../../server/utils/fileSystem';
 import * as filePaths from '../../../server/utils/filePaths';
 import * as rollup from '../../../server/data/rollup';
@@ -17,18 +17,21 @@ describe('Server', () => {
       const terminatorBlockName = 'el terminado';
 
       const createCustomRollup = () => {
-        const rollup = createExampleRollup();
+        const roll = createExampleRollup();
+        const projectId = roll.project.id;
         const promoter = Block.classless({
+          projectId,
           metadata: { name: 'promoter' },
           rules: { role: 'promoter' },
         });
         const terminator = Block.classless({
+          projectId,
           metadata: { name: terminatorBlockName },
           rules: { role: 'terminator' },
         });
-        rollup.blocks.push(promoter, terminator);
-        rollup.project.components.push(promoter.id, terminator.id);
-        return rollup;
+        roll.blocks.push(promoter, terminator);
+        roll.project.components.push(promoter.id, terminator.id);
+        return roll;
       };
       const numberBlocksInCustomRollup = createCustomRollup().blocks.length;
 
@@ -96,7 +99,7 @@ describe('Server', () => {
             return querying.getAllProjectManifests(myUserId)
               .then(manifests => {
                 expect(manifests.length).to.equal(accessibleProjects.length);
-                assert(manifests.every(manifest => ProjectDefinition.validate(manifest, true)), 'manifests not in valid format');
+                assert(manifests.every(manifest => ProjectSchema.validate(manifest, true)), 'manifests not in valid format');
               });
           });
       });
@@ -105,7 +108,7 @@ describe('Server', () => {
         return querying.getAllBlocks(myUserId)
           .then(blocks => {
             expect(blocks.length).to.equal(myRolls.length * numberBlocksInCustomRollup);
-            assert(blocks.every(block => BlockDefinition.validate(block, true)), 'blocks not in valid format');
+            assert(blocks.every(block => BlockSchema.validate(block, true)), 'blocks not in valid format');
           });
       });
 

@@ -1,7 +1,7 @@
 import { expect, assert } from 'chai';
 import { writeFile } from '../../src/middleware/data';
 import Block from '../../src/models/Block';
-import AnnotationDefinition from '../../src/schemas/Annotation';
+import AnnotationSchema from '../../src/schemas/Annotation';
 import md5 from 'md5';
 import merge from 'lodash.merge';
 
@@ -42,7 +42,7 @@ describe('Model', () => {
     });
 
     describe('Annotations', () => {
-      const annotation = merge({},AnnotationDefinition.scaffold(), {'name': 'annotationName'});
+      const annotation = merge({},AnnotationSchema.scaffold(), {'name': 'annotationName'});
 
       it('annotate() should validate invalid annotations', () => {
         const clone = Object.assign({}, annotation);

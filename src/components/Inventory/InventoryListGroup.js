@@ -18,6 +18,7 @@ export default class InventoryListGroup extends Component {
     onSelect: PropTypes.func, //click title. return false if toggleOnSelect to prevent
     isActive: PropTypes.bool, //to do with color, not whether expanded or not
     hideToggle: PropTypes.bool, //disable toggler (hide it)
+    canToggle: PropTypes.bool,
     toggleOnSelect: PropTypes.bool, //run toggling on selection
   };
 
@@ -27,7 +28,9 @@ export default class InventoryListGroup extends Component {
     isActive: false,
     isExpanded: false,
     isSelectable: false,
+    canToggle: true,
     toggleOnSelect: true,
+    //no default for onToggle because check invariant
   };
 
   state = {
@@ -44,11 +47,11 @@ export default class InventoryListGroup extends Component {
   }
 
   handleToggle = (evt) => {
-    const { disabled, manual, isExpanded, onToggle } = this.props;
+    const { disabled, manual, isExpanded, onToggle, canToggle } = this.props;
 
     evt.stopPropagation();
 
-    if (disabled) {
+    if (disabled || !canToggle) {
       return;
     }
 
@@ -73,7 +76,7 @@ export default class InventoryListGroup extends Component {
   };
 
   render() {
-    const { isSelectable, hideToggle, title, manual, isLoading, isExpanded, isActive, children, disabled } = this.props;
+    const { isSelectable, hideToggle, title, manual, isLoading, isExpanded, isActive, children, disabled, canToggle } = this.props;
     const expanded = manual ? isExpanded : this.state.expanded;
 
     return (
@@ -86,13 +89,14 @@ export default class InventoryListGroup extends Component {
              ref={(el) => this.headingElement = el}
              onClick={this.handleSelect}>
           <Toggler hidden={hideToggle}
+                   disabled={!canToggle}
                    onClick={this.handleToggle}
                    open={expanded}/>
           <a className="InventoryListGroup-title">
             <span>{title}</span>
           </a>
         </div>
-        {isLoading && !expanded && <Spinner />}
+        {(isLoading && !expanded) && <Spinner />}
         {expanded && <div className="InventoryListGroup-contents no-vertical-scroll">
           {children}
         </div>}

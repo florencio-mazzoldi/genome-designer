@@ -74,6 +74,17 @@ export class InventoryGroupSearch extends Component {
     });
   };
 
+  handleToggleSourceVisiblity = (nextState) => {
+    const newState = this.props.inventorySourcesVisibility(nextState);
+
+    //if hiding, check if any new sources enabled, and if so run a new search
+    if (!newState) {
+      if (this.state.sourceList.some(source => !this.state.lastSearch.sourceList.includes(source))) {
+        this.forceSearch(this.props.searchTerm);
+      }
+    }
+  };
+
   onSourceToggle = (source) => {
     const { sourceList } = this.state;
     const newSourceList = sourceList.length ? sourceList.slice() : getSources('search');
@@ -90,6 +101,7 @@ export class InventoryGroupSearch extends Component {
     }
 
     this.setState({ sourceList: newSourceList });
+    this.handleToggleSourceVisiblity(false);
   };
 
   getFullItem = (registryKey, item, shouldAddToStore) => {
@@ -134,17 +146,6 @@ export class InventoryGroupSearch extends Component {
     return this.getFullItem(registryKey, item, true);
   };
 
-  handleToggleSourceVisiblity = (nextState) => {
-    const newState = this.props.inventorySourcesVisibility(nextState);
-
-    //if hiding, check if any new sources enabled, and if so run a new search
-    if (!newState) {
-      if (this.state.sourceList.some(source => !this.state.lastSearch.sourceList.includes(source))) {
-        this.forceSearch(this.props.searchTerm);
-      }
-    }
-  };
-
   //want to filter down results while next query running
   filterListItems = list => {
     const { searchTerm } = this.props;
@@ -167,7 +168,7 @@ export class InventoryGroupSearch extends Component {
     // could do this sorting when the results come in?
     //nested ternary - null if no lengths, then handle based on groupBy
     const groupsContent = noSearchResults ?
-      (!searching && <div className="InventoryGroup-placeholderContent">No Results Found</div>) :
+      ((!searching && searchTerm) && <div className="InventoryGroup-placeholderContent">No Results Found</div>) :
       (groupBy === 'source')
         ?
         sourceList.map(key => {

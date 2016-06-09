@@ -81,12 +81,16 @@
 }
 
 .construct-viewer {
-  margin: 1rem 1rem 0 1rem;
-  width: calc(100% - 2rem);
-  overflow: hidden;
+  margin: 1rem 1rem 0 2rem;
+  width: calc(100% - 3rem);
   background: transparent;
   position: relative;
 
+  .lockIcon {
+    position: absolute;
+    left: -19px;
+    top: 28px;
+  }
 
   .sceneGraphContainer {
     overflow: hidden;
@@ -153,4 +157,10 @@
   border-top-style: solid;
   border-top-color: --colors-bluegrey;
   border-right: 12px solid transparent;
+}
+/*selected option in a list block, size is set programmatically*/
+.listSelected {
+  position: absolute;
+  border-radius: 100%;
+  background-color: #1D222D;
 }

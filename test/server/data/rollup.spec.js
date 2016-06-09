@@ -50,7 +50,7 @@ describe('Server', () => {
       });
 
       it('writeProjectRollup() discards old blocks', () => {
-        const blockF = new Block();
+        const blockF = new Block({projectId});
         const newComponentsBlockA = blockA.components.slice();
         newComponentsBlockA.shift(); //remove C
         newComponentsBlockA.push(blockF.id); //add F

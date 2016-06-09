@@ -103,6 +103,17 @@ export const uiShowDNAImport = (bool) => {
   };
 };
 
+export const uiShowOrderForm = (bool, orderId) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.UI_SHOW_ORDER_FORM,
+      showOrderForm: bool,
+      orderId,
+    });
+    return bool;
+  };
+};
+
 export const uiShowAbout = (bool) => {
   return (dispatch, getState) => {
     dispatch({

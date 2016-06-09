@@ -34,4 +34,16 @@
   &:hover {
     background-color: var(--listItem-background);
   }
+
+  .isFrozen > & {
+    cursor: default;
+
+    &.selected {
+      color: var(--colors-grey);
+    }
+
+    &:hover {
+      background-color: inherit;
+    }
+  }
 }

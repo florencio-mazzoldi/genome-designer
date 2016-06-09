@@ -5,13 +5,21 @@ const serializer = navigator.userAgent.indexOf('Node.js') < 0 ? new XMLSerialize
   serializeToString: () => {return '<SVG/>';},
 };
 
+//todo - should generalize this class (or wrap the SBOL ones) so that not tied to the sbol-svg namespace (e.g. for lock icon)
+
 export default class RoleSvg extends Component {
   static propTypes = {
     symbolName: PropTypes.string,
     color: PropTypes.string,
+    fill: PropTypes.string,
     width: PropTypes.string,
     height: PropTypes.string,
     stroke: PropTypes.number,
+  };
+
+  static defaultProps = {
+    color: 'white',
+    fill: null,
   };
 
   render() {
@@ -22,8 +30,13 @@ export default class RoleSvg extends Component {
       // some role symbols may not be supported so ignore the ones without templates
       if (template) {
         const svg = template.cloneNode(true);
-        // ensure svg is stroked in black
-        setAttribute(svg, 'stroke', this.props.color || 'white', true);
+        // ensure svg is stroked in our color
+        setAttribute(svg, 'stroke', this.props.color, true);
+
+        if (this.props.fill) {
+          setAttribute(svg, 'fill', this.props.fill, true);
+        }
+
         // remove the ID attribute from the clone to avoid duplicates
         svg.removeAttribute('id');
         // set width on top level SVG element

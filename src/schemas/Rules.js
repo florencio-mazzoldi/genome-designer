@@ -1,7 +1,7 @@
 import fields from './fields/index';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
-const RulesDefinition = new SchemaDefinition({
+const rulesFields = {
   list: [
     fields.bool(),
     'Block is a list block. It has options rather than components.',
@@ -23,12 +23,18 @@ const RulesDefinition = new SchemaDefinition({
     'Block Ids of components are fixed - no movement, insertions, deletions, substitutions',
   ],
   /*
-  //deprecated filters for now
-  filter: [
-    fields.object(),
-    'Map of fields to allowed values for constituents (options / components)',
-  ],
-  */
-});
+   //deprecated filters for now
+   filter: [
+   fields.object(),
+   'Map of fields to allowed values for constituents (options / components)',
+   ],
+   */
+};
 
-export default RulesDefinition;
+export class RulesSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, rulesFields, fieldDefinitions));
+  }
+}
+
+export default new RulesSchemaClass();

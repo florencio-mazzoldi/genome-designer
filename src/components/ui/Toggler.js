@@ -31,14 +31,7 @@ export default function Toggler({ onClick, hidden, open, disabled, styles }) {
                            (open ? ' open' : '')}
               styles={styles}
               onClick={handleClick}
-              dangerouslySetInnerHTML={{__html: markup}}/>);
-
-  /*
-   return (<span className={'Toggler' +
-   (disabled ? ' disabled' : '') +
-   (open ? ' open' : '')}
-   onClick={handleClick}/>);
-   */
+              dangerouslySetInnerHTML={{__html: markup}}></div>);
 }
 
 Toggler.propTypes = {

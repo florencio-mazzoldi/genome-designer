@@ -1,3 +1,4 @@
+
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import invariant from 'invariant';
@@ -30,7 +31,7 @@ import {
 } from '../actions/blocks';
 import {
   blockGetParents,
-  blockGetChildrenRecursive,
+  blockGetComponentsRecursive,
 } from '../selectors/blocks';
 import { projectGetVersion } from '../selectors/projects';
 import { focusDetailsExist } from '../selectors/focus';
@@ -489,11 +490,7 @@ class GlobalNav extends Component {
             }, {}, {
               text: 'Add Sequence',
               action: () => {
-                if (!this.props.focus.blockIds.length) {
-                  this.props.uiSetGrunt('Sequence data must be added to or before a selected block. Please select a block and try again.');
-                } else {
-                  this.props.uiShowDNAImport(true);
-                }
+                this.props.uiShowDNAImport(true);
               },
             }, {
               text: 'Select Empty Blocks',
@@ -545,22 +542,22 @@ class GlobalNav extends Component {
           items: [
             {
               text: 'User Guide',
-              action: this.disgorgeDiscourse.bind(this, '/c/genome-designer/user-guide'),
+              action: this.disgorgeDiscourse.bind(this, '/c/genetic-constructor/user-guide'),
             }, {
               text: 'Tutorials',
-              action: this.disgorgeDiscourse.bind(this, '/c/genome-designer/tutorials'),
+              action: this.disgorgeDiscourse.bind(this, '/c/genetic-constructor/tutorials'),
             }, {
               text: 'Forums',
-              action: this.disgorgeDiscourse.bind(this, '/c/genome-designer'),
+              action: this.disgorgeDiscourse.bind(this, '/c/genetic-constructor'),
             }, {
               text: 'Get Support',
-              action: this.disgorgeDiscourse.bind(this, '/c/genome-designer/support'),
+              action: this.disgorgeDiscourse.bind(this, '/c/genetic-constructor/support'),
             }, {
               text: 'Keyboard Shortcuts',
               action: () => {},
             }, {
               text: 'Give Us Feedback',
-              action: this.disgorgeDiscourse.bind(this, '/c/genome-designer/feedback'),
+              action: this.disgorgeDiscourse.bind(this, '/c/genetic-constructor/feedback'),
             }, {}, {
               text: 'About Genome Designer',
               action: () => {
@@ -593,7 +590,7 @@ class GlobalNav extends Component {
     return (
       <div className="GlobalNav">
         <RibbonGrunt />
-        <span className="GlobalNav-title">GD</span>
+        <img className="GlobalNav-logo" src="/images/homepage/app-logo.png"/>
         {showMenu && this.menuBar()}
         <span className="GlobalNav-spacer"/>
         {showMenu && <AutosaveTracking projectId={currentProjectId}/>}
@@ -603,7 +600,7 @@ class GlobalNav extends Component {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   return {
     focus: state.focus,
     blocks: state.blocks,
@@ -611,6 +608,8 @@ function mapStateToProps(state) {
     inspectorVisible: state.ui.inspector.isVisible,
     inventoryVisible: state.ui.inventory.isVisible,
     detailViewVisible: state.ui.detailView.isVisible,
+    project: state.projects[props.currentProjectId],
+    currentConstruct: state.blocks[state.focus.constructId],
   };
 }
 
@@ -629,7 +628,7 @@ export default connect(mapStateToProps, {
   inventoryToggleVisibility,
   blockRemoveComponent,
   blockGetParents,
-  blockGetChildrenRecursive,
+  blockGetComponentsRecursive,
   uiShowDNAImport,
   inventorySelectTab,
   undo,

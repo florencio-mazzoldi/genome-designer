@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
-import invariant from 'invariant';
 import { inspectorToggleVisibility } from '../actions/ui';
 
 import InspectorBlock from '../components/Inspector/InspectorBlock';
@@ -13,10 +12,11 @@ export class Inspector extends Component {
   static propTypes = {
     showingGrunt: PropTypes.bool,
     isVisible: PropTypes.bool.isRequired,
-    readOnly: PropTypes.bool.isRequired,
     inspectorToggleVisibility: PropTypes.func.isRequired,
-    blocks: PropTypes.array,
-    project: PropTypes.object,
+    readOnly: PropTypes.bool.isRequired,
+    forceIsConstruct: PropTypes.bool.isRequired,
+    type: PropTypes.string.isRequired,
+    focused: PropTypes.any.isRequired,
   };
 
   toggle = (forceVal) => {
@@ -24,12 +24,24 @@ export class Inspector extends Component {
   };
 
   render() {
-    const { showingGrunt, isVisible, blocks, project, readOnly } = this.props;
+    const { showingGrunt, isVisible, focused, orders, type, readOnly, forceIsConstruct } = this.props;
 
     // inspect instances, or construct if no instance or project if no construct or instances
-    const inspect = blocks && blocks.length
-      ? <InspectorBlock instances={blocks} readOnly={readOnly}/>
-      : <InspectorProject instance={project} readOnly={readOnly}/>;
+    let inspect;
+    switch (type) {
+    case 'project':
+      inspect = (<InspectorProject instance={focused}
+                                  orders={orders}
+                                  readOnly={readOnly}/>);
+      break;
+    case 'construct':
+    default:
+      inspect = (<InspectorBlock instances={focused}
+                                 orders={orders}
+                                 readOnly={readOnly}
+                                 forceIsConstruct={forceIsConstruct}/>);
+      break;
+    }
 
     return (
       <div className={'SidePanel Inspector no-vertical-scroll' +
@@ -57,37 +69,54 @@ export class Inspector extends Component {
 
 function mapStateToProps(state, props) {
   const { isVisible } = state.ui.inspector;
-  const { forceBlocks, blockIds, forceProject, constructId } = state.focus;
-  const { projectId } = props; //from routing
-
-  //blocks
-  let blocks = [];
-  if (forceBlocks.length) {
-    blocks = forceBlocks;
-  } else if (blockIds && blockIds.length) {
-    blocks = blockIds.map(blockId => state.blocks[blockId]);
-  } else if (!!constructId) {
-    blocks = [state.blocks[constructId]];
-  }
-  invariant(blocks.every(el => !!el), 'cannot pass empty instances to inspector');
-
-  //project
-  const project = forceProject || state.projects[projectId];
-
-  //readonly
-  const readOnly = blocks.length ?
-  !!forceBlocks.length || blocks.some(instance => instance.isFrozen()) :
-    !!forceProject;
-
   //UI adjustment
   const showingGrunt = !!state.ui.modals.gruntMessage;
+
+  const { level, forceProject, forceBlocks, projectId, constructId, blockIds } = state.focus;
+  let focused;
+  let readOnly = false;
+  let type = level;
+  //if projectId is not set in store, ProjectPage is passing it in, so lets default to it
+  const currentProject = state.projects[projectId || props.projectId];
+
+  if (level === 'project' || (!constructId && !forceBlocks.length && !blockIds.length)) {
+    if (forceProject) {
+      focused = forceProject;
+      readOnly = true;
+    } else {
+      focused = currentProject;
+    }
+    type = 'project'; //need to override so dont try to show block inspector
+  } else if (level === 'construct' || (constructId && !forceBlocks.length && !blockIds.length)) {
+    const construct = state.blocks[constructId];
+    focused = [construct];
+    readOnly = construct.isFrozen();
+  } else {
+    if (forceBlocks.length) {
+      focused = forceBlocks;
+      readOnly = true;
+    } else {
+      focused = blockIds.map(blockId => state.blocks[blockId]);
+      readOnly = focused.some(instance => instance.isFrozen());
+    }
+  }
+
+  const forceIsConstruct = (level === 'construct') ||
+    blockIds.some(blockId => currentProject.components.indexOf(blockId) >= 0);
+
+  const orders = Object.keys(state.orders)
+    .map(orderId => state.orders[orderId])
+    .filter(order => order.projectId === projectId && order.isSubmitted())
+    .sort((one, two) => one.status.timeSent - two.status.timeSent);
 
   return {
     showingGrunt,
     isVisible,
+    type,
     readOnly,
-    blocks,
-    project,
+    focused,
+    forceIsConstruct,
+    orders,
   };
 }
 

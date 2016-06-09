@@ -58,6 +58,7 @@ class DnD {
 
     //set hooks
     this.onDrop = options.onDrop || (() => {});
+    this.onDropFailure = options.onDropFailure || (() => {});
     this.onDragComplete = options.onDragComplete || (() => {});
 
     // save the payload for dropping
@@ -148,6 +149,20 @@ class DnD {
 
           //completion handler
           this.onDragComplete(target, globalPosition, payload, evt);
+
+          // close / commit the undo/redo transaction if one is required
+          if (this.undoCommit) {
+            dispatch(commit());
+          }
+        })
+        //if the onDrop handler fails, or something in the drop... handle (e.g. close commit)
+        .catch((err) => {
+          this.onDropFailure(err, target);
+
+          // ensure lastTarget gets a dragLeave in case they rely on it for cleanup
+          if (target.options.dragLeave) {
+            target.options.dragLeave.call(this);
+          }
 
           // close / commit the undo/redo transaction if one is required
           if (this.undoCommit) {

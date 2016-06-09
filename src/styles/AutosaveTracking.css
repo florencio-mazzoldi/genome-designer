@@ -4,4 +4,8 @@
   color: var(--colors-greyMedLight);
   align-self: center;
   padding: 0 1em;
+
+  &.failure {
+    color: #ff4444;
+  }
 }

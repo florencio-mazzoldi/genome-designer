@@ -22,7 +22,7 @@ import sha1 from 'sha1';
   type: 'id'
   validate: {Parameterized validation function}
   scaffold: {function returning default value, intelligence ranging dep. on type}
-  isRequired: true
+  fieldRequired: true
   typeDescription: <from fields.js>
   baseValidator:  validatorFunctions.id
 }
@@ -31,6 +31,11 @@ const fields = mapValues({
 
   //primitives
 
+  any: {
+    baseValidator: validatorFunctions.any,
+    typeDescription: 'Any value acceptable',
+    scaffold: () => null,
+  },
   id: {
     baseValidator: validatorFunctions.id,
     typeDescription: 'A UUID',

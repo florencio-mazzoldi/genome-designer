@@ -1,17 +1,29 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
+import Block from '../../models/Block';
 import { transact, commit, abort } from '../../store/undo/actions';
 import { blockMerge, blockSetColor, blockSetRole, blockRename } from '../../actions/blocks';
+import { uiShowOrderForm } from '../../actions/ui';
 import InputSimple from './../InputSimple';
 import ColorPicker from './../ui/ColorPicker';
+import Toggler from './../ui/Toggler';
 import SymbolPicker from './../ui/SymbolPicker';
 import BlockSource from './BlockSource';
 import ListOptions from './ListOptions';
+import OrderList from './OrderList';
+import InspectorRow from './InspectorRow';
+import BlockNotes from './BlockNotes';
 
 export class InspectorBlock extends Component {
   static propTypes = {
     readOnly: PropTypes.bool.isRequired,
-    instances: PropTypes.array.isRequired,
+    instances: PropTypes.arrayOf((propValue, key) => {
+      const instance = propValue[key];
+      if (!(Block.validate(instance) && instance instanceof Block)) {
+        return new Error('Must pass valid instances of blocks to the inspector, got ' + JSON.stringify(instance));
+      }
+    }).isRequired,
+    orders: PropTypes.array.isRequired,
     blockSetColor: PropTypes.func.isRequired,
     blockSetRole: PropTypes.func.isRequired,
     blockMerge: PropTypes.func.isRequired,
@@ -19,6 +31,12 @@ export class InspectorBlock extends Component {
     transact: PropTypes.func.isRequired,
     commit: PropTypes.func.isRequired,
     abort: PropTypes.func.isRequired,
+    uiShowOrderForm: PropTypes.func.isRequired,
+    forceIsConstruct: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    forceIsConstruct: false,
   };
 
   setBlockName = (name) => {
@@ -61,6 +79,10 @@ export class InspectorBlock extends Component {
     this.props.commit();
   };
 
+  handleOpenOrder = (orderId) => {
+    this.props.uiShowOrderForm(true, orderId);
+  };
+
   /**
    * color of selected instance or null if multiple blocks selected
    */
@@ -85,9 +107,9 @@ export class InspectorBlock extends Component {
   /**
    * current name of instance or null if multi-select
    */
-  currentName() {
+  currentName(defaultToRole) {
     if (this.props.instances.length === 1) {
-      return this.props.instances[0].metadata.name || this.props.instances[0].rules.role || '';
+      return this.props.instances[0].metadata.name || (defaultToRole ? this.props.instances[0].rules.role : '') || '';
     }
     return '';
   }
@@ -102,19 +124,18 @@ export class InspectorBlock extends Component {
     return '';
   }
 
+  allBlocksWithSequence() {
+    return this.props.instances.every(instance => instance.sequence.length);
+  }
+
   currentSequenceLength() {
-    if (this.props.instances.length > 1) {
-      const allHaveSequences = this.props.instances.every(instance => instance.sequence.length);
-      if (allHaveSequences) {
-        const reduced = this.props.instances.reduce((acc, instance) => acc + (instance.sequence.length || 0), 0);
-        return reduced + ' bp';
-      }
-      return 'Incomplete Sketch';
-    } else if (this.props.instances.length === 1) {
-      const length = this.props.instances[0].sequence.length;
-      return (length > 0 ? (length + ' bp') : 'No Sequence');
+    if (this.allBlocksWithSequence()) {
+      const reduced = this.props.instances.reduce((acc, instance) => acc + (instance.sequence.length || 0), 0);
+      return reduced + ' bp';
     }
-    return 'No Sequence';
+    return this.props.instances.length > 1 ?
+      'Incomplete Sketch' :
+      'No Sequence';
   }
 
   currentAnnotations() {
@@ -144,58 +165,94 @@ export class InspectorBlock extends Component {
   }
 
   render() {
-    const { instances, readOnly } = this.props;
+    const { instances, orders, readOnly, forceIsConstruct } = this.props;
     const singleInstance = instances.length === 1;
     const isList = singleInstance && instances[0].isList();
     const isTemplate = singleInstance && instances[0].isTemplate();
     const isConstruct = singleInstance && instances[0].isConstruct();
+    const inputKey = instances.map(inst => inst.id).join(',');
+
+    const name = isTemplate ? 'Template' : (isConstruct ? 'Construct' : 'Block'); //eslint-disable-line no-nested-ternary
 
     const currentSourceElement = this.currentSource();
     const annotations = this.currentAnnotations();
 
+    const hasSequence = this.allBlocksWithSequence();
+    const hasNotes = singleInstance && Object.keys(instances[0].notes).length > 0;
+
+    const relevantOrders = orders.filter(order => singleInstance && order.constructIds.indexOf(instances[0].id) >= 0);
+
     return (
       <div className="InspectorContent InspectorContentBlock">
-        <h4 className="InspectorContent-heading">Name</h4>
-        <InputSimple placeholder="Enter a name"
-                     readOnly={readOnly}
-                     onChange={this.setBlockName}
-                     onFocus={this.startTransaction}
-                     onBlur={this.endTransaction}
-                     onEscape={() => this.endTransaction(true)}
-                     maxLength={64}
-                     value={this.currentName()}/>
 
-        <h4 className="InspectorContent-heading">Description</h4>
-        <InputSimple placeholder="Enter a description"
-                     useTextarea
-                     readOnly={readOnly}
-                     onChange={this.setBlockDescription}
-                     onFocus={this.startTransaction}
-                     onBlur={this.endTransaction}
-                     onEscape={() => this.endTransaction(true)}
-                     maxLength={1024}
-                     value={this.currentDescription()}/>
-
-        {currentSourceElement && <h4 className="InspectorContent-heading">Source</h4>}
-        {currentSourceElement}
-
-        <h4 className="InspectorContent-heading">Sequence Length</h4>
-        <p><strong>{this.currentSequenceLength()}</strong></p>
-
-        <h4 className="InspectorContent-heading">Color & Symbol</h4>
-        <div className="InspectorContent-pickerWrap">
-          <ColorPicker current={this.currentColor()}
+        <InspectorRow heading={name}>
+          <InputSimple refKey={inputKey}
+                       placeholder={this.currentName(true) || 'Enter a name'}
                        readOnly={readOnly}
-                       onSelect={this.selectColor}/>
+                       onChange={this.setBlockName}
+                       onFocus={this.startTransaction}
+                       onBlur={this.endTransaction}
+                       onEscape={() => this.endTransaction(true)}
+                       maxLength={64}
+                       value={this.currentName(false)}/>
+        </InspectorRow>
 
-          <SymbolPicker current={this.currentRoleSymbol()}
-                        readOnly={readOnly || isConstruct || isTemplate || isList}
-                        onSelect={this.selectSymbol}/>
-        </div>
+        <InspectorRow heading={name}>
+          <InputSimple refKey={inputKey + 'desc'}
+                       placeholder="Enter a description"
+                       useTextarea
+                       readOnly={readOnly}
+                       onChange={this.setBlockDescription}
+                       onFocus={this.startTransaction}
+                       onBlur={this.endTransaction}
+                       onEscape={() => this.endTransaction(true)}
+                       maxLength={1024}
+                       value={this.currentDescription()}/>
+        </InspectorRow>
 
+        <InspectorRow heading="Source"
+                      condition={!!currentSourceElement}>
+          {currentSourceElement}
+        </InspectorRow>
 
-        {!!annotations.length && (<h4 className="InspectorContent-heading">Contents</h4>)}
-        {!!annotations.length && (<div className="InspectorContentBlock-Annotations">
+        <InspectorRow heading="Sequence Length"
+                      condition={hasSequence}>
+          <p><strong>{this.currentSequenceLength()}</strong></p>
+        </InspectorRow>
+
+        {/* todo - this should have its own component */}
+        <InspectorRow heading={ name + ' Metadata'}
+                      hasToggle
+                      condition={hasNotes}>
+          <div className="InspectorContent-section">
+            <BlockNotes notes={instances[0].notes}/>
+          </div>
+        </InspectorRow>
+
+        <InspectorRow heading="Order History"
+                      hasToggle
+                      condition={relevantOrders.length > 0}>
+          <div className="InspectorContent-section">
+            <OrderList orders={relevantOrders}
+                       onClick={(orderId) => this.handleOpenOrder(orderId)}/>
+          </div>
+        </InspectorRow>
+
+        <InspectorRow heading="Color & Symbol">
+          <div className="InspectorContent-pickerWrap">
+            <ColorPicker current={this.currentColor()}
+                         readOnly={readOnly}
+                         onSelect={this.selectColor}/>
+
+            <SymbolPicker current={this.currentRoleSymbol()}
+                          readOnly={readOnly || isConstruct || isTemplate || isList || forceIsConstruct}
+                          onSelect={this.selectSymbol}/>
+          </div>
+        </InspectorRow>
+
+        <InspectorRow heading="Annotations"
+                      condition={annotations.length > 0}>
+          <div className="InspectorContentBlock-Annotations">
             {annotations.map((annotation, idx) => {
               return (
                 <span className="InspectorContentBlock-Annotation"
@@ -205,10 +262,13 @@ export class InspectorBlock extends Component {
               );
             })}
           </div>
-        )}
+        </InspectorRow>
 
-        {isList && (<h4 className="InspectorContent-heading">List Options</h4>)}
-        {isList && (<ListOptions block={instances[0]}/>)}
+        <InspectorRow heading="List Options"
+                      condition={isList}>
+          <ListOptions block={instances[0]}/>
+        </InspectorRow>
+
       </div>
     );
   }
@@ -222,4 +282,5 @@ export default connect(() => ({}), {
   transact,
   commit,
   abort,
+  uiShowOrderForm,
 })(InspectorBlock);

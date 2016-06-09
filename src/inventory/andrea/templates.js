@@ -83,7 +83,23 @@ const templateFromComponents = (components, toMerge = {}) => {
 
 const template1 = templateFromComponents(
   makeComponents(['a-c', 3, 'd-f', 6, 7, 'h-k', 11, 'l-y', 25]),
-  { metadata: { name: 'Template 1' } },
+  {
+    metadata: {
+      name: 'Template 1',
+      decription: `This vector is design for targeting of a protein (in this case mNG) to plasma membrane. Palmitoylation sequence added upstream of mNG target the protein to the plasma membrane.
+Addition of SV40-ORI makes this vector episomal when is introduced in HEK293T cells expressing the SV40 Large T-antigen.`,
+    },
+    notes: {
+      Name: 'Plasma membrane targeting vector',
+      Category: 'Stable transfection',
+      Subcategory: 'Episomal vector',
+      'Number of Transcription Units': 'One',
+      'Transcription Unit Structure': 'Monocistronic',
+      'Coding sequence design': 'Tagged protein',
+      'Selection Marker': 'Absent',
+      Application: 'Targeting of proteins to cellular compartments',
+    },
+  },
 );
 
 const template2 = templateFromComponents(

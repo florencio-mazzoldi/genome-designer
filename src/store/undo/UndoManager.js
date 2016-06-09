@@ -40,7 +40,6 @@ export default class UndoManager {
   };
 
   addHistoryItem(key, action) {
-    //todo - if we are in a transaction, want to aggregate keys of things that need to undo
     if (this.inTransaction()) {
       //if at start, just continue and make payloa as normal
       if (this.transactionAtStart === true) {
@@ -124,11 +123,13 @@ export default class UndoManager {
   });
 
   commit = (action) => this.doOnce(action, () => {
+    invariant(this.transactionDepth > 0, 'cant commit outside of a transaction!');
     this.transactionDepth--;
     Object.keys(this.slaves).forEach(key => this.slaves[key].commit(action));
   });
 
   abort = (action) => this.doOnce(action, () => {
+    invariant(this.transactionDepth > 0, 'cant abort outside of a transaction!');
     this.transactionDepth--;
     Object.keys(this.slaves).forEach(key => this.slaves[key].abort(action));
   });

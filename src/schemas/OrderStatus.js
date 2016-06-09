@@ -1,7 +1,7 @@
 import fields from './fields/index';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
-const OrderStatusDefinition = new SchemaDefinition({
+const fieldDefs = {
   foundry: [
     fields.string().required,
     `key of foundry the Order has been submitted to`,
@@ -13,9 +13,21 @@ const OrderStatusDefinition = new SchemaDefinition({
   ],
 
   price: [
-    fields.number(),
+    fields.any(),
     `Quote for the order`,
   ],
-});
 
-export default OrderStatusDefinition;
+  timeSent: [
+    fields.number(),
+    `Time when the order was sent, in MS`,
+  ],
+};
+
+export class OrderStatusSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, fieldDefs, fieldDefinitions));
+  }
+}
+
+export default new OrderStatusSchemaClass();
+

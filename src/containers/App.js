@@ -5,6 +5,7 @@ import AuthenticationForms from './authentication/authenticationforms';
 import ImportGenBankModal from '../components/genbank/import';
 import ImportDNAForm from '../components/importdna/importdnaform';
 import AboutForm from '../components/aboutform';
+import OrderModal from '../containers/orders/ordermodal';
 
 import '../styles/App.css';
 
@@ -51,6 +52,7 @@ class App extends Component {
         <ImportGenBankModal currentProjectId={this.props.currentProjectId}/>
         <ImportDNAForm />
         <AboutForm />
+        <OrderModal projectId={this.props.currentProjectId} />
         <div className="App-pageContent">
           {this.props.children}
         </div>

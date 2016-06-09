@@ -23,7 +23,7 @@ class DNAImportForm extends Component {
     focusedBlocks: PropTypes.array.isRequired,
     focusBlocks: PropTypes.func.isRequired,
     blockGetSequence: PropTypes.func.isRequired,
-    currentConstruct: PropTypes.string,
+    currentConstruct: PropTypes.object,
   };
 
   constructor() {
@@ -32,6 +32,21 @@ class DNAImportForm extends Component {
       inputValid: true,
       validLength: 0,
     };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    // we need a focused block that is not frozen or locked to operate on.
+    if (!this.props.open && nextProps.open) {
+      if (nextProps.focusedBlocks.length !== 1) {
+        this.props.uiShowDNAImport(false);
+        this.props.uiSetGrunt(`Sequence data must be added to a selected block. Please select a block and try again.`);
+        return;
+      }
+      if (nextProps.currentConstruct.isFrozen() || nextProps.currentConstruct.isFixed()) {
+        this.props.uiShowDNAImport(false);
+        this.props.uiSetGrunt(`You cannot add sequence to a template block.`);
+      }
+    }
   }
 
   onSequenceChanged(evt) {
@@ -80,7 +95,7 @@ class DNAImportForm extends Component {
           this.setSequenceAndClose(this.props.focusedBlocks[emptyIndex], this.state.sequence);
         } else {
           const block = this.props.blockCreate();
-          this.props.blockAddComponent(this.props.currentConstruct, block.id, 0);
+          this.props.blockAddComponent(this.props.currentConstruct.id, block.id, 0);
           this.setSequenceAndClose(block.id, this.state.sequence);
         }
       })
@@ -155,7 +170,7 @@ function mapStateToProps(state) {
   return {
     open: state.ui.modals.showDNAImport,
     focusedBlocks: state.focus.blockIds,
-    currentConstruct: state.focus.constructId,
+    currentConstruct: state.blocks[state.focus.constructId],
   };
 }
 

@@ -1,9 +1,9 @@
 import Instance from './Instance';
 import invariant from 'invariant';
 import cloneDeep from 'lodash.clonedeep';
-import BlockDefinition from '../schemas/Block';
+import BlockSchema from '../schemas/Block';
 import { getSequence, writeSequence } from '../middleware/sequence';
-import AnnotationDefinition from '../schemas/Annotation';
+import AnnotationSchema from '../schemas/Annotation';
 import md5 from 'md5';
 import color from '../utils/generators/color';
 import { dnaStrict, dnaLoose } from '../utils/dna/dna';
@@ -12,9 +12,11 @@ import safeValidate from '../schemas/fields/safeValidate';
 
 const idValidator = (id) => safeValidate(validators.id(), true, id);
 
+//note - when blocks are frozen, they are just copied between projects. When a block becomes unfrozen, it needs to be cloned. This is in part becuase blocks that are frozen are shared between proejcts, and when two projects share a block with the same ID, it is assumed (and should be guaranteed) that they are completely identical.
+
 export default class Block extends Instance {
   constructor(input) {
-    super(input, BlockDefinition.scaffold(), { metadata: { color: color() } });
+    super(input, BlockSchema.scaffold(), { metadata: { color: color() } });
   }
 
   /************
@@ -27,7 +29,7 @@ export default class Block extends Instance {
   }
 
   static validate(input, throwOnError = false) {
-    return BlockDefinition.validate(input, throwOnError);
+    return BlockSchema.validate(input, throwOnError);
   }
 
   // note that if you are cloning multiple blocks / blocks with components, you likely need to clone the components as well
@@ -39,7 +41,9 @@ export default class Block extends Instance {
       projectId: this.projectId,
       version: (firstParent && firstParent.projectId === this.projectId) ? firstParent.version : null,
     }, parentInfo);
-    return super.clone(parentObject);
+
+    //forcibly unfreeze a clone
+    return super.clone(parentObject, { rules: { frozen: false } });
   }
 
   mutate(...args) {
@@ -94,6 +98,13 @@ export default class Block extends Instance {
     return this.mutate(`rules.${rule}`, value);
   }
 
+  setFrozen(isFrozen) {
+    if (this.rules.frozen === true) {
+      return this;
+    }
+    return this.setRule('frozen', isFrozen);
+  }
+
   setRole(role) {
     return this.setRule('role', role);
   }
@@ -107,19 +118,13 @@ export default class Block extends Instance {
       return cleared.setRule('list', true);
     }
 
-    const cleared = this.merge({
-      options: [],
-    });
+    const cleared = this.merge(Object.keys(this.options).reduce((acc, key) => Object.assign(acc, { [key]: false })));
     return cleared.setRule('list', false);
   }
 
   /************
    metadata
    ************/
-
-  getProjectId() {
-    return this.projectId;
-  }
 
   setProjectId(projectId) {
     invariant(idValidator(projectId) || projectId === null, 'project Id is required, or null to mark unassociated');
@@ -278,9 +283,10 @@ export default class Block extends Instance {
    * @description Writes the sequence for a block
    * @param sequence {String}
    * @param useStrict {Boolean}
+   * @param persistSource {Boolean} Maintain the source of the block
    * @returns {Promise} Promise which resolves with the udpated block
    */
-  setSequence(sequence, useStrict = false) {
+  setSequence(sequence, useStrict = false, persistSource = false) {
     const sequenceLength = sequence.length;
     const sequenceMd5 = md5(sequence);
 
@@ -293,6 +299,8 @@ export default class Block extends Instance {
       return Promise.reject('sequence has invalid characters');
     }
 
+    const updatedSource = persistSource === true ? this.source : { source: 'user', id: null };
+
     return writeSequence(sequenceMd5, sequence, this.id)
       .then(() => {
         const updatedSequence = {
@@ -300,20 +308,18 @@ export default class Block extends Instance {
           length: sequenceLength,
           initialBases: sequence.substr(0, 5),
         };
+
         return this.merge({
           sequence: updatedSequence,
-          source: {
-            source: 'user',
-            id: null,
-          },
-         });
+          source: updatedSource,
+        });
       });
   }
 
   //todo - annotations are essentially keyed using name, since we got rid of ID. is that ok?
 
   annotate(annotation) {
-    invariant(AnnotationDefinition.validate(annotation), `'annotation is not valid: ${annotation}`);
+    invariant(AnnotationSchema.validate(annotation), `'annotation is not valid: ${annotation}`);
     return this.mutate('sequence.annotations', this.sequence.annotations.concat(annotation));
   }
 

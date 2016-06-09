@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import BlockDefinition from '../../src/schemas/Block';
+import BlockSchema from '../../src/schemas/Block';
 import ParentDefintion from '../../src/schemas/Parent';
 import { makeParent, blockWithParents } from './_examples';
 
@@ -11,7 +11,7 @@ describe('Schema', () => {
     });
 
     it('should validate example block with parents', () => {
-      expect(BlockDefinition.validate(blockWithParents)).to.equal(true);
+      expect(BlockSchema.validate(blockWithParents)).to.equal(true);
     });
   });
 });

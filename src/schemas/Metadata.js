@@ -1,8 +1,8 @@
 import fields from './fields/index';
 import * as validators from './fields/validators';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
-const MetadataDefinition = new SchemaDefinition({
+const fieldDefs = {
   name: [
     fields.string({ max: 256 }),
     'Name of the instance',
@@ -19,6 +19,12 @@ const MetadataDefinition = new SchemaDefinition({
     fields.object().required,
     'Dictionary of tags defining object',
   ],
-});
+};
 
-export default MetadataDefinition;
+export class MetadataSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, fieldDefs, fieldDefinitions));
+  }
+}
+
+export default new MetadataSchemaClass();

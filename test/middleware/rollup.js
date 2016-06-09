@@ -57,14 +57,14 @@ describe('Middleware', () => {
       const [blockP, blockA, blockB, blockC, blockD, blockE] = roll.blocks;
 
       return api.saveProject(projectId, roll)
-        .then(() => Promise
+        .then((commit) => Promise
           .all([
             persistence.projectGet(projectId),
             persistence.blockGet(blockA.id, projectId),
             persistence.blockGet(blockE.id, projectId),
           ])
           .then(([gotProject, gotA, gotE]) => {
-            expect(gotProject).to.eql(project);
+            expect(gotProject).to.eql(Object.assign({}, project, { version: commit.sha }));
             expect(gotA).to.eql(blockA);
             expect(gotE).to.eql(blockE);
           }));

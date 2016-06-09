@@ -32,6 +32,7 @@ export const projectList = () => {
 //Promise
 export const projectDelete = (projectId) => {
   return (dispatch, getState) => {
+    invariant(false, 'should trigger a modal to confirm (or something) and change the route when calling this action before the actual deletion - update code');
     return deleteProject(projectId)
       .then(() => {
         dispatch({
@@ -47,8 +48,8 @@ export const projectDelete = (projectId) => {
 //this is a background save (e.g. autosave)
 export const projectSave = (inputProjectId) => {
   return (dispatch, getState) => {
-    //if dont pass project id, get the currently viewed one
-    const projectId = !!inputProjectId ? inputProjectId : getState().focus.projectId;
+    const currentProjectId = dispatch(projectSelectors.projectGetCurrentId());
+    const projectId = !!inputProjectId ? inputProjectId : currentProjectId;
     if (!projectId) {
       return Promise.resolve(null);
     }
@@ -60,6 +61,14 @@ export const projectSave = (inputProjectId) => {
       .then(commitInfo => {
         if (!commitInfo) {
           return null;
+        }
+
+        //if no version => first time saving, show a grunt
+        if (!roll.project.version) {
+          dispatch({
+            type: ActionTypes.UI_SET_GRUNT,
+            gruntMessage: 'Project Saved. Changes will continue to be saved automatically as you work.',
+          });
         }
 
         const { sha } = commitInfo;
@@ -99,9 +108,9 @@ export const projectSnapshot = (projectId, message, withRollup = true) => {
 };
 
 //Promise
-export const projectLoad = (projectId) => {
+export const projectLoad = (projectId, avoidCache = false) => {
   return (dispatch, getState) => {
-    return loadProject(projectId)
+    return loadProject(projectId, avoidCache)
       .then(rollup => {
         const { project, blocks } = rollup;
         const projectModel = new Project(project);
@@ -131,12 +140,45 @@ export const projectLoad = (projectId) => {
 //default to most recent project if falsy
 export const projectOpen = (inputProjectId) => {
   return (dispatch, getState) => {
-    //save the current project
-    return dispatch(projectSave())
+    const currentProjectId = dispatch(projectSelectors.projectGetCurrentId());
+    const projectId = inputProjectId || getItem(recentProjectKey);
+
+    if (currentProjectId === projectId) {
+      return Promise.resolve();
+    }
+
+    return dispatch(projectSave(currentProjectId))
+      .catch(err => {
+        dispatch({
+          type: ActionTypes.UI_SET_GRUNT,
+          gruntMessage: `Project ${currentProjectId} couldn't be saved, but navigating anyway...`,
+        });
+      })
       .then(() => {
-        //dont need to load the project, projectPage will handle that
-        const projectId = !!inputProjectId ? inputProjectId : getItem(recentProjectKey);
-        //alternatively, we can just call react-router's browserHistory.push() directly
+        /*
+        future - clear the store of blocks from the old project.
+        need to consider blocks in the inventory - loaded projects, search results, shown in onion etc. Probably means committing to using the instanceMap for mapping state to props in inventory.
+
+        const blockIds = dispatch(projectSelectors.projectListAllBlocks(currentProjectId)).map(block => block.id);
+
+        // pause action e.g. so dont get accidental redraws with blocks missing
+        dispatch(pauseAction());
+
+        //remove prior projects blocks from the store
+        dispatch({
+          type: ActionTypes.BLOCK_DETACH,
+          blockIds,
+        });
+
+        //projectPage will load the project + its blocks
+        //change the route
+        dispatch(push(`/project/${projectId}`));
+
+        //dispatch(resumeAction());
+         */
+
+        //projectPage will load the project + its blocks
+        //change the route
         dispatch(push(`/project/${projectId}`));
       });
   };
@@ -192,7 +234,7 @@ export const projectAddConstruct = (projectId, componentId, forceProjectId = fal
     const oldProject = getState().projects[projectId];
     const component = getState().blocks[componentId];
 
-    const componentProjectId = component.getProjectId();
+    const componentProjectId = component.projectId;
 
     dispatch(pauseAction());
     dispatch(undoActions.transact());
@@ -208,6 +250,7 @@ export const projectAddConstruct = (projectId, componentId, forceProjectId = fal
     }
 
     //todo - should better check + force removal from previous component / project
+    //would want to check across other projects as well (but you would for constructs too)
 
     const project = oldProject.addComponents(componentId);
     dispatch({

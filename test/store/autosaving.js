@@ -104,8 +104,8 @@ describe('Store', () => {
           assert(!isDirty(), 'not dirty after throttle over');
           expect(saveSpy.callCount).to.equal(callCount + 2);
           done();
-        }, throttleTime);
-      }, waitTime);
+        }, throttleTime + 1);
+      }, waitTime + 1);
     });
 
     it('doesnt block state changes for saves', () => {

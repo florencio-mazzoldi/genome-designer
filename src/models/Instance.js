@@ -1,7 +1,7 @@
 import uuid from 'node-uuid';
 import { set as pathSet, unset as pathUnset, cloneDeep, merge } from 'lodash';
 import invariant from 'invariant';
-import InstanceDefinition from '../schemas/Instance';
+import InstanceSchema from '../schemas/Instance';
 import safeValidate from '../schemas/fields/safeValidate';
 import { version } from '../schemas/fields/validators';
 
@@ -17,7 +17,7 @@ export default class Instance {
     invariant(typeof input === 'object', 'must pass an object (or leave undefined) to model constructor');
 
     merge(this,
-      InstanceDefinition.scaffold(),
+      InstanceSchema.scaffold(),
       subclassBase,
       moreFields,
       input,
@@ -47,7 +47,7 @@ export default class Instance {
   }
 
   //clone can accept just an ID (e.g. project), but likely want to pass an object (e.g. block, which also has field projectId in parent)
-  clone(parentInfo = {}) {
+  clone(parentInfo = {}, overwrites = {}) {
     const cloned = cloneDeep(this);
     const inputObject = (typeof parentInfo === 'string') ?
     { version: parentInfo } :
@@ -60,7 +60,7 @@ export default class Instance {
 
     invariant(versionValidator(parentObject.version), 'must pass a valid version (SHA), got ' + parentObject.version);
 
-    const clone = Object.assign(cloned, {
+    const clone = merge(cloned, overwrites, {
       parents: [parentObject].concat(cloned.parents),
     });
     delete clone.id;

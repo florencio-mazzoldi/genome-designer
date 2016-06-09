@@ -1,6 +1,7 @@
 import * as fileSystem from '../utils/fileSystem';
 import * as filePaths from '../utils/filePaths';
 import * as persistence from './persistence';
+import * as versioning from './versioning';
 import invariant from 'invariant';
 import { exec } from 'child_process';
 import { flatten } from 'lodash';
@@ -8,6 +9,8 @@ import { errorCouldntFindProjectId } from '../utils/errors';
 
 // key for no role rule
 const untypedKey = 'none';
+
+//todo - these would be simplified if all were using maps. Update when convert blocks rollups to maps.
 
 //note - expects the project to already exist.
 export const getAllBlockIdsInProject = (projectId) => {
@@ -89,12 +92,23 @@ export const getAllProjectManifests = (userId) => {
     });
 };
 
+export const getProjectVersions = (projectId) => {
+  const projectDataPath = filePaths.createProjectDataPath(projectId);
+  return versioning.log(projectDataPath);
+};
+
 export const getAllBlocks = (userId) => {
   return listProjectsWithAccess(userId)
     .then(projectIds => Promise.all(
       projectIds.map(projectId => getAllBlocksInProject(projectId))
     ))
-    .then(nested => flatten(nested));
+    .then(nested => flatten(nested))
+    //we need to make this a set because multiple projects may have blocks with the same ID... this is only the case when blocks are locked, so they will be identical.
+    //this is a shitty way of doing it, but cant just use a Set because instances are unique, just need to check the IDs
+    .then(array => {
+      const map = array.reduce((acc, block) => Object.assign(acc, { [block.id]: block}), {});
+      return Object.keys(map).map(key => map[key]);
+    });
 };
 
 export const getAllBlocksFiltered = (userId, blockFilter = () => true) => {

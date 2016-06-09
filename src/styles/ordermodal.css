@@ -1,0 +1,151 @@
+@import './variables.css';
+@import './form.css';
+
+.order-form {
+  width: 70rem;
+
+  .order-page {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    height: 24rem;
+  }
+
+  select {
+    font-size: var(--fontsize);
+    height: 3rem;
+    color: var(--primarycolor);
+  }
+
+  .permutations-input {
+    width: 8rem;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fontsize);
+    width: 100%;
+    padding: 0;
+    margin: 0;
+
+    /*remove default padding / margin from form css*/
+    * {
+       margin: 0;
+       padding: 0;
+    }
+  }
+  .row .row-checkbox {
+    display: flex;
+    align-items: center;
+    input {
+      width: 2rem;
+    }
+  }
+  .row .row-checkbox span {
+    color: var(--primarycolor);
+  }
+  .row-left {
+    text-align: right;
+    color: var(--textcolor);
+    margin: 0 1rem 0 0;
+  }
+  .row-right {
+    text-align: left;
+    color: var(--textcolor);
+  }
+
+  .page1 .row {
+    height: 3.5rem;
+  }
+  .page2 .preview {
+    overflow: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .page2 .input-updown {
+    width: 10rem;
+    margin: 0 1rem 1rem 1rem;
+  }
+  .page2 .container {
+    overflow: hidden;
+    position: relative;
+    height: 19rem;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    overflow-y: auto;
+    background-color: var(--colors-blueGreyDark);
+    * {
+      border-radius: 0;
+    }
+  }
+  .page2 .scenegraph {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  .page3 .row {
+    margin-bottom: 0.5rem;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .buttons {
+    text-align: center;
+  }
+
+  .disabled {
+    pointer-events: none;
+  }
+
+  .nav-left-right {
+    width: 22rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--textcolor);
+    cursor: pointer;
+
+    &:hover {
+      background-color: whitesmoke;
+    }
+
+    .angle {
+      border-left: 2px solid var(--colors-greyMedLight);
+      border-top: 2px solid var(--colors-greyMedLight);
+      transform: rotateZ(-45deg);
+      width: 18px;
+      height: 18px;
+      border-radius: 0px;
+      margin: 0;
+      padding: 0;
+    }
+    .left {
+      transform: rotateZ(-45deg);
+    }
+    .right {
+      transform: rotateZ(135deg);
+      text-align: right;
+    }
+
+    .text {
+      font-size: 1.1rem;
+      color: var(--colors-greyMedLight);
+      text-align: center;
+      line-height: 1rem;
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+}

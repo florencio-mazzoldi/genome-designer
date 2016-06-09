@@ -14,7 +14,8 @@ export const projectGet = (projectId) => {
   };
 };
 
-//bit of a hack - expects focus section of store, and projectPage to have set it
+//expects focus section of store, and projectPage to have set it
+//alternatively, support we could query react-router directly
 export const projectGetCurrentId = () => {
   return (dispatch, getState) => {
     const { focus } = getState();
@@ -29,19 +30,21 @@ export const projectGetVersion = (projectId) => {
   };
 };
 
+//note - does not include options
 export const projectListAllComponents = (projectId) => {
   return (dispatch, getState) => {
     const project = _getProjectFromStore(projectId, getState());
 
     return project.components.reduce((acc, componentId) => {
       acc.push(dispatch(blockSelectors.blockGet(componentId)));
-      const constructChildren = dispatch(blockSelectors.blockGetChildrenRecursive(componentId));
+      const constructChildren = dispatch(blockSelectors.blockGetComponentsRecursive(componentId));
       acc.push(...constructChildren);
       return acc;
     }, []);
   };
 };
 
+//note - does not include components
 export const projectListAllOptions = (projectId) => {
   return (dispatch, getState) => {
     const components = dispatch(projectListAllComponents(projectId));
@@ -50,7 +53,7 @@ export const projectListAllOptions = (projectId) => {
   };
 };
 
-//returns constructs first, then all blocks afterwards, order not guaranteed
+//all contents
 export const projectListAllBlocks = (projectId) => {
   return (dispatch, getState) => {
     const components = dispatch(projectListAllComponents(projectId));

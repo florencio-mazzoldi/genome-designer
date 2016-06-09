@@ -1,7 +1,7 @@
 import invariant from 'invariant';
 import { merge } from 'lodash';
 import * as ActionTypes from '../constants/ActionTypes';
-import BlockDefinition from '../schemas/Block';
+import BlockSchema from '../schemas/Block';
 import Block from '../models/Block';
 import { loadBlock } from '../middleware/data';
 import * as selectors from '../selectors/blocks';
@@ -13,10 +13,20 @@ import { pauseAction, resumeAction } from '../store/pausableStore';
 
 //Promise
 //retrieves a block, and its options and components if specified
-export const blockLoad = (blockId, withContents = false, onlyComponents = false) => {
+export const blockLoad = (blockId, withContents = false, skipIfContentsEmpty = false) => {
   return (dispatch, getState) => {
-    return loadBlock(blockId, withContents, onlyComponents)
-      .then(({components, options}) => {
+    const retrieved = getState().blocks[blockId];
+    if (skipIfContentsEmpty === true && retrieved && !retrieved.components.length && !Object.keys(retrieved.options).length) {
+      return Promise.resolve([retrieved]);
+    }
+
+    let projectId;
+    if (retrieved && retrieved.projectId) {
+      projectId = retrieved.projectId;
+    }
+
+    return loadBlock(blockId, withContents, projectId)
+      .then(({ components, options }) => {
         const blockMap = Object.assign({}, options, components);
         const blocks = Object.keys(blockMap).map(key => new Block(blockMap[key]));
         dispatch({
@@ -88,7 +98,7 @@ export const blockClone = (blockInput, parentObjectInput = {}, shallowOnly = fal
     let oldBlock;
     if (typeof blockInput === 'string') {
       oldBlock = getState().blocks[blockInput];
-    } else if (BlockDefinition.validate(blockInput)) {
+    } else if (BlockSchema.validate(blockInput)) {
       oldBlock = new Block(blockInput);
     } else {
       throw new Error('invalid input to blockClone', blockInput);
@@ -100,7 +110,7 @@ export const blockClone = (blockInput, parentObjectInput = {}, shallowOnly = fal
     // this is so the option IDs remain consistent, and projects are not huge with duplicate blocks that are just options (since they are static)
 
     //get the project ID to use for parent, considering the block may be detached from a project (e.g. inventory block)
-    const parentProjectId = oldBlock.getProjectId() || null;
+    const parentProjectId = oldBlock.projectId || null;
     //will default to null if parentProjectId is undefined
     const parentProjectVersion = dispatch(projectSelectors.projectGetVersion(parentProjectId));
 
@@ -119,7 +129,7 @@ export const blockClone = (blockInput, parentObjectInput = {}, shallowOnly = fal
       return block;
     }
 
-    const allChildren = dispatch(selectors.blockGetChildrenRecursive(oldBlock.id));
+    const allChildren = dispatch(selectors.blockGetComponentsRecursive(oldBlock.id));
     const allToClone = [oldBlock, ...allChildren];
     //all blocks must be from same project, and all were from given version
     const unmappedClones = allToClone.map(block => block.clone(parentObject));
@@ -146,6 +156,23 @@ export const blockClone = (blockInput, parentObjectInput = {}, shallowOnly = fal
     const rootId = cloneIdMap[oldBlock.id];
     const root = clones.find(clone => clone.id === rootId);
     return root;
+  };
+};
+
+export const blockFreeze = (blockId, recursive = true) => {
+  return (dispatch, getState) => {
+    const oldBlocks = [getState().blocks[blockId]];
+    if (recursive === true) {
+      oldBlocks.push(...dispatch(selectors.blockGetComponentsRecursive(blockId)));
+    }
+
+    const blocks = oldBlocks.map(block => block.setFrozen(true));
+
+    dispatch({
+      type: ActionTypes.BLOCK_FREEZE,
+      undoable: true,
+      blocks,
+    });
   };
 };
 
@@ -229,8 +256,8 @@ export const blockAddComponent = (blockId, componentId, index = -1, forceProject
     const oldBlock = getState().blocks[blockId];
     const component = getState().blocks[componentId];
 
-    const componentProjectId = component.getProjectId();
-    const nextParentProjectId = oldBlock.getProjectId();
+    const componentProjectId = component.projectId;
+    const nextParentProjectId = oldBlock.projectId;
 
     dispatch(pauseAction());
     dispatch(undoActions.transact());
@@ -396,8 +423,9 @@ export const blockSetColor = (blockId, color) => {
 export const blockSetRole = (blockId, role) => {
   return (dispatch, getState) => {
     const oldBlock = getState().blocks[blockId];
+    const oldRole = oldBlock.rules.role;
 
-    if (oldBlock.rules.role === role) {
+    if (oldRole === role) {
       return oldBlock;
     }
 
@@ -405,6 +433,7 @@ export const blockSetRole = (blockId, role) => {
     dispatch({
       type: ActionTypes.BLOCK_SET_ROLE,
       undoable: true,
+      oldRole,
       block,
     });
     return block;

@@ -2,9 +2,12 @@ import { errorInvalidPart, errorOrderRejected } from '../utils/errors';
 import rejectingFetch from '../../src/middleware/rejectingFetch';
 import { headersPost } from '../../src/middleware/headers';
 
-const url = 'http://synnp.org:8010/';
+//testing
+import { fileWrite } from '../utils/fileSystem';
 
-export const submit = (order) => {
+const url = 'http://ec2-52-30-192-126.eu-west-1.compute.amazonaws.com:8010/api/order/';
+
+export const submit = (order, user) => {
   //for now, only accept EGF Parts -- need to relay this to the client
   if (!order.constructs.every(construct => construct.components.every(component => component.source.source === 'egf'))) {
     return Promise.reject(errorInvalidPart);
@@ -15,8 +18,16 @@ export const submit = (order) => {
   const payload = {
     orderId: order.id,
     constructs: constructs2d,
-    email: order.user.email,
+    isCombinatorialMix: order.parameters.onePot,
+    customer: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    },
   };
+
+  //testing
+  fileWrite('storage/test/lastOrder.json', payload);
 
   const stringified = JSON.stringify(payload);
 
@@ -31,10 +42,9 @@ export const submit = (order) => {
       console.log('got response from EGF:');
       console.log(response);
 
-      // todo - convert response to this format minimally
       return Promise.resolve({
-        jobId: 'somejob',
-        cost: 100.45,
+        jobId: response.egf_order_id,
+        cost: response.estimated_price,
       });
     });
 };

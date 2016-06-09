@@ -23,6 +23,10 @@
     border-radius: var(--radius);
   }
 
+  fieldset {
+    width: 100%;
+  }
+
   .title {
     font-size: var(--element-height * 0.5);
     color: var(--textcolor);
@@ -43,6 +47,9 @@
   }
   input:focus {
     border: 1px solid lightgray;
+  }
+  select {
+    font-size: 1rem;
   }
 
   button {

@@ -2,7 +2,8 @@
 .idea
 node_modules
 npm-debug.log
-screenshots
+test-e2e/screenshots
+test-e2e/current-screenshots
 e2ereports
 selenium-debug.log
 /redis-stable
@@ -15,3 +16,4 @@ plugins/*/*/inputs
 plugins/*/*/outputs
 storage/
 build/
+screenshots/

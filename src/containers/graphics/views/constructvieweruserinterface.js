@@ -43,6 +43,11 @@ export default class ConstructViewerUserInterface extends UserInterface {
       const element = this.layout.elementFromNode(node);
       if (element) {
         parts.push(element);
+      } else {
+        // check for list blocks as well, but ensure we only add the block once
+        if (node.listParentBlock && parts.indexOf(node.listParentBlock.id) < 0) {
+          parts.push(node.listParentBlock.id);
+        }
       }
     });
     // combine with existing selection
@@ -62,6 +67,11 @@ export default class ConstructViewerUserInterface extends UserInterface {
     for (let i = hits.length - 1; i >= 0; i--) {
       if (this.layout.elementFromNode(hits[i])) {
         return hits[i];
+      }
+      // if the node has a listParentBlock/Node property it is a list
+      // child of another block i.e. from a template
+      if (hits[i].listParentNode) {
+        return hits[i].listParentNode;
       }
     }
     // no hits or no blocks in the hits
@@ -331,11 +341,10 @@ export default class ConstructViewerUserInterface extends UserInterface {
       if (this.metaKey(evt) || evt.altKey || (window.__gde2e && window.__gde2e.metaKey)) {
         action = 'toggle';
       }
-      // if they clicked the context menu area, open it
-      // for now, open a context menu
+      // act according to region clicked
       const globalPoint = this.mouseTrap.mouseToGlobal(evt);
       const region = this.getBlockRegion(block, globalPoint);
-      switch (region) {
+      switch (region.where) {
 
       case 'dots':
         this.constructViewer.openPopup({
@@ -355,6 +364,13 @@ export default class ConstructViewerUserInterface extends UserInterface {
         // change replace to add if opening the menu
         if (action === 'replace') {
           action = 'add';
+        }
+        break;
+
+      case 'option':
+        // user might have clicked an 'empty list' placeholder, otherwise select the option
+        if (region.optionId) {
+          this.constructViewer.optionSelected(region.blockId, region.optionId);
         }
         break;
 
@@ -406,7 +422,10 @@ export default class ConstructViewerUserInterface extends UserInterface {
   }
   /**
    * return an indication of where in the block this point lies.
-   * One of ['none', 'main, 'dots']
+   * {
+   * 	where: ['none', 'main, 'dots', 'option']
+   * 	// with additional properties as per the region hit
+   * }
    */
   getBlockRegion(block, globalPoint) {
     // substract window scrolling from global point to get viewport coordinates
@@ -416,11 +435,27 @@ export default class ConstructViewerUserInterface extends UserInterface {
     const box = node.el.getBoundingClientRect();
     // compare to bounds
     if (vpt.x < box.left || vpt.x > box.right || vpt.y < box.top || vpt.y > box.bottom) {
-      return 'none';
+      // check list blocks which are outside the bounds of the parent
+      let optionId;
+      for(let i = 0; i < node.children.length; i += 1) {
+        const child = node.children[i];
+        if (child.listParentBlock) {
+          // node represents a list block
+          const childBox = child.el.getBoundingClientRect();
+          if (vpt.x >= childBox.left && vpt.x < childBox.right && vpt.y >= childBox.top && vpt.y < childBox.bottom) {
+            return {
+              where: 'option',
+              blockId: child.listParentBlock.id,
+              optionId: child.listBlock ? child.listBlock.id : null,
+            };
+          }
+        }
+      };
+      return {where: 'none'};
     }
     // context menu area?
     if (vpt.x >= box.right - kT.contextDotsW) {
-      return 'dots';
+      return {where: 'dots'};
     }
     // child expander, if present
     if (node.hasChildren) {
@@ -430,12 +465,12 @@ export default class ConstructViewerUserInterface extends UserInterface {
       if (insetX < triSize && insetY < triSize) {
         // whatever the x position is ( 0..triSize ), y must be less than trisize - x
         if (insetY <= (triSize - insetX)) {
-          return 'triangle';
+          return {where: 'triangle'};
         }
       }
     }
     // in block but nowhere special
-    return 'main';
+    return {where: 'main'};
   }
   /**
    * list of all selected blocks, based on our selected scenegraph blocks
@@ -606,8 +641,8 @@ export default class ConstructViewerUserInterface extends UserInterface {
 
     // flatten dropped object and treats as new construct if we are empty.
     const blockids = this.constructViewer.addItemAtInsertionPoint(payload, this.insertion, event);
-    this.constructViewer.blockSelected(blockids);
     this.constructViewer.constructSelected(this.constructViewer.props.constructId);
+    this.constructViewer.blockSelected(blockids);
   }
   /**
    * show the insertion point at the top left of an empty construct.

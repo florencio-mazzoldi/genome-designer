@@ -2,19 +2,27 @@ import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { transact, commit, abort } from '../../store/undo/actions';
 import { projectRename, projectMerge } from '../../actions/projects';
+import { uiShowOrderForm } from '../../actions/ui';
 import InputSimple from './../InputSimple';
-
-//for now, assumes only blocks. Later, may need to pass a type as well
+import Project from '../../models/Project';
+import OrderList from './OrderList';
+import InspectorRow from './InspectorRow';
 
 export class InspectorProject extends Component {
   static propTypes = {
-    instance: PropTypes.object.isRequired,
+    instance: (props, propName) => {
+      if (!(props[propName] instanceof Project)) {
+        return new Error('must pass a project (Project model) to InspectorProject');
+      }
+    },
+    orders: PropTypes.array.isRequired,
     projectRename: PropTypes.func.isRequired,
     projectMerge: PropTypes.func.isRequired,
     readOnly: PropTypes.bool.isRequired,
     transact: PropTypes.func.isRequired,
     commit: PropTypes.func.isRequired,
     abort: PropTypes.func.isRequired,
+    uiShowOrderForm: PropTypes.func.isRequired,
   };
 
   setProjectName = (name) => {
@@ -25,6 +33,10 @@ export class InspectorProject extends Component {
     if (description !== this.props.instance.metadata.description) {
       this.props.projectMerge(this.props.instance.id, { metadata: { description } });
     }
+  };
+
+  handleOpenOrder = (orderId) => {
+    this.props.uiShowOrderForm(true, orderId);
   };
 
   startTransaction = () => {
@@ -40,30 +52,43 @@ export class InspectorProject extends Component {
   };
 
   render() {
-    const { instance, readOnly } = this.props;
+    const { instance, orders, readOnly } = this.props;
 
     return (
       <div className="InspectorContent InspectorContentProject">
-        <h4 className="InspectorContent-heading">Name</h4>
-        <InputSimple placeholder="Project Name"
-                     onChange={this.setProjectName}
-                     onFocus={this.startTransaction}
-                     onBlur={this.endTransaction}
-                     onEscape={() => this.endTransaction(true)}
-                     readOnly={readOnly}
-                     maxLength={256}
-                     value={instance.metadata.name}/>
 
-        <h4 className="InspectorContent-heading">Description</h4>
-        <InputSimple placeholder="Project Description"
-                     useTextarea
-                     onChange={this.setProjectDescription}
-                     onFocus={this.startTransaction}
-                     onBlur={this.endTransaction}
-                     onEscape={() => this.endTransaction(true)}
-                     readOnly={readOnly}
-                     maxLength={2048}
-                     value={instance.metadata.description}/>
+        <InspectorRow heading="Project">
+          <InputSimple placeholder="Project Name"
+                       onChange={this.setProjectName}
+                       onFocus={this.startTransaction}
+                       onBlur={this.endTransaction}
+                       onEscape={() => this.endTransaction(true)}
+                       readOnly={readOnly}
+                       maxLength={256}
+                       value={instance.metadata.name}/>
+        </InspectorRow>
+
+        <InspectorRow heading="Description">
+          <InputSimple placeholder="Project Description"
+                       useTextarea
+                       onChange={this.setProjectDescription}
+                       onFocus={this.startTransaction}
+                       onBlur={this.endTransaction}
+                       onEscape={() => this.endTransaction(true)}
+                       readOnly={readOnly}
+                       maxLength={2048}
+                       value={instance.metadata.description}/>
+        </InspectorRow>
+
+        <InspectorRow heading="Order History"
+                      hasToggle
+                      condition={orders.length > 0}>
+          <div className="InspectorContent-section">
+            <OrderList orders={orders}
+                       onClick={(orderId) => this.handleOpenOrder(orderId)}/>
+          </div>
+        </InspectorRow>
+
       </div>
     );
   }
@@ -75,4 +100,5 @@ export default connect(() => ({}), {
   transact,
   commit,
   abort,
+  uiShowOrderForm,
 })(InspectorProject);

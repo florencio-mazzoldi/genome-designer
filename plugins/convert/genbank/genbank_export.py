@@ -16,7 +16,9 @@ def add_features(block, allblocks, gb, start):
     # Add Myself as a feature
     sf = SeqFeature.SeqFeature()
     # Set the type based on the original type or the role type
-    if "rules" in block and "role" in block["rules"] and block["rules"]["role"] is not None:
+    if "genbank" in block["metadata"] and "type" in block["metadata"]["genbank"]:
+        sf.type = block["metadata"]["genbank"]["type"]
+    elif "rules" in block and "role" in block["rules"] and block["rules"]["role"] is not None:
         sf.type = block["rules"]["role"]
     else:
         sf.type = "unknown"
@@ -178,4 +180,6 @@ def project_to_genbank(filename, project, allblocks):
 
         seq_obj_lst.append(seq_obj)
 
+    print('file is')
+    print(filename)
     SeqIO.write(seq_obj_lst, open(filename, "w"), "genbank")

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import fields from '../../src/schemas/fields/index';
-import SchemaDefinition from '../../src/schemas/SchemaDefinition';
+import Schema from '../../src/schemas/SchemaClass';
 
 describe('Schema', () => {
   //Fields themselves, in schemas/fields
@@ -21,8 +21,8 @@ describe('Schema', () => {
     });
 
     it('should have say if required', () => {
-      expect(stringField.isRequired).to.equal(false);
-      expect(requiredField.isRequired).to.equal(true);
+      expect(stringField.fieldRequired).to.equal(false);
+      expect(requiredField.fieldRequired).to.equal(true);
     });
   });
 
@@ -30,7 +30,7 @@ describe('Schema', () => {
   describe('Schema Fields', () => {
     const simpleFieldDescription = `String named field`;
     const additionalFields = {additionalField: 'blah'};
-    const simpleDefinition = new SchemaDefinition({
+    const simpleDefinition = new Schema({
       custom: [
         fields.string(),
         simpleFieldDescription,

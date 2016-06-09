@@ -1,5 +1,5 @@
 import React, { Component, PropTypes } from 'react';
-import BlockDefinition from '../../schemas/Block';
+import BlockSchema from '../../schemas/Block';
 import * as validators from '../../schemas/fields/validators';
 import { escapeRegExp } from 'lodash';
 
@@ -8,7 +8,7 @@ import InventoryItemBlock from './InventoryItemBlock';
 
 export default class InventoryGroupBlocks extends Component {
   static propTypes = {
-    items: ({ items }) => validators.arrayOf(item => BlockDefinition.validate(item, true))(items) || null,
+    items: ({ items }) => validators.arrayOf(item => BlockSchema.validate(item, true))(items) || null,
   };
 
   state = {

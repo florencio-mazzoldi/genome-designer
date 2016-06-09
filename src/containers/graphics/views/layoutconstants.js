@@ -37,6 +37,14 @@ const minHeight = blockH + rowBarH + titleH;
 // padding at right / bottom of scenegraph to make selection easier
 const bottomPad = 50;
 const rightPad = 30;
+// width of reserved space for selection dot on options
+const optionDotW = 16;
+// height of list blocks ( options )
+const optionH = 22;
+// size of selection dot on options
+const optionDotS = 5;
+// left inset
+const optionDotL = 10;
 
 export default {
   // layout algorithms
@@ -45,6 +53,10 @@ export default {
 
   // layout metrics
   blockH: blockH,
+  optionH: optionH,
+  optionDotW: optionDotW,
+  optionDotS: optionDotS,
+  optionDotL: optionDotL,
   contextDotsW: contextDotsW,
   contextDotsH: contextDotsH,
   titleW: titleW,

@@ -1,22 +1,28 @@
 import fields from './fields/index';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
-import ParentDefinition from './Parent';
-import MetadataDefinition from './Metadata';
+import ParentSchema from './Parent';
+import MetadataSchema from './Metadata';
 
-const InstanceDefinition = new SchemaDefinition({
+const instanceFields = {
   id: [
     fields.id().required,
     'ID of the instance',
   ],
   parents: [
-    fields.arrayOf(ParentDefinition.validate.bind(ParentDefinition)).required,
+    fields.arrayOf(ParentSchema.validate.bind(ParentSchema)).required,
     'Ancestral parents from which object is derived, with newest first',
   ],
   metadata: [
-    MetadataDefinition,
+    MetadataSchema,
     'Metadata for the object',
   ],
-});
+};
 
-export default InstanceDefinition;
+export class InstanceSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, instanceFields, fieldDefinitions));
+  }
+}
+
+export default new InstanceSchemaClass();

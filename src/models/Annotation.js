@@ -1,11 +1,11 @@
 import Instance from './Instance';
 import invariant from 'invariant';
-import AnnotationDefinition from '../schemas/Annotation';
+import AnnotationSchema from '../schemas/Annotation';
 import cloneDeep from 'lodash.clonedeep';
 
 export default class Annotation extends Instance {
   constructor(input) {
-    super(input, AnnotationDefinition.scaffold());
+    super(input, AnnotationSchema.scaffold());
   }
 
   //return an unfrozen JSON (
@@ -14,7 +14,7 @@ export default class Annotation extends Instance {
   }
 
   static validate(input, throwOnError) {
-    return AnnotationDefinition.validate(input, throwOnError);
+    return AnnotationSchema.validate(input, throwOnError);
   }
 
   get length() {

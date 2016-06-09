@@ -1,18 +1,18 @@
-import AnnotationDefinition from '../../src/schemas/Annotation';
+import AnnotationSchema from '../../src/schemas/Annotation';
 import { Annotation as exampleAnnotation } from './_examples';
 import chai from 'chai';
 
 const { assert } = chai;
 
-describe('AnnotationDefinition', () => {
+describe('AnnotationSchema', () => {
   it('should be loggable', () => {
-    //console.log(AnnotationDefinition);
+    //console.log(AnnotationSchema);
 
     assert(true);
   });
 
   it('should describe', () => {
-    const description = AnnotationDefinition.describe();
+    const description = AnnotationSchema.describe();
     //console.log(description);
 
     assert(typeof description === 'object');
@@ -20,6 +20,6 @@ describe('AnnotationDefinition', () => {
 
 
   it('should validate the example', () => {
-    assert(AnnotationDefinition.validate(exampleAnnotation));
+    assert(AnnotationSchema.validate(exampleAnnotation));
   });
 });

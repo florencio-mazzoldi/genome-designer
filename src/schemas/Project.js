@@ -1,15 +1,14 @@
 import fields from './fields/index';
 import * as validators from './fields/validators';
-import InstanceDefinition from './Instance';
+import { InstanceSchemaClass } from './Instance';
 
 /**
- @name ProjectDefinition
+ @name ProjectSchema
  @description
- Project is the container for a body of work. It consists primarily of constructs
-
+ Project is the container for a body of work. It consists primarily of constructs, but also orders, settings, etc.
  */
 
-const ProjectDefinition = InstanceDefinition.extend({
+const projectFields = {
   id: [
     fields.id({ prefix: 'project' }).required,
     'Project UUID',
@@ -25,10 +24,17 @@ const ProjectDefinition = InstanceDefinition.extend({
     fields.arrayOf(validators.id()).required,
     `Constructs associated with this project`,
   ],
+
   settings: [
     fields.object().required,
     `Settings associated with this project`,
   ],
-});
+};
 
-export default ProjectDefinition;
+export class ProjectSchemaClass extends InstanceSchemaClass {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, projectFields, fieldDefinitions));
+  }
+}
+
+export default new ProjectSchemaClass();

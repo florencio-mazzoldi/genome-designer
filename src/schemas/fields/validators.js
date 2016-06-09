@@ -1,13 +1,14 @@
 import safeValidate from './safeValidate';
 import urlRegex from 'url-regex';
 import { dnaStrictRegexp, dnaLooseRegexp } from '../../utils/dna/dna';
+import { id as idRegex } from '../../utils/regex';
 
 /**
  * note that everything exported in this file is tested - so only export real validators
  *
  * @description
  * these validators are used by fields/index.js
- * when defining a SchemaDefinition you should use the fieldType objects exported from that file instead of these directly. However, you may want to use these when just running validation. Note that they expect parameters.
+ * when defining a Schema you should use the fieldType objects exported from that file instead of these directly. However, you may want to use these when just running validation. Note that they expect parameters.
  *
  * @example
  * let validator = number({min:5});
@@ -15,10 +16,10 @@ import { dnaStrictRegexp, dnaLooseRegexp } from '../../utils/dna/dna';
  * validator(40); //true
  */
 
-export const id = params => input => {
-  const regex = /^(\w+-)?[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const any = params => input => {};
 
-  if (!regex.test(input)) {
+export const id = params => input => {
+  if (!idRegex().test(input)) {
     return new Error(`${input} is not a RFC4122-compliant UUID`);
   }
 };
@@ -180,7 +181,7 @@ export const oneOf = possible => input => {
   }
 
   if (possible.indexOf(input) < 0) {
-    return new Error(input + ' not found in ' + possible.join(','));
+    return new Error(input + ' not found in ' + possible.join(', '));
   }
 };
 

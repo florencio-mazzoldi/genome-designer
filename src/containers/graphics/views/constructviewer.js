@@ -19,8 +19,13 @@ import {
 import {
   uiShowDNAImport,
   uiToggleDetailView,
-  inspectorToggleVisibility
+  inspectorToggleVisibility,
+  uiShowOrderForm,
 } from '../../../actions/ui';
+import {
+  orderCreate,
+  orderGenerateConstructs,
+} from '../../../actions/orders';
 import {
   blockGetParents,
 } from '../../../selectors/blocks';
@@ -33,12 +38,16 @@ import {
   focusBlocksAdd,
   focusBlocksToggle,
   focusConstruct,
+  focusBlockOption,
 } from '../../../actions/focus';
 import invariant from 'invariant';
 import {
   projectGetVersion,
 } from '../../../selectors/projects';
 import { projectRemoveConstruct } from '../../../actions/projects';
+import RoleSvg from '../../../components/RoleSvg';
+
+import "../../../styles/constructviewer.css";
 
 // static hash for matching viewers to constructs
 const idToViewer = {};
@@ -54,6 +63,7 @@ export class ConstructViewer extends Component {
     focusBlocksAdd: PropTypes.func.isRequired,
     focusBlocksToggle: PropTypes.func.isRequired,
     focusConstruct: PropTypes.func.isRequired,
+    focusBlockOption: PropTypes.func.isRequired,
     currentBlock: PropTypes.array,
     blockSetRole: PropTypes.func,
     blockCreate: PropTypes.func,
@@ -63,6 +73,9 @@ export class ConstructViewer extends Component {
     blockAddComponents: PropTypes.func,
     blockDetach: PropTypes.func,
     uiShowDNAImport: PropTypes.func,
+    uiShowOrderForm: PropTypes.func.isRequired,
+    orderCreate: PropTypes.func.isRequired,
+    orderGenerateConstructs: PropTypes.func.isRequired,
     blockRemoveComponent: PropTypes.func,
     blockGetParents: PropTypes.func,
     projectGetVersion: PropTypes.func,
@@ -209,6 +222,13 @@ export class ConstructViewer extends Component {
   }
 
   /**
+   * focus an option
+   */
+  optionSelected(blockId, optionId) {
+    this.props.focusBlockOption(blockId, optionId);
+  }
+
+  /**
    * select the given block
    */
   blockToggleSelected(partIds) {
@@ -273,19 +293,15 @@ export class ConstructViewer extends Component {
    * update the layout and then the scene graph
    */
   _update() {
-    //console.time(`LAYOUT`);
-    this.layout.update(
-      this.props.construct,
-      this.props.blocks,
-      this.props.focus.blockIds,
-      this.props.focus.constructId);
-    //console.timeEnd(`LAYOUT`);
-    //console.time('GRAPH');
+    this.layout.update({
+      construct: this.props.construct,
+      blocks: this.props.blocks,
+      currentBlocks: this.props.focus.blockIds,
+      currentConstructId: this.props.focus.constructId,
+      focusedOptions: this.props.focus.options,
+    });
     this.sg.update();
-    //console.timeEnd('GRAPH');
-    //console.time('UI');
     this.sg.ui.update();
-    //console.timeEnd('UI');
   }
 
   /**
@@ -487,6 +503,42 @@ export class ConstructViewer extends Component {
   }
 
   /**
+   * launch DNA form for this construct
+   */
+  onOrderDNA = () => {
+    const order = this.props.orderCreate(this.props.projectId, [this.props.construct.id]);
+    this.props.uiShowOrderForm(true, order.id);
+  };
+
+  /**
+   * only visible on templates for now
+   */
+  orderButton() {
+    if (this.props.construct.isTemplate()) {
+      return <button onClick={this.onOrderDNA} className="order-button">Order DNA</button>;
+    }
+    return null;
+  }
+
+  lockIcon() {
+    const locked = this.props.construct.isTemplate() && this.props.construct.isFrozen();
+    if (!locked) {
+      return null;
+    }
+    return (
+      <div className="lockIcon">
+        <RoleSvg
+          symbolName="lock"
+          color={this.props.construct.metadata.color}
+          width="14px"
+          height="14px"
+          fill={this.props.construct.metadata.color}
+        />
+      </div>
+    )
+  }
+
+  /**
    * render the component, the scene graph will render later when componentDidUpdate is called
    */
   render() {
@@ -497,6 +549,8 @@ export class ConstructViewer extends Component {
         </div>
         {this.blockContextMenu()}
         {this.constructContextMenu()}
+        {this.orderButton()}
+        {this.lockIcon()}
       </div>
     );
     return rendered;
@@ -525,10 +579,14 @@ export default connect(mapStateToProps, {
   focusBlocks,
   focusBlocksAdd,
   focusBlocksToggle,
+  focusBlockOption,
   focusConstruct,
   projectGetVersion,
   projectRemoveConstruct,
   inspectorToggleVisibility,
   uiShowDNAImport,
+  uiShowOrderForm,
   uiToggleDetailView,
+  orderCreate,
+  orderGenerateConstructs,
 })(ConstructViewer);

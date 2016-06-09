@@ -267,7 +267,7 @@ export default class Node2D {
 
   /**
    * get the axis align bounding box for the element
-   * @returns G.Box
+   * @returns {Box2D}
    */
   getAABB() {
     // transform the 4 corners of the bounds into screen space
@@ -286,6 +286,15 @@ export default class Node2D {
     const ymax = Math.max(tpts[0].y, tpts[1].y, tpts[2].y, tpts[3].y);
 
     return new Box2D(xmin, ymin, xmax - xmin, ymax - ymin);
+  }
+  /**
+   * AABB of node including all child nodes
+   * @return {Box2D}
+   */
+  getAABBWithChildren() {
+    return this.children.reduce((aabb, child) => {
+      return aabb.union(child.getAABBWithChildren());
+    }, this.getAABB());
   }
 
   /**

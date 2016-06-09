@@ -34,6 +34,11 @@
   }
 
   &.disabled {
-    cursor: default;
+    cursor: not-allowed;
+
+    svg g g,
+    svg:hover g g {
+      fill: var(--colors-blueGreyMed);
+    }
   }
 }

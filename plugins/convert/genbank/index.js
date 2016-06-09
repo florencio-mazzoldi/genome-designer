@@ -5,8 +5,8 @@ import Project from '../../../src/models/Project';
 import Block from '../../../src/models/Block';
 import merge from 'lodash.merge';
 import _ from 'lodash';
-import BlockDefinition from '../../../src/schemas/Block';
-import ProjectDefinition from '../../../src/schemas/Project';
+import BlockSchema from '../../../src/schemas/Block';
+import ProjectSchema from '../../../src/schemas/Project';
 import * as persistence from '../../../server/data/persistence';
 import md5 from 'md5';
 
@@ -43,7 +43,7 @@ const runCommand = (command, inputFile, outputFile) => {
 const createBlockStructureAndSaveSequence = (block, sourceId) => {
   // generate a valid block scaffold. This is similar to calling new Block(),
   // but a bit more light weight and easier to work with (models are frozen so you cannot edit them)
-  const scaffold = BlockDefinition.scaffold();
+  const scaffold = BlockSchema.scaffold();
   const fileName = /[^/]*$/.exec(sourceId)[0];
 
   //get the sequence md5
@@ -123,7 +123,7 @@ const handleProject = (outputProject, rootBlockIds) => {
   //just get fields we want using destructuring and use them to merge
   const { name, description } = outputProject;
 
-  return new Project(merge({}, ProjectDefinition.scaffold(), {
+  return new Project(merge({}, ProjectSchema.scaffold(), {
     components: rootBlockIds,
     metadata: {
       name,

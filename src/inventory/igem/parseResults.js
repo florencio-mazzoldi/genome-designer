@@ -63,7 +63,7 @@ export function parseFullResult(result) {
     },
   };
   const block = new Block(merge(basics, additional));
-  return block.setSequence(sequence);
+  return block.setSequence(sequence, false, true);
 }
 
 export function parseResults(results) {

@@ -1,10 +1,10 @@
 import fields from './fields/index';
 // import * as validators from './fields/validators';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
 /**
- @name AnnotationDefinition
- @parent BlockDefinition
+ @name AnnotationSchema
+ @parent BlockSchema
  @role Annotation (kinda)
 
  @description
@@ -13,7 +13,8 @@ import SchemaDefinition from './SchemaDefinition';
 
  Later, we may want to make a field that notes how optimizable the sequence is. E.g. none, codon-optimize, or random sequence. It may be represented as a degenerate sequence?
  */
-const AnnotationDefinition = new SchemaDefinition({
+
+const fieldDefs = {
   tags: [
     fields.object(),
     'Dictionary of tags defining annotation',
@@ -46,6 +47,12 @@ const AnnotationDefinition = new SchemaDefinition({
     fields.object().required,
     `Notes about the annotation`,
   ],
-});
+};
 
-export default AnnotationDefinition;
+export class AnnotationSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, fieldDefs, fieldDefinitions));
+  }
+}
+
+export default new AnnotationSchemaClass();

@@ -74,10 +74,10 @@ router.post('/:pluginId/convert', jsonParser, (req, resp, next) => {
   req.on('end', () => {
     const inputFilePath = filePaths.createStorageUrl(pluginId, md5(buffer));
     return fileSystem.fileWrite(inputFilePath, buffer, false)
-      .then(() => callImportFunction('convert', pluginId, inputFilePath));
-  })
-    .then(converted => resp.status(200).json(converted))
-    .catch(err => next(err));
+      .then(() => callImportFunction('convert', pluginId, inputFilePath))
+      .then(converted => resp.status(200).json(converted))
+      .catch(err => next(err));
+  });
 });
 
 //can pass :projectId = 'convert' to just convert genbank file directly, and not write to memory
@@ -98,7 +98,7 @@ router.post('/:pluginId/:projectId?', jsonParser, (req, resp, next) => {
               .then((roll) => {
                 if (!projectId) {
                   rollup.writeProjectRollup(roll.project.id, roll, req.user.uuid)
-                    .then(() => persistence.projectSave(roll.project.id))
+                    .then(() => persistence.projectSave(roll.project.id, req.user.uuid))
                     .then(commit => resp.status(200).json({ ProjectId: roll.project.id }))
                     .catch(err => {
                       resp.status(400).send(err);
@@ -109,7 +109,7 @@ router.post('/:pluginId/:projectId?', jsonParser, (req, resp, next) => {
                       existingRoll.project.components = existingRoll.project.components.concat(roll.project.components);
                       existingRoll.blocks = existingRoll.blocks.concat(roll.blocks);
                       rollup.writeProjectRollup(existingRoll.project.id, existingRoll, req.user.uuid)
-                        .then(() => persistence.projectSave(existingRoll.project.id))
+                        .then(() => persistence.projectSave(existingRoll.project.id, req.user.uuid))
                         .then(commit => resp.status(200).json({ ProjectId: existingRoll.project.id }))
                         .catch(err => {
                           resp.status(400).send(err);

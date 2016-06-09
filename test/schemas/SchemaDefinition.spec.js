@@ -1,18 +1,18 @@
 import { expect } from 'chai';
 import fields from '../../src/schemas/fields/index';
-import SchemaDefinition from '../../src/schemas/SchemaDefinition';
-import InstanceDefinition from '../../src/schemas/Instance';
+import Schema from '../../src/schemas/SchemaClass';
+import InstanceSchema from '../../src/schemas/Instance';
 
 describe('Schema', () => {
-  describe('SchemaDefinition', () => {
+  describe('Schema', () => {
     const simpleFieldDescription = `String named field`;
-    const simpleDefinition = new SchemaDefinition({
+    const simpleDefinition = new Schema({
       field: [
         fields.string(),
         simpleFieldDescription,
       ],
     });
-    const testDefinition = new SchemaDefinition({
+    const testDefinition = new Schema({
       another: [
         fields.string(),
         `another field that is a string`,
@@ -27,17 +27,17 @@ describe('Schema', () => {
 
     describe('Basic Methods', () => {
       it('extend() exists', () => {
-        expect(typeof InstanceDefinition.extend).to.equal('function');
+        expect(typeof InstanceSchema.extend).to.equal('function');
       });
 
       it('describe() exists', () => {
-        expect(typeof InstanceDefinition.describe).to.equal('function');
+        expect(typeof InstanceSchema.describe).to.equal('function');
       });
     });
 
     describe('validate()', () => {
       it('exists', () => {
-        expect(typeof InstanceDefinition.validate).to.equal('function');
+        expect(typeof InstanceSchema.validate).to.equal('function');
       });
 
       it('allows arbitrary fields', () => {
@@ -48,12 +48,12 @@ describe('Schema', () => {
 
     describe('scaffold()', () => {
       it('exists', () => {
-        expect(typeof InstanceDefinition.scaffold).to.equal('function');
+        expect(typeof InstanceSchema.scaffold).to.equal('function');
       });
 
       it('should prefix IDs with passed prefix', () => {
         const prefix = 'prefff';
-        const Extended = InstanceDefinition.extend({
+        const Extended = InstanceSchema.extend({
           id: [
             fields.id({prefix}).required,
             'Prefixed ID of the instance',

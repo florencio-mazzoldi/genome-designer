@@ -22,16 +22,18 @@ export class ListOptions extends Component {
   render() {
     const { block, optionBlocks } = this.props;
     const { options } = block;
+    const isFrozen = block.isFrozen();
 
     return (
-      <div className="ListOptions">
+      <div className={'ListOptions no-vertical-scroll' + (isFrozen ? ' isFrozen' : '')}>
+        {isFrozen && <div className="ListOptions-explanation">List items cannot be modified after they have been frozen. Duplicate the template to make changes.</div>}
         {optionBlocks.map(item => {
           return (
             <ListOption
               option={item}
               key={item.id}
               selected={options[item.id]}
-              onClick={(option) => this.onSelectOption(option)}/>
+              onClick={(option) => { if (!isFrozen) { this.onSelectOption(option); }}}/>
           );
         })}
       </div>

@@ -51,6 +51,11 @@
     user-select: none;
   }
 
+  &-detail {
+    padding-left: 0.75em;
+    color: var(--colors-grey);
+  }
+
   &-glyph:not(:empty) {
     padding-right: 0.5em;
   }

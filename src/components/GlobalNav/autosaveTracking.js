@@ -1,6 +1,6 @@
 import React, { PropTypes, Component } from 'react';
 import autosaveInstance from '../../store/autosave/autosaveInstance';
-import { getProjectSaveState } from '../../middleware/data';
+import { getProjectSaveState } from '../../store/saveState';
 
 import '../../styles/AutosaveTracking.css';
 
@@ -27,7 +27,9 @@ export default class autosaveTracking extends Component {
     const dirty = autosaveInstance.isDirty();
 
     let text;
+    const classNames = ['AutosaveTracking'];
     if (!saveSuccessful) {
+      classNames.push('failure');
       text = 'Save Failed!';
     } else if (dirty || saveDelta > 15000) {
       text = '';
@@ -38,6 +40,6 @@ export default class autosaveTracking extends Component {
       text = 'Project Saved';
     }
 
-    return (<span className="AutosaveTracking">{text}</span>);
+    return (<span className={classNames.join(' ')}>{text}</span>);
   }
 }

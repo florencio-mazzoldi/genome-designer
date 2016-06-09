@@ -8,7 +8,8 @@ import Inventory from './Inventory';
 import Inspector from './Inspector';
 import { projectList, projectLoad, projectCreate, projectOpen } from '../actions/projects';
 import { uiSetGrunt } from '../actions/ui';
-import { focusProject } from '../actions/focus';
+import { focusProject, focusConstruct } from '../actions/focus';
+import { orderList } from '../actions/orders';
 import autosaveInstance from '../store/autosave/autosaveInstance';
 
 import '../styles/ProjectPage.css';
@@ -20,18 +21,20 @@ class ProjectPage extends Component {
     projectId: PropTypes.string.isRequired,
     project: PropTypes.object, //if have a project (not fetching)
     constructs: PropTypes.array, //if have a project (not fetching)
+    orders: PropTypes.array, //if have a project (not fetching)
     projectCreate: PropTypes.func.isRequired,
     projectList: PropTypes.func.isRequired,
     projectLoad: PropTypes.func.isRequired,
     projectOpen: PropTypes.func.isRequired,
     uiSetGrunt: PropTypes.func.isRequired,
     focusProject: PropTypes.func.isRequired,
+    focusConstruct: PropTypes.func.isRequired,
+    orderList: PropTypes.func.isRequired,
   };
 
   constructor(props) {
     super(props);
     this.lastProjectId = null;
-    this.layoutAlgorithm = 'wrap';
   }
 
   componentDidMount() {
@@ -42,9 +45,15 @@ class ProjectPage extends Component {
 
   componentWillReceiveProps(nextProps) {
     //set state.focus.project -- might be a better way to do this, but hard otuside components with react-router
-    if (nextProps.project && nextProps.project.metadata && (!this.lastProjectId || nextProps.projectId !== this.props.projectId)) {
+    if (!!nextProps.project && Array.isArray(nextProps.project.components) && (!this.lastProjectId || nextProps.projectId !== this.props.projectId)) {
       this.lastProjectId = nextProps.projectId;
       this.props.focusProject(nextProps.projectId);
+      if (nextProps.project.components.length) {
+        this.props.focusConstruct(nextProps.project.components[0]);
+      }
+
+      //temp - get all the projects orders lazily, will re-render when have them
+      this.props.orderList(nextProps.projectId);
     }
   }
 
@@ -57,11 +66,6 @@ class ProjectPage extends Component {
       return 'Project has unsaved work! Please save before leaving this page';
     }
   }
-
-  onLayoutChanged = () => {
-    this.layoutAlgorithm = this.refs.layoutSelector.value;
-    this.forceUpdate();
-  };
 
   render() {
     const { showingGrunt, project, projectId, constructs } = this.props;
@@ -96,8 +100,7 @@ class ProjectPage extends Component {
       return (
         <ConstructViewer key={construct.id}
                          projectId={projectId}
-                         constructId={construct.id}
-                         layoutAlgorithm={this.layoutAlgorithm}/>
+                         constructId={construct.id}/>
       );
     });
 
@@ -136,11 +139,17 @@ function mapStateToProps(state, ownProps) {
   }
 
   const constructs = project.components.map(componentId => state.blocks[componentId]);
+  const orders = Object.keys(state.orders)
+    .map(orderId => state.orders[orderId])
+    .filter(order => order.projectId === projectId && order.isSubmitted())
+    .sort((one, two) => one.status.timeSent - two.status.timeSent);
+
   return {
     showingGrunt,
     projectId,
     project,
     constructs,
+    orders,
   };
 }
 
@@ -151,4 +160,6 @@ export default connect(mapStateToProps, {
   projectOpen,
   uiSetGrunt,
   focusProject,
+  focusConstruct,
+  orderList,
 })(ProjectPage);

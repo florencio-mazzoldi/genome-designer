@@ -10,7 +10,9 @@ role_type_table = {
     "promoter": "promoter",
     "terminator": "terminator",
     "gene": "cds",
-    "mat_peptide": "cds"
+    "mat_peptide": "cds",
+    "rep_origin": "originReplication",
+    "rbs": "rbs"
 }
 
 # Creates a scaffold structure for a block
@@ -165,6 +167,7 @@ def create_child_block_from_feature(f, all_blocks, root_block, sequence):
         child_block["metadata"]["end"] = end - 1
         child_block["sequence"]["length"] = end - start
         child_block["metadata"]["strand"] = strand
+        child_block["metadata"]["genbank"]["type"] = f.type
 
         if role_type:
             child_block["rules"]["role"] = role_type

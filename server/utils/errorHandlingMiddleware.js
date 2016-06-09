@@ -1,5 +1,11 @@
 export default function generalErrorHandler(err, req, res, next) {
-  console.error(err);
-  console.error(err.stack);
-  res.status(500).send('Uh oh!');
-};
+  if (err) {
+    console.error(err);
+    console.error(err.stack);
+    if (res.headersSent) {
+      return next(err);
+    }
+    res.status(502).send(err);
+  }
+  return next();
+}

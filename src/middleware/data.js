@@ -2,69 +2,8 @@ import rejectingFetch from './rejectingFetch';
 import invariant from 'invariant';
 import { headersGet, headersPost, headersPut, headersDelete } from './headers';
 import { dataApiPath } from './paths';
-import Project from '../models/Project';
-
-/******
- caching + checks
- ******/
-
-//unforunately, the reducers run after the promise resolutions in these loading / saving functions, so project.version will increment immediately after the roll is set here, but that is ok - we handle that check below in isRollSame.
-
-//project rollup cache
-//track the last versions saved so we aren't saving over and over
-const rollMap = new Map();
-
-//track information about saving e.g. time
-const saveState = new Map();
-
-//compares two rollups for effective changes
-const isRollDifferent = (oldRoll, newRoll) => {
-  if (!oldRoll || !newRoll) return true;
-
-  //check projects same
-  if (!Project.compare(oldRoll.project, newRoll.project)) return true;
-
-  //check all blocks same
-  return oldRoll.blocks.some(oldBlock => {
-    const analog = newRoll.blocks.find(newBlock => newBlock.id === oldBlock.id);
-    return !analog || analog !== oldBlock;
-  });
-};
-
-const noteSave = (projectId, rollup, sha = null) => {
-  invariant(projectId, 'must pass project ID');
-  const lastState = saveState.get(projectId) || {};
-
-  saveState.set(projectId, Object.assign(lastState, {
-    lastSaved: +Date.now(),
-    sha,
-  }));
-};
-
-const noteFailure = (projectId, err) => {
-  invariant(projectId, 'must pass project ID');
-  const lastState = saveState.get(projectId) || {};
-
-  saveState.set(projectId, Object.assign(lastState, {
-    lastFailed: +Date.now(),
-    lastErr: err,
-  }));
-};
-
-export const getProjectSaveState = (projectId) => {
-  invariant(projectId, 'must pass project ID');
-  const state = saveState.get(projectId) || {};
-  const { lastSaved = 0, lastFailed = 0, sha = null, lastErr = null } = state;
-
-  return {
-    lastSaved,
-    sha,
-    lastFailed,
-    lastErr,
-    saveDelta: +Date.now() - lastSaved,
-    saveSuccessful: lastFailed <= lastSaved,
-  };
-};
+import * as instanceMap from '../store/instanceMap';
+import { noteSave, noteFailure } from '../store/saveState';
 
 /******
  API requests
@@ -91,12 +30,18 @@ export const listProjects = () => {
 /***** rollups - loading + saving projects *****/
 
 //returns a rollup
-export const loadProject = (projectId) => {
+export const loadProject = (projectId, avoidCache = false) => {
+  const isCached = instanceMap.projectLoaded(projectId);
+
+  if (isCached && avoidCache !== true) {
+    return Promise.resolve(instanceMap.getRollup(projectId));
+  }
+
   const url = dataApiPath(`projects/${projectId}`);
   return rejectingFetch(url, headersGet())
     .then(resp => resp.json())
     .then(rollup => {
-      rollMap.set(projectId, rollup);
+      instanceMap.saveRollup(rollup);
       return rollup;
     });
 };
@@ -110,10 +55,11 @@ export const saveProject = (projectId, rollup) => {
   invariant(rollup.project && Array.isArray(rollup.blocks), 'rollup in wrong form');
 
   //check if project is new, and save if it is
-  const cached = rollMap.get(projectId);
-  if (!isRollDifferent(cached, rollup)) {
+  if (!instanceMap.isRollupNew(rollup)) {
     return Promise.resolve(null);
   }
+
+  instanceMap.saveRollup(rollup);
 
   const url = dataApiPath(`projects/${projectId}`);
   const stringified = JSON.stringify(rollup);
@@ -122,7 +68,7 @@ export const saveProject = (projectId, rollup) => {
     .then(resp => resp.json())
     .then(commit => {
       const { sha } = commit;
-      noteSave(projectId, rollup, sha);
+      noteSave(projectId, sha);
       return commit;
     })
     .catch(err => {
@@ -131,12 +77,16 @@ export const saveProject = (projectId, rollup) => {
     });
 };
 
-//expects a rollup
+//rollup is optional, will be saved if provided
 //explicit, makes a git commit with special message to differentiate
 //returns the commit wth sha, message
 export const snapshot = (projectId, message = 'Project Snapshot', rollup = {}) => {
   invariant(projectId, 'Project ID required to snapshot');
   invariant(!message || typeof message === 'string', 'optional message for snapshot must be a string');
+
+  if (rollup.project && rollup.blocks) {
+    instanceMap.saveRollup(rollup);
+  }
 
   const stringified = JSON.stringify({ message, rollup });
   const url = dataApiPath(`${projectId}/commit`);
@@ -145,7 +95,7 @@ export const snapshot = (projectId, message = 'Project Snapshot', rollup = {}) =
     .then(resp => resp.json())
     .then(commit => {
       const { sha } = commit;
-      noteSave(projectId, rollup, sha);
+      noteSave(projectId, sha);
       return commit;
     })
     .catch(err => {
@@ -171,18 +121,11 @@ export const deleteProject = (projectId) => {
 //   components : { <blockId> : <block> } //including the parent requested
 //   options: { <blockId> : <block> }
 // }
-export const loadBlock = (blockId, withContents = false, onlyComponents = false, projectId = 'block') => {
+export const loadBlock = (blockId, withContents = false, projectId = 'block') => {
   invariant(projectId, 'Project ID is required');
   invariant(blockId, 'Block ID is required');
 
   if (withContents === true) {
-    if (onlyComponents === true) {
-      return infoQuery('components', blockId)
-        .then(components => ({
-          components,
-          options: {},
-        }));
-    }
     return infoQuery('contents', blockId);
   }
 

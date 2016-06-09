@@ -104,11 +104,11 @@ export default class UserInterface {
         this.selectionMap[node.uuid] = sel;
       }
       // update to current node bounds
-      const bounds = node.getAABB();
+      const bounds = node.getAABBWithChildren();
       sel.style.left = bounds.x + 'px';
       sel.style.top = bounds.y + 'px';
-      sel.style.width = bounds.width + 'px';
-      sel.style.height = bounds.height + 'px';
+      sel.style.width = bounds.width + 1 +'px';
+      sel.style.height = bounds.height + 1 + 'px';
     });
 
     // now we have to say goodbye to items left in the bucket

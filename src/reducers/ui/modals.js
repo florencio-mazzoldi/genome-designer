@@ -5,6 +5,7 @@ export const initialState = {
   detailViewVisible: false,
   authenticationForm: 'none',
   showDNAImport: false,
+  orderId: null,
   showAbout: false,
   gruntMessage: null,
   showGenBankImport: false,
@@ -24,6 +25,10 @@ export default function modals(state = initialState, action) {
   case ActionTypes.UI_SHOW_DNAIMPORT:
     const { showDNAImport } = action;
     return Object.assign({}, state, { showDNAImport });
+
+  case ActionTypes.UI_SHOW_ORDER_FORM:
+    const { showOrderForm, orderId } = action;
+    return Object.assign({}, state, { showOrderForm, orderId });
 
   case ActionTypes.UI_SHOW_ABOUT:
     const { showAbout } = action;

@@ -1,7 +1,7 @@
 import * as ActionTypes from '../constants/ActionTypes';
+import * as instanceMap from '../store/instanceMap';
 import { blocks as testBlocks } from './testProject';
 import { blocks as combiBlocks } from './testCombinatorial';
-import andreaParts from '../inventory/andrea/parts';
 
 const initialState = {};
 
@@ -9,6 +9,7 @@ const initialState = {};
 combiBlocks.forEach(block => Object.assign(initialState,
   { [block.id]: block }
 ));
+instanceMap.saveBlock(...combiBlocks);
 
 if (process.env.NODE_ENV === 'test') {
   testBlocks.forEach(block => Object.assign(initialState,
@@ -25,6 +26,7 @@ export default function blocks(state = initialState, action) {
   case ActionTypes.BLOCK_CLONE :
   case ActionTypes.BLOCK_LOAD :
   case ActionTypes.BLOCK_STASH :
+  case ActionTypes.BLOCK_FREEZE :
   case ActionTypes.BLOCK_SET_ROLE :
   case ActionTypes.BLOCK_ADD_ROLE :
   case ActionTypes.BLOCK_ANNOTATE :
@@ -40,14 +42,24 @@ export default function blocks(state = initialState, action) {
     const { block, blocks } = action;
 
     if (Array.isArray(blocks)) {
+      instanceMap.saveBlock(...blocks);
       const toMerge = blocks.reduce((acc, block) => Object.assign(acc, { [block.id]: block }), {});
       return Object.assign({}, state, toMerge);
     }
+
+    instanceMap.saveBlock(block);
     return Object.assign({}, state, { [block.id]: block });
 
+  case ActionTypes.BLOCK_DETACH :
   case ActionTypes.BLOCK_DELETE :
-    const { blockId } = action;
+    const { blockId, blockIds } = action;
     const nextState = Object.assign({}, state);
+
+    if (Array.isArray(blockIds)) {
+      blockIds.forEach(blockId => { delete nextState[blockId]; });
+      return nextState;
+    }
+
     delete nextState[blockId];
     return nextState;
 

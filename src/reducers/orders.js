@@ -8,6 +8,7 @@ export default function orders(state = initialState, action) {
   case ActionTypes.ORDER_CREATE:
   case ActionTypes.ORDER_STASH:
   case ActionTypes.ORDER_SUBMIT:
+  case ActionTypes.ORDER_SET_NAME:
     const { order, orders } = action;
     if (Array.isArray(orders)) {
       const toMerge = orders.reduce((acc, order) => Object.assign(acc, { [order.id]: order }), {});

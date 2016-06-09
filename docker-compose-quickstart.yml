@@ -3,7 +3,10 @@ genome-designer:
     file: docker-compose-common.yml
     service: genome-designer
   image: quay.io/autodesk_bionano/genomedesigner_genome-designer${BNR_ENV_TAG}
+  volumes:
+    - /storage/genome-designer/projects:/projects
   environment:
+    STORAGE: /projects
     API_END_POINT: http://auth${AUTH_ENV_TAG}.bionano.bio:8080/api
     HOST_URL: http://genome-designer${AUTH_ENV_TAG}.bionano.autodesk.com
   command:

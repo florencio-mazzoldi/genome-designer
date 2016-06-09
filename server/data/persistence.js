@@ -6,7 +6,7 @@ import { validateBlock, validateProject, validateOrder } from '../utils/validati
 import * as filePaths from './../utils/filePaths';
 import * as versioning from './versioning';
 import * as commitMessages from './commitMessages';
-import { fileExists, fileRead, fileWrite, fileDelete, directoryMake, directoryDelete } from '../utils/fileSystem';
+import { fileExists, fileRead, fileWrite, fileDelete, directoryMake, directoryDelete, directoryMove } from '../utils/fileSystem';
 import * as permissions from './permissions';
 
 /*********
@@ -87,12 +87,17 @@ const _projectSetup = (projectId, userId) => {
     .then(() => directoryMake(orderDirectory))
     .then(() => directoryMake(blockDirectory))
     .then(() => permissions.createProjectPermissions(projectId, userId))
-    .then(() => versioning.initialize(projectDataPath));
+    .then(() => versioning.initialize(projectDataPath, userId));
 };
 
 const _blockSetup = (blockId, projectId) => {
   const blockPath = filePaths.createBlockPath(blockId, projectId);
   return directoryMake(blockPath);
+};
+
+const _orderSetup = (orderId, projectId) => {
+  const orderDirectory = filePaths.createOrderPath(orderId, projectId);
+  return directoryMake(orderDirectory);
 };
 
 // WRITING
@@ -112,41 +117,32 @@ const _orderWrite = (orderId, order = {}, projectId) => {
   return fileWrite(manifestPath, order);
 };
 
+const _orderRollupWrite = (orderId, rollup, projectId) => {
+  const orderPath = filePaths.createOrderProjectManifestPath(orderId, projectId);
+  return fileWrite(orderPath, rollup);
+};
+
 // COMMITS
 
 //expects a well-formed commit message from commitMessages.js
-const _projectCommit = (projectId, message) => {
+const _projectCommit = (projectId, userId, message) => {
   const projectDataPath = filePaths.createProjectDataPath(projectId);
   const commitMessage = !message ? commitMessages.messageProject(projectId) : message;
-  return versioning.commit(projectDataPath, commitMessage)
+  return versioning.commit(projectDataPath, commitMessage, userId)
     .then(sha => versioning.getCommit(projectDataPath, sha));
 };
 
 //expects a well-formed commit message from commitMessages.js
-const _blockCommit = (blockId, projectId, message) => {
+const _blockCommit = (blockId, projectId, userId, message) => {
   const projectDataPath = filePaths.createProjectDataPath(projectId);
   const commitMessage = !message ? commitMessages.messageBlock(blockId) : message;
-  return versioning.commit(projectDataPath, commitMessage)
+  return versioning.commit(projectDataPath, commitMessage, userId)
     .then(sha => versioning.getCommit(path, sha));
 };
 
 /*********
  API
  *********/
-
-//SAVE
-
-//e.g. autosave
-export const projectSave = (projectId, messageAddition) => {
-  const message = commitMessages.messageSave(projectId, messageAddition);
-  return _projectCommit(projectId, message);
-};
-
-//explicit save aka 'snapshot'
-export const projectSnapshot = (projectId, messageAddition) => {
-  const message = commitMessages.messageSnapshot(projectId, messageAddition);
-  return _projectCommit(projectId, message);
-};
 
 //EXISTS
 
@@ -240,7 +236,7 @@ export const projectCreate = (projectId, project, userId) => {
     .then(() => _projectWrite(projectId, project))
     //MAY keep this initial commit message, even when not auto-commiting for all atomic operations
     //since create is a different operation than just called projectWrite / projectMerge
-    //.then(() => _projectCommit(projectId, commitMessages.messageCreateProject(projectId)))
+    //.then(() => _projectCommit(projectId, userId, commitMessages.messageCreateProject(projectId)))
     .then(() => project);
 };
 
@@ -248,7 +244,7 @@ export const blockCreate = (blockId, block, projectId) => {
   return blockAssertNew(blockId, projectId)
     .then(() => _blockSetup(blockId, projectId))
     .then(() => _blockWrite(blockId, block, projectId))
-    //.then(() => _blockCommit(blockId, projectId, commitMessages.messageCreateBlock(blockId)))
+    //.then(() => _blockCommit(blockId, projectId, userId, commitMessages.messageCreateBlock(blockId)))
     .then(() => block);
 };
 
@@ -265,7 +261,7 @@ export const projectWrite = (projectId, project, userId) => {
   return projectExists(projectId)
     .catch(() => _projectSetup(projectId, userId))
     .then(() => _projectWrite(projectId, idedProject))
-    //.then(() => _projectCommit(projectId))
+    //.then(() => _projectCommit(projectId, userId))
     .then(() => idedProject);
 };
 
@@ -291,7 +287,7 @@ export const blockWrite = (blockId, block, projectId) => {
   return blockExists(blockId, projectId)
     .catch(() => _blockSetup(blockId, projectId))
     .then(() => _blockWrite(blockId, idedBlock, projectId))
-    //.then(() => _blockCommit(blockId, projectId))
+    //.then(() => _blockCommit(blockId, projectId, userId))
     .then(() => idedBlock);
 };
 
@@ -306,7 +302,7 @@ export const blockMerge = (blockId, block, projectId) => {
     });
 };
 
-export const orderWrite = (orderId, order, projectId) => {
+export const orderWrite = (orderId, order, projectId, roll) => {
   const idedOrder = Object.assign({}, order, {
     projectId,
     id: orderId,
@@ -317,7 +313,11 @@ export const orderWrite = (orderId, order, projectId) => {
   }
 
   return orderAssertNew(orderId, projectId)
-    .then(() => _orderWrite(orderId, idedOrder, projectId))
+    .then(() => _orderSetup(orderId, projectId))
+    .then(() => Promise.all([
+      _orderWrite(orderId, idedOrder, projectId),
+      _orderRollupWrite(orderId, roll, projectId),
+    ]))
     .then(() => idedOrder);
 };
 
@@ -326,18 +326,27 @@ export const orderWrite = (orderId, order, projectId) => {
 export const projectDelete = (projectId) => {
   return projectExists(projectId)
     .then(() => {
+      // DEPRECATED - ACTUALLY DELETE
       //const projectPath = filePaths.createProjectPath(projectId);
       //return directoryDelete(projectPath);
 
+      /*
+      //DEPRECATED - CHANGE PERMISSIONS FILE
       //dont want to actually delete it.. just delete the permissions (move to a new file)
       const projectPermissionsPath = filePaths.createProjectPermissionsPath(projectId);
-      const deletedOwnerPath = filePaths.createProjectPath(projectId, 'priorOwner.json');
+      const deletedOwnerPath = filePaths.createProjectPath(projectId, filePaths.permissionsDeletedFileName);
       return fileRead(projectPermissionsPath)
         .then(contents => {
-          return fileDelete(projectPermissionsPath)
+          return fileWrite(projectPermissionsPath, [])
           //but also should track somewhere who used to own it...
             .then(() => fileWrite(deletedOwnerPath, contents));
         });
+      */
+
+      //MOVE TO TRASH FOLDER
+      const projectPath = filePaths.createProjectPath(projectId);
+      const trashPath = filePaths.createTrashPath(projectId);
+      return directoryMove(projectPath, trashPath);
     })
     //no need to commit... its deleted (and permissions out of scope of data folder)
     .then(() => projectId);
@@ -347,7 +356,7 @@ export const blockDelete = (blockId, projectId) => {
   const blockPath = filePaths.createBlockPath(blockId, projectId);
   return blockExists(blockId, projectId)
     .then(() => directoryDelete(blockPath))
-    //.then(() => _projectCommit(projectId, commitMessages.messageDeleteBlock(blockId)))
+    //.then(() => _projectCommit(projectId, userId, commitMessages.messageDeleteBlock(blockId)))
     .then(() => blockId);
 };
 
@@ -357,6 +366,26 @@ export const orderDelete = (orderId, projectId) => {
   return orderId(orderId, projectId)
     .then(() => fileDelete(orderPath))
     .then(() => orderId);
+};
+
+//SAVE
+
+//e.g. autosave
+export const projectSave = (projectId, userId, messageAddition) => {
+  const message = commitMessages.messageSave(projectId, messageAddition);
+  return _projectCommit(projectId, userId, message)
+    .then(commit => {
+      //not only create the commit, but then save the project so that is has the right commit (but dont commit again)
+      //but still return the commit
+      return projectMerge(projectId, { version: commit.sha }, userId)
+        .then(() => commit);
+    });
+};
+
+//explicit save aka 'snapshot'
+export const projectSnapshot = (projectId, userId, messageAddition) => {
+  const message = commitMessages.messageSnapshot(projectId, messageAddition);
+  return _projectCommit(projectId, userId, message);
 };
 
 //sequence

@@ -2,17 +2,21 @@ import invariant from 'invariant';
 import Order from '../models/Order';
 import { getOrder, getOrders } from '../middleware/order';
 import * as ActionTypes from '../constants/ActionTypes';
-import * as projectActions from './projects';
+import * as undoActions from '../store/undo/actions';
+import { pauseAction, resumeAction } from '../store/pausableStore';
 import * as blockActions from './blocks';
-import * as projectSelectors from '../selectors/projects';
 import * as blockSelectors from '../selectors/blocks';
-import { merge, flatten } from 'lodash';
-import OrderConstructDefinition from '../schemas/OrderConstruct';
+import * as projectActions from './projects';
+import * as projectSelectors from '../selectors/projects';
+import { merge, flatten, sampleSize } from 'lodash';
+import OrderConstructSchema from '../schemas/OrderConstruct';
 
 export const orderList = (projectId) => {
   return (dispatch, getState) => {
     return getOrders(projectId)
-      .then(orders => {
+      .then(ordersData => {
+        const orders = ordersData.map(order => new Order(order));
+
         dispatch({
           type: ActionTypes.ORDER_STASH,
           orders,
@@ -25,7 +29,9 @@ export const orderList = (projectId) => {
 export const orderGet = (projectId, orderId) => {
   return (dispatch, getState) => {
     return getOrder(projectId, orderId)
-      .then(order => {
+      .then(orderData => {
+        const order = new Order(orderData);
+
         dispatch({
           type: ActionTypes.ORDER_STASH,
           order,
@@ -44,7 +50,8 @@ export const orderCreate = (projectId, constructIds = [], parameters = {}) => {
     //make sure we have specs
     invariant(constructIds.every(id => dispatch(blockSelectors.blockIsSpec(id))), 'all constructs must be specs (no empty option lists, and each leaf node must have a sequence)');
 
-    invariant(typeof parameters === 'object', 'paramters must be object');
+    invariant(typeof parameters === 'object', 'paramaters must be object');
+    invariant(!Object.keys(parameters).length || Order.validateParameters(parameters), 'parameters must pass validation if you pass them in on creation');
 
     const order = new Order({
       projectId,
@@ -57,22 +64,9 @@ export const orderCreate = (projectId, constructIds = [], parameters = {}) => {
       type: ActionTypes.ORDER_CREATE,
       order,
     });
-    return order;
-  };
-};
 
-export const orderSetParameters = (orderId, parameters = {}, shouldMerge = false) => {
-  return (dispatch, getState) => {
-    invariant(Order.validateParameters(parameters), 'parameters must pass validation');
-
-    const oldOrder = getState().orders[orderId];
-    const order = oldOrder.setParameters(parameters, shouldMerge);
-
-    dispatch({
-      type: ActionTypes.ORDER_STASH,
-      order,
-    });
-    return order;
+    //generate constructs and return
+    return dispatch(orderGenerateConstructs(order.id)); //eslint-disable-line no-use-before-define
   };
 };
 
@@ -81,16 +75,15 @@ export const orderGenerateConstructs = (orderId) => {
   return (dispatch, getState) => {
     const oldOrder = getState().orders[orderId];
     const { constructIds, parameters } = oldOrder;
-
-    //todo - validate parameters
+    invariant(Order.validateParameters(parameters), 'parameters must pass validation');
 
     //for each constructId, get construct combinations as blocks
     //flatten all combinations into a single list of combinations
-    const constructs = flatten(constructIds.map(constructId => dispatch(blockSelectors.blockGetCombinations(constructId, parameters))))
+    const allConstructs = flatten(constructIds.map(constructId => dispatch(blockSelectors.blockGetCombinations(constructId, parameters))))
     //convert each combination construct (currently blocks) into schema-conforming form
       .map(construct => {
         //each construct comforms ot OrderConstruct
-        return merge(OrderConstructDefinition.scaffold(), {
+        return merge(OrderConstructSchema.scaffold(), {
           //each construct component conforms to OrderConstructComponent
           components: construct.map(component => ({
             componentId: component.id,
@@ -98,6 +91,18 @@ export const orderGenerateConstructs = (orderId) => {
           })),
         });
       });
+
+    let constructs = allConstructs;
+    if (!parameters.onePot && parameters.permutations < allConstructs.length) {
+      if (parameters.combinatorialMethod === 'Maximum Unique Set') {
+        //this may not be the most exlucsive set.... should actually think through this (and dependent on how generated)
+        //also not exact, so trim to make sure correct length
+        constructs = sampleSize(allConstructs.filter((el, idx, arr) => idx % Math.floor(allConstructs.length / parameters.permutations) === 0), parameters.permutations);
+      } else {
+        //default to random subset
+        constructs = sampleSize(allConstructs, parameters.permutations);
+      }
+    }
 
     const order = oldOrder.setConstructs(constructs);
 
@@ -109,16 +114,54 @@ export const orderGenerateConstructs = (orderId) => {
   };
 };
 
+export const orderSetParameters = (orderId, parameters = {}, shouldMerge = false) => {
+  return (dispatch, getState) => {
+    const oldOrder = getState().orders[orderId];
+    const order = oldOrder.setParameters(parameters, shouldMerge);
+
+    //validate afterwards in case merging
+    invariant(Order.validateParameters(order.parameters), 'parameters must pass validation');
+
+    dispatch({
+      type: ActionTypes.ORDER_STASH,
+      order,
+    });
+
+    return dispatch(orderGenerateConstructs(orderId));
+  };
+};
+
+export const orderSetName = (orderId, name) => {
+  return (dispatch, getState) => {
+    const oldOrder = getState().orders[orderId];
+    const order = oldOrder.setName(name);
+
+    dispatch({
+      type: ActionTypes.ORDER_SET_NAME,
+      order,
+    });
+    return order;
+  };
+};
+
 //submit the order, foundry information is required
 //actually saves the order to the server
 export const orderSubmit = (orderId, foundry) => {
   return (dispatch, getState) => {
-    const order = getState().orders[orderId];
-    invariant(order, 'order not in the store...');
-    invariant(!order.isSubmitted(), 'Cant submit an order twice');
+    const retrievedOrder = getState().orders[orderId];
+    invariant(retrievedOrder, 'order not in the store...');
+    invariant(!retrievedOrder.isSubmitted(), 'Cant submit an order twice');
 
-    return order.submit(foundry)
-      .then(order => {
+    return retrievedOrder.submit(foundry)
+      .then(orderData => {
+        const order = new Order(orderData);
+
+        dispatch(pauseAction());
+        dispatch(undoActions.transact());
+
+        //todo - the order is also frozen on the server... maybe we should just send + save the project...
+        order.constructIds.forEach(constructId => dispatch(blockActions.blockFreeze(constructId, true)));
+
         dispatch({
           type: ActionTypes.PROJECT_SNAPSHOT,
           projectId: order.projectId,
@@ -129,6 +172,10 @@ export const orderSubmit = (orderId, foundry) => {
           type: ActionTypes.ORDER_SUBMIT,
           order,
         });
+
+        dispatch(undoActions.commit());
+        dispatch(resumeAction());
+
         return order;
       });
   };

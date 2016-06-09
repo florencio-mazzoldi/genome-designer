@@ -1,7 +1,7 @@
 import fields from './fields/index';
-import SchemaDefinition from './SchemaDefinition';
+import Schema from './SchemaClass';
 
-const BlockSourceDefinition = new SchemaDefinition({
+const blockSourceFields = {
   source: [
     fields.string(),
     `key of foundry the Order has been submitted to`,
@@ -11,6 +11,12 @@ const BlockSourceDefinition = new SchemaDefinition({
     fields.string(),
     `ID at remote foundry`,
   ],
-});
+};
 
-export default BlockSourceDefinition;
+export class BlockSourceSchemaClass extends Schema {
+  constructor(fieldDefinitions) {
+    super(Object.assign({}, blockSourceFields, fieldDefinitions));
+  }
+}
+
+export default new BlockSourceSchemaClass();

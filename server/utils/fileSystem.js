@@ -2,6 +2,7 @@ import { errorDoesNotExist, errorFileSystem } from './../utils/errors';
 import mkpath from 'mkpath';
 import rimraf from 'rimraf';
 import fs from 'fs';
+import mv from 'mv';
 
 const parser = (string) => {
   if (typeof string !== 'string') {
@@ -32,10 +33,9 @@ export const fileExists = (path) => {
   return new Promise((resolve, reject) => {
     fs.stat(path, (err, stats) => {
       if (err || !stats.isFile()) {
-        reject(errorDoesNotExist);
-      } else {
-        resolve(path);
+        return reject(errorDoesNotExist);
       }
+      resolve(path);
     });
   });
 };
@@ -45,10 +45,9 @@ export const fileRead = (path, jsonParse = true) => {
     fs.readFile(path, 'utf8', (err, result) => {
       if (err) {
         if (err.code === 'ENOENT') {
-          reject(errorDoesNotExist);
-        } else {
-          reject(err);
+          return reject(errorDoesNotExist);
         }
+        return reject(err);
       }
       const parsed = !!jsonParse ? parser(result) : result;
       resolve(parsed);
@@ -63,7 +62,7 @@ export const fileWrite = (path, contents, stringify = true) => {
       if (err) {
         console.log('Error writing file');
         console.log(err);
-        reject(err);
+        return reject(err);
       }
       resolve(path);
     });
@@ -74,7 +73,7 @@ export const fileDelete = (path) => {
   return new Promise((resolve, reject) => {
     fs.unlink(path, (err) => {
       if (err) {
-        reject(err);
+        return reject(err);
       }
       resolve(path);
     });
@@ -96,7 +95,7 @@ export const directoryExists = (path) => {
   return new Promise((resolve, reject) => {
     fs.stat(path, (err, stats) => {
       if (err || !stats.isDirectory()) {
-        reject(errorDoesNotExist);
+        return reject(errorDoesNotExist);
       }
       resolve(path);
     });
@@ -107,7 +106,7 @@ export const directoryMake = (path) => {
   return new Promise((resolve, reject) => {
     mkpath(path, (err) => {
       if (err) {
-        reject(errorFileSystem);
+        return reject(errorFileSystem);
       }
       resolve(path);
     });
@@ -118,7 +117,7 @@ export const directoryContents = (path) => {
   return new Promise((resolve, reject) => {
     fs.readdir(path, (err, contents) => {
       if (err) {
-        reject(errorFileSystem);
+        return reject(errorFileSystem);
       }
       resolve(contents);
     });
@@ -129,9 +128,20 @@ export const directoryDelete = (path) => {
   return new Promise((resolve, reject) => {
     rimraf(path, (err) => {
       if (err) {
-        reject(err);
+        return reject(err);
       }
       resolve(path);
+    });
+  });
+};
+
+export const directoryMove = (path, newPath) => {
+  return new Promise((resolve, reject) => {
+    mv(path, newPath, { mkdirp: true }, (err) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(newPath);
     });
   });
 };

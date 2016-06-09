@@ -51,7 +51,7 @@ export class ConstructViewerCanvas extends Component {
       this.props.focusConstruct(construct.id);
     } else {
       const construct = this.props.blockCreate();
-      this.props.projectAddConstruct(this.props.currentProjectId, construct.id, shouldForceProjectId);
+      this.props.projectAddConstruct(this.props.currentProjectId, construct.id, fromInventory);
       const constructViewer = ConstructViewer.getViewerForConstruct(construct.id);
       invariant(constructViewer, 'expect to find a viewer for the new construct');
       constructViewer.addItemAtInsertionPoint(payload, null, null);

@@ -19,7 +19,6 @@ export default class InventorySearch extends Component {
     return (
       <div className={'InventorySearch' + (this.props.isSearching ? ' searching' : '')}>
         <input className="InventorySearch-input"
-               autoFocus
                type="text"
                disabled={!!this.props.disabled ? true : null}
                value={this.props.searchTerm}

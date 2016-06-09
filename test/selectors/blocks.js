@@ -68,8 +68,8 @@ describe('Selectors', () => {
         expect(parent.components[0]).to.eql(leaf);
       });
 
-      it('blockGetChildrenByDepth()', () => {
-        const byDepth = blockStore.dispatch(selectors.blockGetChildrenByDepth(root));
+      it('blockGetComponentsByDepth()', () => {
+        const byDepth = blockStore.dispatch(selectors.blockGetComponentsByDepth(root));
         const keys = Object.keys(byDepth);
         expect(typeof byDepth).to.equal('object');
         expect(keys.length).to.equal(depth * siblings);

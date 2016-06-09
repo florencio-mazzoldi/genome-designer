@@ -37,7 +37,7 @@ export function parseSearchResult(result) {
 export function parseFullResult(result) {
   const { sequence } = result;
   const block = new Block(parseBasicFields(result));
-  return block.setSequence(sequence);
+  return block.setSequence(sequence, false, true);
 }
 
 export function parseResults(results) {

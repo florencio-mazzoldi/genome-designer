@@ -22,7 +22,7 @@ export default class SceneGraph2D {
     invariant(this.parent, 'expected a parent DOM element');
 
     // ensure our parent element has the scene graph class
-    this.parent.classList.add('sceneGraph');
+    //this.parent.classList.add('sceneGraph');
 
     // create our root node, which represents the view matrix and to which
     // all other nodes in the graph are ultimately attached.

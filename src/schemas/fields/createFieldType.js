@@ -20,7 +20,7 @@ import safeValidate from './safeValidate';
  * {
  *   type: {String} Field type
  *   validate: {Function}
- *   isRequired: {Boolean} is the field required
+ *   fieldRequired: {Boolean} is the field required
  *   description: {String} description of specific field
  *   typeDescription: {String} description of field type
  *   baseValidator:  {Function} base validation function, pre-parameterized
@@ -37,10 +37,10 @@ export default function createFieldType(baseFieldDefinition, type) {
     const opt = createFieldFromValidator(fieldDef, baseValidator, validationParams, false);
     opt.required = createFieldFromValidator(fieldDef, baseValidator, validationParams, true);
 
-    //catch these in case you declare a schema improperly, hard to catch otherwise
+    //catch these in case you declare a schema improperly, hard to catch otherwise (this is like React PropTypes)
     if (process.env.NODE_ENV !== 'production') {
       opt.isRequired = {
-        validate: () => { throw new Error('use required, not isRequired'); },
+        validate: () => { throw new Error('use .required, not .isRequired, or check if required with .fieldRequired'); },
       };
     }
 
@@ -54,12 +54,8 @@ function createFieldFromValidator(fieldDefinition, baseValidator, params, requir
     fieldDefinition,
     {
       params,
-      validate: wrapValidator(definedValidator, required),
-      isRequired: required,
+      validate: safeValidate.bind(null, definedValidator, required),
+      fieldRequired: required,
     }
   );
-}
-
-function wrapValidator(validator, required = false) {
-  return safeValidate.bind(null, validator, required);
 }
