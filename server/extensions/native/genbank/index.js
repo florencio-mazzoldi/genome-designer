@@ -55,6 +55,11 @@ router.get('/file/:fileId', (req, res, next) => {
 
 /***** EXPORT ******/
 
+router.param('projectId', (req, res, next, id) => {
+  Object.assign(req, { projectId: id });
+  next();
+});
+
 router.get('/export/blocks/:projectId/:blockIdList', permissionsMiddleware, (req, res, next) => {
   const { projectId, blockIdList } = req.params;
   const blockIds = blockIdList.split(',');
