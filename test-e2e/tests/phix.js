@@ -39,7 +39,7 @@ module.exports = {
       .submitForm('.genbank-import-form')
       // wait for blocks to become visible
       .waitForElementPresent('[data-nodetype="block"]', 1000, 'expected a construct viewer to appear')
-      .assert.countelements('[data-nodetype="block"]', 24, 'expected 24 blocks for phi-x')
+      .assert.countelements('[data-nodetype="block"]', 39, 'expected 39 blocks for phi-x')
       .saveScreenshot('./test-e2e/current-screenshots/phix.png')
       .end();
   }

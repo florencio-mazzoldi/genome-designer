@@ -24,10 +24,13 @@ describe('Extensions', () => {
           expect(parentBlock.metadata.name).to.equal('EU912544');
           expect(parentBlock.metadata.description).to.equal('Cloning vector pDM313, complete sequence.');
           expect(parentBlock.metadata.genbank.feature_annotations.mol_type).to.equal('other DNA');
-          expect(parentBlock.metadata.start).to.equal(0);
-          expect(parentBlock.metadata.end).to.equal(119);
+          expect(parentBlock.metadata.start).to.equal(undefined);
+          expect(parentBlock.metadata.end).to.equal(undefined);
           expect(parentBlock.metadata.genbank.annotations.gi).to.equal('198078160');
-          expect(parentBlock.metadata.genbank.feature_annotations.note).to.equal('GFP-tag for C-terminal fusion');
+
+          // We have to drop the note that comes in the file because that's where we put our stuff!
+          //expect(parentBlock.metadata.genbank.feature_annotations.note).to.equal('GFP-tag for C-terminal fusion');
+
           expect(parentBlock.metadata.genbank.annotations.data_file_division).to.equal('SYN');
           expect(parentBlock.metadata.genbank.annotations.date).to.equal('06-FEB-2009');
           expect(parentBlock.source.source).to.equal('genbank');

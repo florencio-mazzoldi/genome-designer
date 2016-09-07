@@ -94,6 +94,9 @@ router.get('/export/blocks/:projectId/:blockIdList', permissionsMiddleware, (req
         }),
       };
 
+      console.log('Exporting 1');
+      console.log(JSON.stringify({ roll: partialRoll, constructId: construct.id }));
+
       exportConstruct({ roll: partialRoll, constructId: construct.id })
         .then(fileContents => {
           res.set({
@@ -123,6 +126,10 @@ router.get('/export/:projectId/:constructId?', permissionsMiddleware, (req, res,
 
       return promise
         .then(result => {
+
+          console.log('Exporting 2');
+          console.log(JSON.stringify({ roll, constructId }));
+
           res.attachment(name);
           res.status(200).send(result);
         });
@@ -164,6 +171,10 @@ router.post('/import/convert', (req, resp, next) => {
         const payload = constructsOnly ?
         { roots, blocks: rootBlocks } :
           converted;
+
+        console.log('Converting Import');
+        console.log(JSON.stringify(payload));
+
         resp.status(200).json(payload);
       })
       .catch(err => next(err));

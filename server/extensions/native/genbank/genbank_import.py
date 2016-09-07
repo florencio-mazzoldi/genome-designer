@@ -10,9 +10,67 @@ role_type_table = {
     "promoter": "promoter",
     "terminator": "terminator",
     "gene": "cds",
+    "exon": "cds",
     "mat_peptide": "cds",
     "rep_origin": "originReplication",
     "rbs": "rbs"
+}
+
+# This table is used to convert names coming from genbank into our block name field and vice versa.
+# Each key is a genbank key. The values are a hierarchy of preference to the qualifiers to take as our name
+name_qualifier_table = {
+    "assembly_gap": ["label"],
+    "c_region": ["standard_name", "gene", "product", "label"],
+    "cds": ["standard_name", "gene", "product", "function", "label"],
+    "centromere": ["standard_name", "label"],
+    "d-loop": ["gene", "label"],
+    "d-segment": ["gene", "product", "label"],
+    "exon": ["standard_name", "gene", "product", "function", "label"],
+    "gap": ["label"],
+    "gene": ["standard_name", "gene", "product", "function", "label"],
+    "idna": ["standard_name", "gene", "function", "label"],
+    "intron": ["standard_name", "gene", "function", "label"],
+    "j_segment": ["standard_name", "gene", "product", "label"],
+    "ltr": ["standard_name", "gene", "function", "label"],
+    "mat_peptide": ["standard_name", "gene", "product", "function", "label"],
+    "misc_binding": ["gene", "function", "label"],
+    "misc_difference": ["standard_name", "gene", "label"],
+    "misc_feature": ["standard_name", "gene", "product", "function", "label"],
+    "misc_recomb": ["standard_name", "gene", "label"],
+    "misc_RNA": ["standard_name", "gene", "product", "function", "label"],
+    "misc_structure": ["standard_name", "gene", "function", "label"],
+    "misc_element": ["standard_name", "gene", "function", "label"],
+    "modified_base": ["gene", "label"],
+    "mrna": ["standard_name", "gene", "product", "function", "label"],
+    "ncrna": ["standard_name", "gene", "product", "function", "label"],
+    "n_region": ["standard_name", "gene", "product", "label"],
+    "old_sequence": ["gene", "label"],
+    "operon": ["standard_name", "function", "label"],
+    "orit": ["standard_name", "gene", "label"],
+    "polya_site": ["gene", "label"],
+    "precursor_rna": ["standard_name", "gene", "function", "label"],
+    "prim_transcript": ["standard_name", "gene", "function", "label"],
+    "primer_bind": ["standard_name", "gene", "label"],
+    "protein_bind": ["standard_name", "gene", "function", "label"],
+    "regulatory": ["standard_name", "gene", "function", "label"],
+    "repeat_region": ["standard_name", "gene", "function", "label"],
+    "rep_origin": ["standard_name", "gene", "label"],
+    "rrna": ["standard_name", "gene", "product", "function", "label"],
+    "s_region": ["standard_name", "gene", "product", "label"],
+    "sig_peptide": ["standard_name", "gene", "product", "function", "label"],
+    "source": ["label"],
+    "stem_loop": ["standard_name", "gene", "function", "label"],
+    "sts": ["standard_name", "gene", "label"],
+    "telomere": ["standard_name", "label"],
+    "tmrna": ["standard_name", "gene", "product", "function", "label"],
+    "transit_peptide": ["standard_name", "gene", "product", "function", "label"],
+    "trna": ["standard_name", "gene", "product", "function", "label"],
+    "unsure": ["gene", "label"],
+    "vregion": ["standard_name", "gene", "product", "label"],
+    "v_segment": ["standard_name", "gene", "product", "label"],
+    "variation": ["standard_name", "gene", "product", "label"],
+    "3'utr": ["standard_name", "gene", "function", "label"],
+    "5'utr": ["standard_name", "gene", "function", "label"],
 }
 
 # Creates a scaffold structure for a block
@@ -53,41 +111,46 @@ def relationship(block1, block2, full_size):
     raise Exception("This relationship between blocks can never happen")
     return "disjoint"
 
-# Takes a block and makes it a feature of another block, instead of a full block on itself.
-# This function takes all the children of the block to embed in the parent and in turn makes THEM
+# Takes a block and makes it an annotation of another block, instead of a full block on itself.
+# This function takes all the children of the block to embed in the parent and in turn makes them
 # also features of the parent.
 # Parameters: An array with all the blocks, the block to convert, the parent it should be a feature of,
 # and a list of IDs of blocks that need to be removed.
 # The function does NOT take the blocks from all_blocks
-def convert_block_to_feature(all_blocks, to_convert, parent, to_remove_list):
-    feature = { "name": "", "notes": {} }
+def convert_block_to_annotation(all_blocks, to_convert, parent, to_remove_list):
+    annotation = { "name": "", "notes": {} }
     for key, value in to_convert["metadata"].iteritems():
         if key in ["name", "description", "start", "end", "tags", "color"]:
-            feature[key] = value
+            annotation[key] = value
         elif key == "strand":
-            feature["isForward"] = (value == 1)
+            annotation["isForward"] = (value == 1)
         else:
-            feature["notes"][key] = value
+            annotation["notes"][key] = value
 
     if "role" in to_convert["rules"]:
-        feature["role"] = to_convert["rules"]["role"]
+        annotation["role"] = to_convert["rules"]["role"]
 
-    #feature["sequence"] = to_convert["sequence"]["sequence"]
+    # Start and end of the annotation are relative to the block containing them
+    annotation["start"] = to_convert["metadata"]["start"] - parent["metadata"]["start"]
+    annotation["end"] = to_convert["metadata"]["end"] - parent["metadata"]["start"]
 
     if "annotations" not in parent["sequence"]:
         parent["sequence"]["annotations"] = []
 
-    parent["sequence"]["annotations"].append(feature)
+    parent["sequence"]["annotations"].append(annotation)
     to_remove_list.append(to_convert["id"])
 
     if "annotations" in to_convert["sequence"]:
         for annotation in to_convert["sequence"]["annotations"]:
+            # We need to normalize the start and end for the annotation to the new parent start and end
+            annotation["start"] = annotation["start"] + to_convert["metadata"]["start"] - parent["metadata"]["start"]
+            annotation["end"] = annotation["end"] + to_convert["metadata"]["end"] - parent["metadata"]["end"]
             parent["sequence"]["annotations"].append(annotation)
 
     # And also convert to features all the components of the removed block, recursively
     for to_convert_child_id in to_convert["components"]:
         to_convert_child = all_blocks[to_convert_child_id]
-        convert_block_to_feature(all_blocks, to_convert_child, parent, to_remove_list)
+        convert_block_to_annotation(all_blocks, to_convert_child, parent, to_remove_list)
 
 # Takes a genbank record and creates a root block
 def create_root_block_from_genbank(gb, sequence):
@@ -123,6 +186,41 @@ def create_root_block_from_genbank(gb, sequence):
             pass
     return root_block
 
+# Create the name for the block based on preference rules in the name qualifier table
+# Defaults to the genbank type if we don't have anything else to go on
+def convert_block_name(f, block):
+    genbank_type = f.type.lower()
+    if genbank_type in name_qualifier_table:
+        preferences = name_qualifier_table[genbank_type]
+        for key in preferences:
+            if key in f.qualifiers:
+                block["metadata"]["name"] = f.qualifiers[key][0]
+                block["metadata"]["genbank"]["name_source"] = key
+                return
+    else:
+        block["metadata"]["name"] = f.type
+
+# The information for GC is stored in the notes qualifier, encoded in json. Get it back out.
+def convert_GC_info(f, block):
+    if "note" not in f.qualifiers:
+        return
+
+    try:
+        all_info = json.loads(f.qualifiers["note"][0])
+        block["metadata"]["name"] = all_info["GC"]["name"]
+        if "color" in all_info["GC"]:
+            block["metadata"]["color"] = all_info["GC"]["color"]
+        if "description" in all_info["GC"]:
+            block["metadata"]["description"] = all_info["GC"]["description"]
+        if "id" in all_info["GC"]:
+            block["id"] = all_info["GC"]["id"]
+        if "components" in all_info["GC"]:
+            block["components"] = json.loads(all_info["GC"]["components"].replace("'", "\""))
+        if "note" in all_info:
+            block["metadata"]["genbank"]["note"] = all_info["note"]
+    except:
+        pass
+
 # Takes a BioPython SeqFeature and turns it into a block
 def create_child_block_from_feature(f, all_blocks, root_block, sequence):
     qualifiers = f.qualifiers
@@ -132,41 +230,33 @@ def create_child_block_from_feature(f, all_blocks, root_block, sequence):
     role_type = role_type_table.get(f.type)
 
     if f.type.strip() == 'source':
+        old_id = root_block["id"]
+        convert_GC_info(f, root_block)
+        if root_block["id"] != old_id:
+            del all_blocks[old_id]
+            all_blocks[root_block["id"]] = root_block
+
         # 'source' refers to the root block. So, the root block aggregates information
         # from the header of the genbank file as well as the 'source' feature
         for key, value in qualifiers.iteritems():
             if "feature_annotations" not in root_block["metadata"]["genbank"]:
                 root_block["metadata"]["genbank"]["feature_annotations"] = {}
-            if key == "GC_Id":
-                del all_blocks[root_block["id"]]
-                root_block["id"] = value[0]
-                all_blocks[value[0]] = root_block
-            elif key == "GC_Children":
-                root_block["components"] = json.loads(value[0].replace("'", "\""))
-            else:
+            if key not in ["note"]:
                 root_block["metadata"]["genbank"]["feature_annotations"][key] = value[0]
     else:
         # It's a regular annotation, create a block
         block_id = str(uuid.uuid4())
         child_block = create_block_json(block_id, sequence[start:end], [])
+        convert_block_name(f, child_block)
+        convert_GC_info(f, child_block)
+
         for q in f.qualifiers:
-            if q == "name":
-                child_block["name"] = f.qualifiers[q][0]
-            elif q  == "GC_Color":
-                child_block["metadata"]["color"] = f.qualifiers[q][0]
-            elif q  == "GC_Description":
-                child_block["metadata"]["description"] = f.qualifiers[q][0]
-            elif q == "GC_Id":
-                block_id = f.qualifiers[q][0]
-                child_block["id"] = f.qualifiers[q][0]
-            elif q == "GC_Children":
-                child_block["components"] = json.loads(f.qualifiers[q][0].replace("'", "\""))
-            else:
-                try:
-                    json.dumps(qualifiers[q][0])
-                    child_block["metadata"]["genbank"][q] = f.qualifiers[q][0]
-                except:
-                    pass
+            try:
+                json.dumps(qualifiers[q][0])
+                child_block["metadata"]["genbank"][q] = f.qualifiers[q][0]
+            except:
+                pass
+
         child_block["metadata"]["start"] = start
         child_block["metadata"]["end"] = end - 1
         child_block["sequence"]["length"] = len(child_block["sequence"]["sequence"])
@@ -176,20 +266,6 @@ def create_child_block_from_feature(f, all_blocks, root_block, sequence):
         if role_type:
             child_block["rules"]["role"] = role_type
 
-        # Note the rules for the name of the block
-        # The name is the string that appears on the UI when visualizing blocks.
-        if "name" not in child_block:
-            if "label" in f.qualifiers:
-                child_block["metadata"]["name"] = f.qualifiers["label"][0]
-            elif "product" in f.qualifiers:
-                child_block["metadata"]["name"] = f.qualifiers["product"][0]
-            elif role_type == 'cds' and "gene" in f.qualifiers:
-                child_block["metadata"]["name"] = f.qualifiers["gene"][0]
-            else:
-                if role_type:
-                    child_block["metadata"]["name"] = role_type
-                elif f.type:
-                    child_block["metadata"]["name"] = f.type
 
         all_blocks[block_id] = child_block
 
@@ -254,24 +330,24 @@ def build_block_hierarchy(all_blocks, root_block, sequence):
                     other_block["components"].insert(i, block["id"])
                 else:
                     # Partial match, make this block just an annotation of the parent
-                    convert_block_to_feature(all_blocks, block, other_block, to_remove)
+                    convert_block_to_annotation(all_blocks, block, other_block, to_remove)
                 inserted = True
                 break
             elif rel == "equal":
                 # If the blocks overlap, make the one with less amount of children the feature of
                 # the other one
                 if len(block["components"]) <= len(other_block["components"]):
-                    convert_block_to_feature(all_blocks, block, other_block, to_remove)
+                    convert_block_to_annotation(all_blocks, block, other_block, to_remove)
                     inserted = True
                     break
                 else:
-                    convert_block_to_feature(all_blocks, other_block, block, to_remove)
+                    convert_block_to_annotation(all_blocks, other_block, block, to_remove)
 
         if not inserted:  # This should never happen because the block should be at least child of root!
             if block["sequence"]["length"] == root_block["sequence"]["length"]:
-                convert_block_to_feature(all_blocks, block, root_block, to_remove)
+                convert_block_to_annotation(all_blocks, block, root_block, to_remove)
             else:
-                print('Error processing block ' + block["metadata"]["name"] + "[" + str(block["metadata"]["start"]) + ":" + str(block["metadata"]["end"]) + "]")
+                print('Error processing block ' + str(block["metadata"].get("name")) + "[" + str(block["metadata"]["start"]) + ":" + str(block["metadata"]["end"]) + "]")
 
     # Delete all the blocks that were converted to features
     for removing in to_remove:
@@ -284,6 +360,7 @@ def create_filler_blocks_for_holes(all_blocks, sequence):
     # Go through all the blocks
     for block in current_block_structures:
         current_position = block["metadata"]["start"]
+        child = None
         i = 0
         # For each block go through all the children
         for i, child_id in enumerate(block["components"]):
@@ -303,7 +380,7 @@ def create_filler_blocks_for_holes(all_blocks, sequence):
                 block["components"].insert(i, block_id)
             current_position = child["metadata"]["end"] + 1
         # If the last block doesn't end at the end of the parent, create a filler too!
-        if i > 0 and current_position < block["metadata"]["end"]:
+        if child and current_position < block["metadata"]["end"]:
             block_id = str(uuid.uuid4())
             filler_block = create_block_json(block_id, sequence[current_position:block["metadata"]["end"] + 1], [])
             filler_block["metadata"]["initialBases"] = filler_block["sequence"]["sequence"][:3] + "..."
@@ -320,6 +397,16 @@ def remove_sequence_from_parents(all_blocks):
         if len(block["components"]) > 0:
             block["sequence"]["sequence"] = ""
             block["sequence"]["length"] = 0
+
+# Once we have arranged all blocks, there is no need to keep the start and end values for each block. We do keep
+# the start and end of annotations
+def remove_start_and_end_of_blocks(all_blocks):
+    for block in all_blocks.values():
+        try:
+            del block["metadata"]["start"]
+            del block["metadata"]["end"]
+        except KeyError:
+            pass
 
 # Takes a BioPython SeqRecord and converts it to our blocks structures,
 # with temporary ids
@@ -339,6 +426,7 @@ def convert_genbank_record_to_blocks(gb):
     create_filler_blocks_for_holes(all_blocks, sequence)
 
     remove_sequence_from_parents(all_blocks)
+    remove_start_and_end_of_blocks(all_blocks)
 
     return { "root": all_blocks[root_block["id"]], "blocks": all_blocks }
 

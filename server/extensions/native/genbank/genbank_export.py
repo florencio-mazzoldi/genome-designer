@@ -1,12 +1,47 @@
 from Bio import Seq
 from Bio import SeqIO
 from Bio import SeqFeature
+from genbank_import import name_qualifier_table
 import json
 
 def is_filler(block):
     # It's a filler block when it has no name, it has a sequence, and no color
     return block["metadata"]["name"] == "" and ("sequence" in block and "sequence" in block["sequence"] and block["sequence"]["sequence"] != "") \
            and ("initialBases" in block["metadata"] and block["metadata"]["initialBases"] != "")
+
+def convert_block_name(sf, block):
+    # The name of the feature should go in the appropriate place in genbank
+    if "name" in block["metadata"] and block["metadata"]["name"] != "":
+        if "genbank" in block["metadata"] and "name_source" in block["metadata"]["genbank"]:
+            sf.qualifiers[block["metadata"]["genbank"]["name_source"]] = block["metadata"]["name"]
+        else:
+            genbank_type = sf.type.lower()
+            if genbank_type in name_qualifier_table and len(name_qualifier_table[genbank_type]) != 0:
+                sf.qualifiers[name_qualifier_table[genbank_type][0]] = block["metadata"]["name"]
+            # Unfortunately if the name doesn't fit in genbank we have to drop it!
+
+def add_GC_info(sf, block, allblocks):
+    encoded_data = { "GC": {} }
+
+    encoded_data["GC"]["name"] = block["metadata"]["name"]
+
+    # The color
+    if "color" in block["metadata"] and block["metadata"]["color"] != "":
+        encoded_data["GC"]["color"] = block["metadata"]["color"]
+
+    # The description in the GD_Description qualifier
+    if "description" in block["metadata"] and block["metadata"]["description"] != "":
+        encoded_data["GC"]["description"] = block["metadata"]["description"]
+
+    encoded_data["GC"]["id"] = block["id"]
+
+    if len(block["components"]) > 0:
+        encoded_data["GC"]["children"] = get_children_ids(block, allblocks)
+
+    if "genbank" in block["metadata"] and "note" in block["metadata"]["genbank"]:
+        encoded_data["note"] = block["metadata"]["genbank"]["note"]
+
+    sf.qualifiers["note"] = json.dumps(encoded_data).replace("\"", "'").replace("\n", " ")
 
 def add_features(block, allblocks, gb, start):
     # Disregard fillers... don't create features for them
@@ -21,36 +56,24 @@ def add_features(block, allblocks, gb, start):
     elif "rules" in block and "role" in block["rules"] and block["rules"]["role"] is not None and block["rules"]["role"] != "":
         sf.type = block["rules"]["role"]
     else:
-        sf.type = "unknown"
+        sf.type = "misc_feature"
 
     # Set up the location of the feature
     feature_strand = 1
     if "strand" in block["metadata"]:
         feature_strand = block["metadata"]["strand"]
 
-    # The name of the feature should go in the label
-    if "name" in block["metadata"] and block["metadata"]["name"] != "":
-        sf.qualifiers["label"] = block["metadata"]["name"]
-
-    # The color
-    if "color" in block["metadata"] and block["metadata"]["color"] != "":
-        sf.qualifiers["GC_Color"] = block["metadata"]["color"]
-
-    # The description in the GD_Description qualifier
-    if "description" in block["metadata"] and block["metadata"]["description"] != "":
-        sf.qualifiers["GC_Description"] = block["metadata"]["description"]
-
-    sf.qualifiers["GC_Id"] = block["id"]
-
-    if len(block["components"]) > 0:
-        sf.qualifiers["GC_Children"] = json.dumps(get_children_ids(block, allblocks)).replace("\"", "'")
-
     # And copy all the other qualifiers that came originally from genbank
     if "genbank" in block["metadata"]:
         for annot_key, annot_value in block["metadata"]["genbank"].iteritems():
-            sf.qualifiers[annot_key] = annot_value
+            if annot_key not in ["name_source", "note"]:
+                sf.qualifiers[annot_key] = annot_value
 
-    convert_annotations(block, gb)
+    convert_block_name(sf, block)
+
+    add_GC_info(sf, block, allblocks)
+
+    convert_annotations(block, gb, start)
 
     # Add my children as features
     child_start = start
@@ -71,34 +94,41 @@ def add_features(block, allblocks, gb, start):
 
     return end
 
-def convert_annotations(block, gb):
+# Parameters: the block to take annotations from,
+# the biopython SeqRecord object to add the annotations to,
+# the start position of the current block
+def convert_annotations(block, gb, start):
     # Add My annotations as features
     for annotation in block["sequence"]["annotations"]:
         gb_annot = SeqFeature.SeqFeature()
-        annotation_type = "unknown"
+        annotation_type = "misc_feature"
 
         if "role" in annotation and annotation["role"] != "":
             annotation_type = annotation["role"]
 
         for key, value in annotation.iteritems():
-            if key not in ["start", "end", "notes", "strand", "color", "role"]:
+            if key not in ["start", "end", "notes", "strand", "color", "role", "isForward"]:
                 gb_annot.qualifiers[key] = value
-            elif key == "color":
-                gb_annot.qualifiers["GC_Color"] = value
-            elif key == "notes":
-                for notes_key, notes_value in annotation["notes"].iteritems():
-                    if notes_key == "genbank":
-                        for gb_key, gb_value in notes_value.iteritems():
-                            if gb_key not in ["type"]:
-                                gb_annot.qualifiers[gb_key] = gb_value
-                            elif gb_key == "type":
-                                annotation_type = gb_value
+            elif key == "notes" and "genbank" in annotation["notes"]:
+                for gb_key, gb_value in annotation["notes"]["genbank"].iteritems():
+                    if gb_key not in ["type", "note"]:
+                        gb_annot.qualifiers[gb_key] = gb_value
+                    elif gb_key == "type":
+                        annotation_type = gb_value
+
+        gc_info = { "GC": { "name": annotation["name"] } }
+        if "color" in annotation:
+            gc_info["GC"]["color"] = annotation["color"]
+        if "notes" in annotation and "genbank" in annotation["notes"] and "note" in annotation["notes"]["genbank"]:
+            gc_info["note"] = annotation["notes"]["genbank"]["note"]
+        gb_annot.qualifiers["note"] = json.dumps(gc_info).replace("\"", "'")
 
         if "start" in annotation:
             strand = 1
-            if "strand" in annotation and annotation["strand"] == -1:
+            if "isForward" in annotation and annotation["isForward"] == -1:
                 strand = -1
-            gb_annot.location = SeqFeature.FeatureLocation(annotation["start"], annotation["end"]+1, strand)
+            # Remember: annotations start and end are relative to the block
+            gb_annot.location = SeqFeature.FeatureLocation(annotation["start"] + start, annotation["end"] + start + 1, strand)
 
         gb_annot.type = annotation_type
 
@@ -154,8 +184,8 @@ def project_to_genbank(filename, project, allblocks):
         sf = SeqFeature.SeqFeature()
         sf.type = "source"
         sf.location = SeqFeature.FeatureLocation(0, len(seq_obj.seq))
-        sf.qualifiers["GC_Id"] = block["id"]
-        sf.qualifiers["GC_Children"] = json.dumps(get_children_ids(block, allblocks)).replace("\"", "'")
+
+        add_GC_info(sf, block, allblocks)
 
         if "genbank" in block["metadata"]:
             # Set up all the annotations in the genbank record. These came originally from genbank.
@@ -192,7 +222,7 @@ def project_to_genbank(filename, project, allblocks):
         else:
             seq_obj.name = "GC_DNA"
 
-        convert_annotations(block, seq_obj)
+        convert_annotations(block, seq_obj, 0)
 
         # Add a block for each of the features, recursively
         start = 0
