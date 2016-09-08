@@ -267,7 +267,7 @@ export default class Block extends Instance {
    * @returns {string} Block rule
    */
   getRole(userFriendly = true) {
-    const role = this.rules.role;
+    const role = this.rules.role || this.metadata.role;
     const friendly = symbolMap[role];
 
     return (userFriendly === true && friendly) ?
@@ -410,6 +410,16 @@ export default class Block extends Instance {
    */
   setColor(newColor = color()) {
     return this.mutate('metadata.color', newColor);
+  }
+
+  /**
+   * Get Block's color
+   * @method getColor
+   * @memberOf Block
+   * @returns {string} Hex Color value
+   */
+  getColor() {
+    return this.metadata.color;
   }
 
   /************
@@ -595,23 +605,45 @@ export default class Block extends Instance {
   }
 
   /**
+   * Get the blocks sequence length, respecting trim
+   * @method getSequenceLength
+   * @memberOf Block
+   * @param {boolean} [ignoreTrim=false]
+   */
+  getSequenceLength(ignoreTrim = false) {
+    const { length, trim } = this.sequence;
+    if (!Array.isArray(trim) || !!ignoreTrim) {
+      return length;
+    }
+    return length - trim[0] - trim[1];
+  }
+
+  /**
    * Retrieve the sequence of the block. Retrieves the sequence from the server, since it is stored in a separate file.
    * @method getSequence
    * @memberOf Block
    * @returns {Promise} Promise which resolves with the sequence value, or (resolves) with null if no sequence is associated.
    */
-  getSequence() {
-    const { md5, download, url } = this.sequence;
+  getSequence(ignoreTrim = false) {
+    const { md5, download, url, trim } = this.sequence;
+    let promise;
 
     if (typeof download === 'function') {
-      return Promise.resolve(download());
+      promise = Promise.resolve(download());
     } else if (md5) {
-      return getSequence(md5);
+      promise = getSequence(md5);
     } else if (url) {
-      return fetch(url).then(resp => resp.text());
+      promise = fetch(url).then(resp => resp.text());
+    } else {
+      promise = Promise.resolve(null);
     }
 
-    return Promise.resolve(null);
+    return promise.then(seq => {
+      if (typeof seq === 'string' && Array.isArray(trim) && ignoreTrim !== true) {
+        return seq.substring(trim[0], seq.length - trim[1]);
+      }
+      return seq;
+    });
   }
 
   //todo - ability to set source
@@ -647,6 +679,7 @@ export default class Block extends Instance {
           length: sequenceLength,
           initialBases: '' + sequence.substr(0, 6),
           download: null,
+          trim: null,
         };
 
         return this.merge({
@@ -654,6 +687,26 @@ export default class Block extends Instance {
           source: updatedSource,
         });
       });
+  }
+
+  /**
+   * Set trim (number of bases to skip) on the sequence
+   * @method setSequenceTrim
+   * @memberOf Block
+   * @param {number} start
+   * @param {number} end
+   */
+  setSequenceTrim(start = 0, end = 0) {
+    invariant(this.hasSequence(), 'must have a sequence to set trim');
+    invariant(Number.isInteger(start) && start >= 0, 'must pass 0 or positive integer for start');
+    invariant(Number.isInteger(end) && end >= 0, 'must pass 0 or positive integer for end');
+    invariant((start <= (this.sequence.length - 1)) && (end <= (this.sequence.length - 1)), 'start and end must be less than length of sequence');
+
+    return this.merge({
+      sequence: {
+        trim: [start, end],
+      },
+    });
   }
 
   //todo - annotations are essentially keyed using name, since we got rid of ID. is that ok?

@@ -20,7 +20,6 @@
   font-size: 12px;
   cursor: default;
   border-radius: 3px;
-  /* transition: background-color var(--timing-fast) ease-out; */
 
   &.hasImage {
     white-space: nowrap;
@@ -37,7 +36,6 @@
     flex-wrap: nowrap;
     justify-content: flex-start;
     align-items: center;
-    cursor: pointer;
     padding: 2px 5px;
     margin: 1px 0;
     width: 100%;
@@ -65,7 +63,9 @@
     padding-right: 0.5em;
   }
 
+  &.loading,
   &.selected {
+    transition: background-color var(--timing-extrafast) ease-out;
     background-color: var(--listItem-background);
 
     .InventoryItem-text {
@@ -73,7 +73,21 @@
     }
   }
 
-  &:hover{
+  &.loading {
+    animation: softpulse 1s infinite;
+  }
+
+  &.loadError {
+    cursor: not-allowed;
+
+    .InventoryItem-text {
+      color: #ff0000;
+    }
+  }
+
+  &:hover {
+    transition: 0s;
     background-color: var(--listItem-backgroundHover);
+    animation: none;
   }
 }

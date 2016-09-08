@@ -59,6 +59,7 @@ router.post('/import/:projectId?', jsonParser, (req, resp, next) => {
   const noSave = req.query.hasOwnProperty('noSave') || projectId === 'convert';
   const returnRoll = projectId === 'convert';
 
+  let importedName;
   let csvFile;
   // save incoming file then read back the string data.
   // If these files turn out to be large we could modify the import functions to take
@@ -75,6 +76,9 @@ router.post('/import/:projectId?', jsonParser, (req, resp, next) => {
   })
     .then(files => {
       const tempPath = (files && files.data) ? files.data.path : null;
+      importedName = files.data.name;
+
+      //todo - ensure theyve passed a CSV - look at files.data.type === 'text/csv'
 
       if (!tempPath) {
         return Promise.reject('no file provided');
@@ -113,8 +117,28 @@ router.post('/import/:projectId?', jsonParser, (req, resp, next) => {
         return Promise.reject('no valid blocks');
       }
 
+      //wrap all the blocks in a construct (so they dont appear as top-level constructs), add constructs to the blocks Object
+
+      const allBlocks = blockIds.reduce((acc, blockId) => {
+        const row = blocks[blockId].metadata.csv_row;
+        const name = importedName + (row > 0 ? ' - row ' + row : '');
+        const construct = Block.classless({
+          components: [blockId],
+          metadata: {
+            name,
+          },
+        });
+        return Object.assign(acc, { [construct.id]: construct });
+      }, blocks);
+
+      return allBlocks;
+    })
+    .then(blocks => {
+      const componentIds = Object.keys(blocks).filter(blockId => blocks[blockId].components.length > 0);
+
+      //if no project ID, we are adding to a new project, no need to merge
       if (!projectId) {
-        const project = Project.classless({ components: blockIds });
+        const project = Project.classless({ components: componentIds });
         return Promise.resolve({
           project,
           blocks,
@@ -123,7 +147,7 @@ router.post('/import/:projectId?', jsonParser, (req, resp, next) => {
 
       return rollup.getProjectRollup(projectId)
         .then((existingRoll) => {
-          existingRoll.project.components = existingRoll.project.components.concat(blockIds);
+          existingRoll.project.components = existingRoll.project.components.concat(componentIds);
           Object.assign(existingRoll.blocks, blocks);
           return existingRoll;
         });
@@ -144,7 +168,7 @@ router.post('/import/:projectId?', jsonParser, (req, resp, next) => {
     .then((roll) => {
       const response = returnRoll ?
         roll :
-        { ProjectId: roll.project.id };
+      { ProjectId: roll.project.id };
 
       resp.status(200).json(response);
     })

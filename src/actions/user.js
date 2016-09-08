@@ -38,12 +38,22 @@ const _userSetUser = (user) => ({
   user,
 });
 
+/**
+ * identify user to heap analytics
+ */
+const identifyUser = (email) => {
+  if (window && window.heap && window.heap.identify) {
+    window.heap.identify(email);
+  }
+}
+
 //Promise
 export const userLogin = (email, password) => {
   return (dispatch, getState) => {
     return login(email, password)
       .then(user => {
         const mappedUser = mapUserFromServer(user);
+        identifyUser(mappedUser.email);
         const setUserPayload = _userSetUser(mappedUser);
         dispatch(setUserPayload);
         return mappedUser;
@@ -70,6 +80,7 @@ export const userRegister = (user) => {
     return register(user)
       .then(user => {
         const mappedUser = mapUserFromServer(user);
+        identifyUser(mappedUser.email);
         const setUserPayload = _userSetUser(mappedUser);
         dispatch(setUserPayload);
         return user;
@@ -82,6 +93,7 @@ export const userUpdate = (user) => {
     return updateAccount(user)
       .then(user => {
         const mappedUser = mapUserFromServer(user);
+        identifyUser(mappedUser.email);
         const setUserPayload = _userSetUser(mappedUser);
         dispatch(setUserPayload);
         return user;

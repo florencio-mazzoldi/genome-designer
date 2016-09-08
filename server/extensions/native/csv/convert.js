@@ -29,6 +29,7 @@ const mapPartFields = (importedObject) => {
     role = null,
     sequence = null,
     color,
+    index = 0,
     ...rest,
   } = importedObject;
 
@@ -40,6 +41,7 @@ const mapPartFields = (importedObject) => {
       name,
       description,
       color,
+      csv_row: index,
     },
     rules: {
       role,
@@ -66,7 +68,6 @@ export function convertCsv(csvContents, fileName, fileUrl) {
     //remove top rows
     .then(lines => {
       //todo - ensure these are fields, beyond just making sure a required field is present
-      //todo - should be lower case in the doc
       fields = lines.shift(1);
       console.log('csvjs import - using fields: ' + fields.join(', '));
       if (!fields.some(fieldName => requiredFields.indexOf(fieldName) >= 0)) {
@@ -78,10 +79,17 @@ export function convertCsv(csvContents, fileName, fileUrl) {
     .then(lines => lines.filter(line => line.some(field => !!field)))
     //make object with appropriate keys
     .then(lines => lines.map(line => zip(fields, line)))
+    //assign the index before we do more filtering
+    //hack - assumes that none were filtered
+    .then(parts => parts.map((part, index) => Object.assign(part, {
+      index: `${index + 1}`,
+    })))
     //remove parts which do not have any required fields
     .then(parts => parts.filter(part => requiredFields.some(field => !!part[field])))
-    //assign role
-    .then(parts => parts.map(part => Object.assign(part, { role: roleMassageMap[part.role] || part.role || null })))
+    //assign role + index
+    .then(parts => parts.map((part, index) => Object.assign(part, {
+      role: roleMassageMap[part.role] || part.role || null,
+    })))
     //map fields to block fields
     .then(parts => parts.map(part => mapPartFields(part)))
     //assign the source

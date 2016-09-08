@@ -14,6 +14,7 @@
  limitations under the License.
  */
 import fields from './fields/index';
+import * as validators from './fields/validators';
 import Schema from './SchemaClass';
 import AnnotationSchema from './Annotation';
 
@@ -55,6 +56,12 @@ const fieldDefs = {
   download: [
     fields.func(),
     `Function which returns the sequence, taking precedence over md5 download. Note this is not persisted, and only exists in the scope of the user's session, so might be used e.g. for a inspecting a detached block not yet in a project`,
+    { avoidScaffold: true },
+  ],
+
+  trim: [
+    fields.arrayOf(validators.number()),
+    `Specify number of bases to skip at start and end of the sequence: [start, end]`,
     { avoidScaffold: true },
   ],
 };

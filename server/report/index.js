@@ -40,24 +40,49 @@ router.route('/githubOAuth')
     //todo
   });
 
-router.post('/githubIssue', jsonParser, (req, res, next) => {
-  const payload = JSON.stringify(req.body);
-  const githubUrl = `${githubIssuesApiUrl}?access_token=${process.env.GITHUB_ACCESS_TOKEN}`;
-
-  rejectingFetch(githubUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/vnd.github.v3.text+json',
-    },
-    body: payload,
+router.route('/githubIssue/:id?')
+  .all((req, res, next) => {
+    if (!process.env.GITHUB_ACCESS_TOKEN) {
+      return next('must set GITHUB_ACCESS_TOKEN for GitHub API');
+    }
+    next();
   })
-    .catch(resp => {
-      res.status(resp.status);
-      return resp;
+  //route for testing - only should test when env var is set
+  .get((req, res, next) => {
+    const githubUrl = `${githubIssuesApiUrl}/${req.params.id}`;
+
+    rejectingFetch(githubUrl, {
+      headers: {
+        Authorization: `token ${process.env.GITHUB_ACCESS_TOKEN}`,
+        Accept: 'application/vnd.github.v3.text+json',
+      },
     })
-    .then(resp => resp.json())
-    .then(json => res.json(json));
-});
+      .catch(resp => {
+        res.status(resp.status);
+        return resp;
+      })
+      .then(resp => resp.json())
+      .then(json => res.json(json));
+  })
+  .post(jsonParser, (req, res, next) => {
+    const payload = JSON.stringify(req.body);
+    const githubUrl = githubIssuesApiUrl;
+
+    rejectingFetch(githubUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `token ${process.env.GITHUB_ACCESS_TOKEN}`,
+        Accept: 'application/vnd.github.v3.text+json',
+      },
+      body: payload,
+    })
+      .catch(resp => {
+        res.status(resp.status);
+        return resp;
+      })
+      .then(resp => resp.json())
+      .then(json => res.json(json));
+  });
 
 export default router;

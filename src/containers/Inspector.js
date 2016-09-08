@@ -34,6 +34,8 @@ export class Inspector extends Component {
     forceIsConstruct: PropTypes.bool.isRequired,
     type: PropTypes.string.isRequired,
     focused: PropTypes.any.isRequired,
+    orders: PropTypes.array.isRequired,
+    overrides: PropTypes.object.isRequired,
   };
 
   toggle = (forceVal) => {
@@ -41,7 +43,7 @@ export class Inspector extends Component {
   };
 
   render() {
-    const { showingGrunt, isVisible, focused, orders, type, readOnly, forceIsConstruct } = this.props;
+    const { showingGrunt, isVisible, focused, orders, overrides, type, readOnly, forceIsConstruct } = this.props;
 
     // inspect instances, or construct if no instance or project if no construct or instances
     let inspect;
@@ -57,6 +59,7 @@ export class Inspector extends Component {
     case 'construct':
     default:
       inspect = (<InspectorBlock instances={focused}
+                                 overrides={overrides}
                                  orders={orders}
                                  readOnly={readOnly}
                                  forceIsConstruct={forceIsConstruct}/>);
@@ -98,6 +101,19 @@ function mapStateToProps(state, props) {
   //delegate handling of focus state handling to selector
   const { type, readOnly, focused } = _getFocused(state, true, props.projectId);
 
+  //handle overrides if a list option
+  const overrides = {};
+  if (type === 'option') {
+    const blockId = state.focus.blockIds[0];
+    const block = state.blocks[blockId];
+    if (!!block) {
+      Object.assign(overrides, {
+        color: block.getColor(),
+        role: block.getRole(false),
+      });
+    }
+  }
+
   const forceIsConstruct = (level === 'construct') ||
     blockIds.some(blockId => currentProject.components.indexOf(blockId) >= 0);
 
@@ -114,6 +130,7 @@ function mapStateToProps(state, props) {
     focused,
     forceIsConstruct,
     orders,
+    overrides,
   };
 }
 

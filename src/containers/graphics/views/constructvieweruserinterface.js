@@ -255,6 +255,9 @@ export default class ConstructViewerUserInterface extends UserInterface {
    * Might signal the end of fence drag or just a normal click
    */
   mouseUp(evt, point) {
+    // don't let it propagate to the canvas, it will register as a click and cause
+    // an unfocus operation to undo what we are about to do.
+    evt.stopPropagation();
     if (this.fence) {
       // select blocks within the fence then dispose it
       this.selectNodesByRectangle(this.fence.getBox());

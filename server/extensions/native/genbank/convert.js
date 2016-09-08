@@ -130,13 +130,13 @@ const handleProject = (outputProject, rootBlockIds) => {
   //just get fields we want using destructuring and use them to merge
   const { name, description } = outputProject;
 
-  return Project.classless(merge({}, ProjectSchema.scaffold(), {
+  return Project.classless({
     components: rootBlockIds,
     metadata: {
       name,
       description,
     },
-  }));
+  });
 };
 
 // Reads a genbank file and returns a project structure and all the blocks

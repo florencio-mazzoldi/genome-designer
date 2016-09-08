@@ -7,3 +7,9 @@
   from { background-position: 0 0; }
   to { background-position: 200% 0; }
 }
+
+@keyframes softpulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; }
+}

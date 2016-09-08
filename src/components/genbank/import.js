@@ -151,7 +151,7 @@ class ImportGenBankModal extends Component {
                 className="dropzone"
                 activeClassName="dropzone-hot"
                 multiple={false}>
-                <div className="dropzone-text">Drop Files Here</div>
+                <div className="dropzone-text">Drop File Here</div>
               </Dropzone>
               {this.showFiles()}
               {this.state.error ? <div className="error visible">{this.state.error}</div> : null}

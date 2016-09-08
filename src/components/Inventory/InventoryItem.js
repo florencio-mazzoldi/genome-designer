@@ -67,6 +67,13 @@ export class InventoryItem extends Component {
     dataAttribute: '',
   };
 
+  state = {
+    loading: false,
+    loaded: null,
+    loadError: false,
+    skipFocus: false,
+  };
+
   componentDidMount() {
     this.mouseTrap = new MouseTrap({
       element: this.itemElement,
@@ -79,6 +86,10 @@ export class InventoryItem extends Component {
     this.mouseTrap.cancelDrag();
     // get global point as starting point for drag
     const globalPoint = this.mouseTrap.mouseToGlobal(event);
+
+    if (this.state.loadError) {
+      return;
+    }
 
     //onDragStart handler
     if (this.props.onDragStart) {
@@ -130,21 +141,56 @@ export class InventoryItem extends Component {
   handleClick = () => {
     const { item, onSelect, inventoryType, inspectorToggleVisibility, focusForceBlocks, focusGsl, focusRole } = this.props;
 
-    const promise = (!!onSelect) ? onSelect(item) : Promise.resolve(item);
+    this.setState({ skipFocus: false });
+
+    if (this.state.loading) {
+      return;
+    }
+
+    //may want to clear prior focus when loading starts, currently do not
+
+    const promise = (!!onSelect && !this.state.loaded) ? onSelect(item) : Promise.resolve(this.state.loaded || item);
+
+    //handler, so if click somewhere else, shouldnt focus selection on resolve
+    const onClickHandler = (evt) => {
+      if (!this.itemElement.contains(evt.target)) {
+        this.setState({ skipFocus: true });
+      }
+      document.removeEventListener('click', onClickHandler);
+    };
+
+    //if onselect, has a promise, may take a while, show loading status
+    if (onSelect) {
+      this.setState({ loading: true });
+      document.addEventListener('click', onClickHandler);
+    }
 
     promise.then(result => {
-      //todo - this shouldnt be responsibility of this generic component. move into specific components.
-      if (inventoryType === blockDragType) {
-        focusForceBlocks([result]);
-      } else if (inventoryType === roleDragType) {
-        focusRole(result.id);
+      if (!this.state.skipFocus) {
+        //todo - this shouldnt be responsibility of this generic component. move into specific components.
+        if (inventoryType === blockDragType) {
+          focusForceBlocks([result]);
+        } else if (inventoryType === roleDragType) {
+          focusRole(result.id);
+        }
+        inspectorToggleVisibility(true);
       }
-      inspectorToggleVisibility(true);
-    });
+      if (onSelect) {
+        this.setState({ loaded: result });
+      }
+    })
+      .catch(err => {
+        console.log(err);
+        if (onSelect) {
+          this.setState({ loadError: true });
+        }
+      })
+      .then(() => this.setState({ loading: false, skipFocus: false }));
   };
 
   render() {
     const { item, itemDetail, image, svg, svgProps, defaultName, inventoryType, dataAttribute, forceBlocks, focusBlocks } = this.props;
+    const { loading, loadError, skipFocus } = this.state;
     const isSelected = forceBlocks.some(block => item.id === block.id) || focusBlocks.some(focusId => item.id === focusId);
 
     const hasSequence = item.sequence && item.sequence.length > 0;
@@ -154,14 +200,16 @@ export class InventoryItem extends Component {
     return (
       <div className={'InventoryItem' +
       ((!!image || !!svg) ? ' hasImage' : '') +
+      ((!!loading && !skipFocus) ? ' loading' : '') +
+      ((!!loadError) ? ' loadError' : '') +
       (!!isSelected ? ' selected' : '')}
            ref={(el) => this.itemElement = el}
            data-inventory={dataAttr}>
         <a className="InventoryItem-item"
            onClick={this.handleClick}>
-          {image && (<span className="InventoryItem-image" style={{backgroundImage: `url(${image})`}} />)}
+          {image && (<span className="InventoryItem-image" style={{ backgroundImage: `url(${image})` }}/>)}
           {(svg && !image) ? <RoleSvg symbolName={svg} color="white" {...svgProps} styles={{}}/> : null}
-          <span className="InventoryItem-text" title={itemName}>
+          <span className="InventoryItem-text" title={loadError ? 'Error Loading Item' : itemName}>
             {itemName}
           </span>
           {itemDetail && <span className="InventoryItem-detail">{itemDetail}</span>}

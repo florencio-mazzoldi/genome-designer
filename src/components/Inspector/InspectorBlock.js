@@ -37,6 +37,10 @@ export class InspectorBlock extends Component {
         return new Error('Must pass valid instances of blocks to the inspector, got ' + JSON.stringify(instance));
       }
     }).isRequired,
+    overrides: PropTypes.shape({
+      color: PropTypes.string,
+      role: PropTypes.string,
+    }).isRequired,
     orders: PropTypes.array.isRequired,
     blockSetColor: PropTypes.func.isRequired,
     blockSetRole: PropTypes.func.isRequired,
@@ -101,8 +105,12 @@ export class InspectorBlock extends Component {
    * color of selected instance or null if multiple blocks selected
    */
   currentColor() {
-    if (this.props.instances.length === 1) {
-      return this.props.instances[0].metadata.color;
+    const { instances, overrides } = this.props;
+    if (!!overrides.color) {
+      return overrides.color;
+    }
+    if (instances.length === 1) {
+      return instances[0].metadata.color;
     }
     return null;
   }
@@ -111,8 +119,12 @@ export class InspectorBlock extends Component {
    * role symbol of selected instance or null if multiple blocks selected
    */
   currentRoleSymbol() {
-    if (this.props.instances.length === 1) {
-      return this.props.instances[0].rules.role;
+    const { instances, overrides } = this.props;
+    if (!!overrides.role) {
+      return overrides.role;
+    }
+    if (instances.length === 1) {
+      return instances[0].getRole(false);
     }
     //false is specially handled in symbol picker as blank, and is different than null (no symbol)
     return false;

@@ -92,7 +92,7 @@ describe('Model', () => {
 
     describe('Sequence', () => {
       const withoutSequence = new Block();
-      const oneSequence = 'acgtacgt';
+      const oneSequence = 'acgacgatcgtacgatcgtacgactacgt';
       const twoSequence = 'aacccgggggttttt';
       const invalidSequence = 'qwertyuiop';
 
@@ -100,7 +100,13 @@ describe('Model', () => {
       const twoMd5 = md5(twoSequence);
 
       const sequenceFilePath = filePaths.createSequencePath(oneMd5);
-      const withSequence = withoutSequence.mutate('sequence.md5', oneMd5);
+      const withSequence = withoutSequence.merge({
+        sequence: {
+          md5: oneMd5,
+          length: oneSequence.length,
+          initialBases: oneSequence.substr(0, 6),
+        },
+      });
 
       before(() => {
         return fileSystem.fileWrite(sequenceFilePath, oneSequence, false);
@@ -142,6 +148,19 @@ describe('Model', () => {
           .then(sequence => {
             expect(sequence).to.equal(newSequence);
           });
+      });
+
+      it('getSequence() respects trim', () => {
+        const trim = 3;
+        const withSequenceAndTrim = withSequence.mutate('sequence.trim', [trim, trim]);
+        const withSequenceAndTrim2 = withSequence.setSequenceTrim(trim, trim);
+
+        expect(withSequenceAndTrim).to.eql(withSequenceAndTrim2);
+
+        return withSequenceAndTrim.getSequence().then(result => {
+          expect(result.length).to.equal(oneSequence.length - (trim * 2));
+          expect(result).to.equal(oneSequence.substring(trim, oneSequence.length - trim));
+        });
       });
     });
 

@@ -1,0 +1,16 @@
+{
+  "name": "heroku-constructor-staging",
+  "description": "Heroku deployment of Constructor, no auth",
+  "scripts": {
+  },
+  "env": {
+  },
+  "formation": {
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+
+  ]
+}

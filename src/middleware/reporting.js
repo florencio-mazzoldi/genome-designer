@@ -15,7 +15,7 @@
  */
 import rejectingFetch from './rejectingFetch';
 import invariant from 'invariant';
-import { headersGet, headersPost} from './headers';
+import { headersPost} from './headers';
 import { reportApiPath } from './paths';
 
 export const reportError = (title, description, url, user) => {

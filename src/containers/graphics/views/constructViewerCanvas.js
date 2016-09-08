@@ -135,10 +135,15 @@ export class ConstructViewerCanvas extends Component {
   }
 
   /**
-   * clicking on canvas unselects all blocks
+   * track clicks to unselect blocks
    */
-  onClick = (evt) => {
-    if (evt.target === ReactDOM.findDOMNode(this)) {
+  onMouseDown = (evt) => {
+    this.down = evt.target === ReactDOM.findDOMNode(this) && evt.button === 0;
+  };
+
+  onMouseUp = (evt) => {
+    if (this.down && evt.button === 0) {
+      this.down = false;
       evt.preventDefault();
       evt.stopPropagation();
       this.props.focusBlocks([]);
@@ -225,7 +230,7 @@ export class ConstructViewerCanvas extends Component {
 
     // map construct viewers so we can propagate projectId and any recently dropped blocks
     return (
-      <div className="ProjectPage-constructs no-vertical-scroll" onClick={this.onClick}>
+      <div className="ProjectPage-constructs no-vertical-scroll" onMouseDown={this.onMouseDown} onMouseUp={this.onMouseUp}>
         <div className={dropClasses} ref="dropTarget" key="dropTarget">Drop blocks here to create a new construct.</div>;
         {constructViewers}
       </div>

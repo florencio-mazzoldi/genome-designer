@@ -49,9 +49,9 @@ export const list = (pos, optionId) => {
   const listBlock = new Block({
     metadata: {
       name: `Position ${pos}`,
-      role: templateSymbols[pos], //role as metadata, since constructs shouldn't have a role
     },
     rules: {
+      role: templateSymbols[pos], //role as metadata, since constructs shouldn't have a role
       list: true,
     },
     options: getOptionParts(pos, optionId),

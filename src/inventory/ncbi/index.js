@@ -19,6 +19,10 @@ import Block from '../../models/Block';
 import { merge, debounce } from 'lodash';
 import { convertGenbank } from '../../middleware/genbank';
 
+const fetchOpts = {
+  mode: 'cors',
+};
+
 // NCBI limits number of requests per user/ IP, so better to initate from the client and I support process on client...
 export const name = 'NCBI';
 
@@ -100,7 +104,7 @@ const getSummary = (...ids) => {
 
   const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=nuccore&id=${idList}&retmode=json`;
 
-  return rejectingFetch(url)
+  return rejectingFetch(url, fetchOpts)
     .then(resp => resp.json())
     .then(json => {
       //returns dictionary of UID -> ncbi entry, with extra key uids
@@ -132,8 +136,15 @@ export const get = (accessionVersion, parameters = {}, searchResult) => {
 
   const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${accessionVersion}&rettype=${format}&retmode=text`;
 
-  return rejectingFetch(url)
+  return rejectingFetch(url, fetchOpts)
     .then(resp => resp.text())
+    .then(text => {
+      //make sure we didnt get a 500 error from them
+      if (text.indexOf('<!DOCTYPE') === 0) {
+        return Promise.reject(text);
+      }
+      return text;
+    })
     .then(genbank => genbankToBlock(genbank, parametersMapped.onlyConstruct))
     .then(blocks => blocks.map(block => wrapBlock(block, accessionVersion)))
     .then(blockModels => {
@@ -180,7 +191,7 @@ export const search = (query, options = {}) => {
 
   let count;
 
-  return rejectingFetch(url)
+  return rejectingFetch(url, fetchOpts)
     .then(resp => resp.json())
     .then(json => {
       count = json.esearchresult.count;

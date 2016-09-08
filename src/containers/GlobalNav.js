@@ -202,6 +202,12 @@ class GlobalNav extends Component {
     });
   }
 
+  componentDidMount() {
+    // if we have a user then identify them to heap
+    if (heap && heap.identify && flashedUser && flashedUser.email) {
+      heap.identify(flashedUser.email);
+    }
+  }
   /**
    * unsink all keyboard events on unmount
    */
