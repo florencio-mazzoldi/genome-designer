@@ -242,8 +242,7 @@ const exportProjectStructure = (project, blocks) => {
     .then(() => runCommand(`python ${path.resolve(__dirname, 'convert.py')} to_genbank ${inputFilePath} ${outputFilePath}`, inputFilePath, outputFilePath))
     .then(resStr => {
       fileSystem.fileDelete(inputFilePath);
-      fileSystem.fileDelete(outputFilePath);
-      return resStr;
+      return outputFilePath;
     })
     .catch(err => {
       //dont need to wait for promises to resolve

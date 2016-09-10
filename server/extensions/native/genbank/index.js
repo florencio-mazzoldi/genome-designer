@@ -95,11 +95,10 @@ router.get('/export/blocks/:projectId/:blockIdList', permissionsMiddleware, (req
       };
 
       exportConstruct({ roll: partialRoll, constructId: construct.id })
-        .then(fileContents => {
-          res.set({
-            'Content-Disposition': `attachment; filename="${roll.project.id}.fasta"`,
+        .then(resultFileName => {
+          res.download(resultFileName, roll.project.id + '.fasta', err => {
+            fileSystem.fileDelete(resultFileName);
           });
-          res.send(fileContents);
         });
     })
     .catch(err => {
@@ -122,16 +121,16 @@ router.get('/export/:projectId/:constructId?', permissionsMiddleware, (req, res,
         exportProject(roll);
 
       return promise
-        .then(result => {
-          if (result.substring(0, 4) !== 'LOCUS') {
-            res.set('Content-Type', 'application/zip')
-            res.set('Content-Disposition', 'attachment; filename='+ name +'.zip');
-            res.set('Content-Length', result.length);
-            res.status(200).end(new Buffer(result, 'binary'));
-          } else {
-            res.attachment(name + '.gb');
-            res.status(200).send(result);
-          }
+        .then((resultFileName) => {
+          fileSystem.fileRead(resultFileName, false)
+            .then(fileOutput => {
+              // We have to disambiguate between zip files and gb files!
+              console.log('First Letters: ' + fileOutput.substring(0, 4));
+              const fileExtension = (fileOutput.substring(0, 5) !== 'LOCUS') ? '.zip' : '.gb';
+              res.download(resultFileName, name + fileExtension, err => {
+                fileSystem.fileDelete(resultFileName);
+              });
+            });
         });
     })
     .catch(err => {
