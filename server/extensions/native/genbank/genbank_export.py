@@ -33,11 +33,6 @@ def add_GC_info(sf, block, allblocks):
     if "description" in block["metadata"] and block["metadata"]["description"] != "":
         encoded_data["GC"]["description"] = block["metadata"]["description"]
 
-    encoded_data["GC"]["id"] = block["id"]
-
-    if len(block["components"]) > 0:
-        encoded_data["GC"]["children"] = get_children_ids(block, allblocks)
-
     if "genbank" in block["metadata"] and "note" in block["metadata"]["genbank"]:
         encoded_data["note"] = block["metadata"]["genbank"]["note"]
 
@@ -152,9 +147,13 @@ def build_sequence(block, allblocks):
     seq = ""
     if len(block["components"]) > 0:
         for component in block["components"]:
-            block = [b for b in allblocks if b["id"] == component][0]
-            seq = seq + build_sequence(block, allblocks)
+            child_block = [b for b in allblocks if b["id"] == component][0]
+            seq = seq + build_sequence(child_block, allblocks)
     else:
+        # For handling list blocks!
+        if "current_option" in block:
+            option = [b for b in allblocks if b["id"] == block["current_option"]][0]
+            seq = seq + build_sequence(option, allblocks)
         if "sequence" in block and "sequence" in block["sequence"] and block["sequence"]["sequence"]:
             seq = block["sequence"]["sequence"]
     return seq
@@ -305,8 +304,6 @@ def export_project(filename, project, allblocks):
         project_to_genbank(filename, project, allblocks)
         return
 
-    print "There are options"
-
     # There are list blocks. We need to create a zip file with all the combinations. Include in the zip file the non-list-block constructs
     constructs = project["components"]
     name_prefix = project["metadata"]["name"] + " - "
@@ -319,7 +316,6 @@ def export_project(filename, project, allblocks):
 
         optional_children = get_optional_children(construct, allblocks)
         if len(optional_children) > 0:
-            print "This construct has options"
             build_first_optional_construct(optional_children)
 
             gb_filename = name_prefix + construct["metadata"]["name"] + " - " + str(construct_number) + ".gb"

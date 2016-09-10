@@ -520,7 +520,7 @@ class GlobalNav extends Component {
               },
             },
             {
-              text: 'Download Genbank File',
+              text: 'Download Genbank/Zip File',
               action: () => {
                 this.downloadProjectGenbank();
               },

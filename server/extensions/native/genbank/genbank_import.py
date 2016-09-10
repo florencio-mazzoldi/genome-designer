@@ -1,6 +1,7 @@
 import json
 from Bio import SeqIO
 import uuid
+import sys
 
 # This table converts annotation types in genbank to role_types in our tool
 # Ex: if genbank says "gene", turn it into an role_type of "cds" as we import
@@ -206,19 +207,16 @@ def convert_GC_info(f, block):
         return
 
     try:
-        all_info = json.loads(f.qualifiers["note"][0])
+        all_info = json.loads(f.qualifiers["note"][0].replace("'", "\""))
         block["metadata"]["name"] = all_info["GC"]["name"]
         if "color" in all_info["GC"]:
             block["metadata"]["color"] = all_info["GC"]["color"]
         if "description" in all_info["GC"]:
             block["metadata"]["description"] = all_info["GC"]["description"]
-        if "id" in all_info["GC"]:
-            block["id"] = all_info["GC"]["id"]
-        if "components" in all_info["GC"]:
-            block["components"] = json.loads(all_info["GC"]["components"].replace("'", "\""))
         if "note" in all_info:
             block["metadata"]["genbank"]["note"] = all_info["note"]
     except:
+        print "Exception: ", sys.exc_info()
         pass
 
 # Takes a BioPython SeqFeature and turns it into a block
@@ -230,11 +228,7 @@ def create_child_block_from_feature(f, all_blocks, root_block, sequence):
     role_type = role_type_table.get(f.type)
 
     if f.type.strip() == 'source':
-        old_id = root_block["id"]
         convert_GC_info(f, root_block)
-        if root_block["id"] != old_id:
-            del all_blocks[old_id]
-            all_blocks[root_block["id"]] = root_block
 
         # 'source' refers to the root block. So, the root block aggregates information
         # from the header of the genbank file as well as the 'source' feature
@@ -253,7 +247,8 @@ def create_child_block_from_feature(f, all_blocks, root_block, sequence):
         for q in f.qualifiers:
             try:
                 json.dumps(qualifiers[q][0])
-                child_block["metadata"]["genbank"][q] = f.qualifiers[q][0]
+                if q not in ["note"]:
+                    child_block["metadata"]["genbank"][q] = f.qualifiers[q][0]
             except:
                 pass
 
@@ -435,8 +430,6 @@ def convert_genbank_record_to_blocks(gb):
 def genbank_to_project(filename):
     project = { "components": []}
     blocks = {}
-    print('file is')
-    print(filename)
 
     generator = SeqIO.parse(open(filename,"r"),"genbank")
     for record in generator:
