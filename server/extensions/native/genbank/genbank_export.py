@@ -48,6 +48,11 @@ def add_features(block, allblocks, gb, start):
     if is_filler(block):
         return start + block["sequence"]["length"] + 1
 
+    # For handling list blocks!
+    if "current_option" in block:
+        option = [b for b in allblocks if b["id"] == block["current_option"]][0]
+        return add_features(option, allblocks, gb, start)
+
     # Add Myself as a feature
     sf = SeqFeature.SeqFeature()
     # Set the type based on the original type or the role type
@@ -87,7 +92,10 @@ def add_features(block, allblocks, gb, start):
         end = child_start
     else:
         # No children, look at the block's length
-        end = start + block["sequence"]["length"]
+        if "sequence" in block:
+            end = start + block["sequence"]["length"]
+        else:
+            end = start
 
     sf.location = SeqFeature.FeatureLocation(start, end, strand=feature_strand)
     gb.features.append(sf)
@@ -98,6 +106,9 @@ def add_features(block, allblocks, gb, start):
 # the biopython SeqRecord object to add the annotations to,
 # the start position of the current block
 def convert_annotations(block, gb, start):
+    if "sequence" not in block:
+        return
+
     # Add My annotations as features
     for annotation in block["sequence"]["annotations"]:
         gb_annot = SeqFeature.SeqFeature()
@@ -144,7 +155,7 @@ def build_sequence(block, allblocks):
             block = [b for b in allblocks if b["id"] == component][0]
             seq = seq + build_sequence(block, allblocks)
     else:
-        if "sequence" in block["sequence"] and block["sequence"]["sequence"]:
+        if "sequence" in block and "sequence" in block["sequence"] and block["sequence"]["sequence"]:
             seq = block["sequence"]["sequence"]
     return seq
 
@@ -158,9 +169,13 @@ def get_children_ids(block, allblocks):
     return children
 
 # Take a project structure and a list of all the current blocks, convert this data to a genbank file and store it
-# in filename.
-def project_to_genbank(filename, project, allblocks):
-    blocks = project["components"]
+# in filename. If you pass a construct in, only convert that particular construct.
+def project_to_genbank(filename, project, allblocks, construct_id=None):
+    if construct_id is not None:
+        blocks = [construct_id]
+    else:
+        blocks = project["components"]
+
     seq_obj_lst = []
 
     # For each of the construct in the project
@@ -232,6 +247,103 @@ def project_to_genbank(filename, project, allblocks):
 
         seq_obj_lst.append(seq_obj)
 
-    print('file is')
-    print(filename)
     SeqIO.write(seq_obj_lst, open(filename, "w"), "genbank")
+
+
+# Returns a list of blocks that are optional from this block down in the hierarchy
+def get_optional_children(block, allblocks):
+    result = []
+    if block.get("options") is not None and len(block["options"]) > 0:
+        # Is there at least one "enabled" option?
+        for option_id, option_value in block["options"].iteritems():
+            if option_value:
+                result.append(block)
+                return result
+    else:
+        for child_id in block["components"]:
+            child = [b for b in allblocks if b["id"] == child_id][0]
+            childs_options = get_optional_children(child, allblocks)
+            result.extend(childs_options)
+    return result
+
+def next_viable_option(options, current_option=None):
+    select_next = False
+    for option_id, option_enabled in options.iteritems():
+        if current_option == option_id:
+            select_next = True
+            continue
+        if option_enabled and (select_next or current_option is None):
+            return option_id
+    return None
+
+def build_first_optional_construct(optional_children):
+    for block in optional_children:
+        block["current_option"] = next_viable_option(block["options"], current_option=block.get("current_option"))
+
+def build_next_optional_construct(optional_children):
+    for block in optional_children:
+        next_option = next_viable_option(block["options"], current_option=block.get("current_option"))
+        if next_option is not None:
+            block["current_option"] = next_option
+            return True
+        else:
+            # Back to the first option
+            block["current_option"] = next_viable_option(block["options"])
+    return False
+
+# Take a project and create a file. This file can be a genbank file or a zip with
+# lots of genbank files, depending on whether the project has list blocks in it.
+from pprint import pprint
+import zipfile
+import os
+def export_project(filename, project, allblocks):
+    all_options = [block["id"] for block in allblocks if block.get("options") is not None and len(block["options"]) > 0]
+
+    # There are no list blocks
+    if len(all_options) == 0:
+        print "No options!"
+        project_to_genbank(filename, project, allblocks)
+        return
+
+    print "There are options"
+
+    # There are list blocks. We need to create a zip file with all the combinations. Include in the zip file the non-list-block constructs
+    constructs = project["components"]
+    name_prefix = project["metadata"]["name"] + " - "
+    construct_number = 1
+
+    zf = zipfile.ZipFile(filename, mode='w')
+
+    for construct_id in constructs:
+        construct = [b for b in allblocks if b["id"] == construct_id][0]
+
+        optional_children = get_optional_children(construct, allblocks)
+        if len(optional_children) > 0:
+            print "This construct has options"
+            build_first_optional_construct(optional_children)
+
+            gb_filename = name_prefix + construct["metadata"]["name"] + " - " + str(construct_number) + ".gb"
+            construct_number = construct_number + 1
+
+            project_to_genbank(gb_filename, project,
+                               allblocks, construct_id=construct_id)
+            zf.write(gb_filename)
+            os.remove(gb_filename)
+
+            while build_next_optional_construct(optional_children):
+                gb_filename = name_prefix + construct["metadata"]["name"] + " - " + str(construct_number) + ".gb"
+                construct_number = construct_number + 1
+
+                project_to_genbank(gb_filename, project,
+                                   allblocks, construct_id=construct_id)
+                zf.write(gb_filename)
+                os.remove(gb_filename)
+
+        else:
+            gb_filename = name_prefix + construct["metadata"]["name"] + " - " + str(construct_number) + ".gb"
+            construct_number = construct_number + 1
+            project_to_genbank(gb_filename, project, allblocks, construct_id=construct_id)
+            zf.write(gb_filename)
+            os.remove(gb_filename)
+
+    zf.close()

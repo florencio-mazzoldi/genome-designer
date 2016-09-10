@@ -42,7 +42,7 @@ if to_genbank:
     genbank_file = sys.argv[3]
     project_file = sys.argv[2]
     project = json.load(open(project_file,"r"), object_hook=_decode_dict)
-    project_to_genbank(genbank_file, project['project'], project['blocks'])
+    export_project(genbank_file, project['project'], project['blocks'])
 else:
     genbank_file = sys.argv[2]
     project_file = sys.argv[3]

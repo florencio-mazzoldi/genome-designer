@@ -236,6 +236,7 @@ const exportProjectStructure = (project, blocks) => {
 
   //const outputFile2 = filePaths.createStorageUrl('exported_to_genbank.json');
   //fileSystem.fileWrite(outputFile2, input);
+  //console.log(JSON.stringify(input));
 
   return fileSystem.fileWrite(inputFilePath, input)
     .then(() => runCommand(`python ${path.resolve(__dirname, 'convert.py')} to_genbank ${inputFilePath} ${outputFilePath}`, inputFilePath, outputFilePath))

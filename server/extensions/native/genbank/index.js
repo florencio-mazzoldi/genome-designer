@@ -94,9 +94,6 @@ router.get('/export/blocks/:projectId/:blockIdList', permissionsMiddleware, (req
         }),
       };
 
-      console.log('Exporting 1');
-      console.log(JSON.stringify({ roll: partialRoll, constructId: construct.id }));
-
       exportConstruct({ roll: partialRoll, constructId: construct.id })
         .then(fileContents => {
           res.set({
@@ -118,7 +115,7 @@ router.get('/export/:projectId/:constructId?', permissionsMiddleware, (req, res,
 
   rollup.getProjectRollup(projectId)
     .then(roll => {
-      const name = (roll.project.metadata.name ? roll.project.metadata.name : roll.project.id) + '.gb';
+      const name = (roll.project.metadata.name ? roll.project.metadata.name : roll.project.id);
 
       const promise = !!constructId ?
         exportConstruct({ roll, constructId }) :
@@ -126,12 +123,15 @@ router.get('/export/:projectId/:constructId?', permissionsMiddleware, (req, res,
 
       return promise
         .then(result => {
-
-          console.log('Exporting 2');
-          console.log(JSON.stringify({ roll, constructId }));
-
-          res.attachment(name);
-          res.status(200).send(result);
+          if (result.substring(0, 4) !== 'LOCUS') {
+            res.set('Content-Type', 'application/zip')
+            res.set('Content-Disposition', 'attachment; filename='+ name +'.zip');
+            res.set('Content-Length', result.length);
+            res.status(200).end(new Buffer(result, 'binary'));
+          } else {
+            res.attachment(name + '.gb');
+            res.status(200).send(result);
+          }
         });
     })
     .catch(err => {
