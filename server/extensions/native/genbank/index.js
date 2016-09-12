@@ -32,6 +32,13 @@ const createFileUrl = (fileName) => {
   return extensionKey + '/file/' + fileName;
 };
 
+// Download a temporary file and delete it afterwards
+const downloadAndDelete = (res, tempFileName, downloadFileName) => {
+  res.download(tempFileName, downloadFileName, err => {
+    fileSystem.fileDelete(tempFileName);
+  });
+};
+
 //create the router
 const router = express.Router(); //eslint-disable-line new-cap
 
@@ -96,9 +103,7 @@ router.get('/export/blocks/:projectId/:blockIdList', permissionsMiddleware, (req
 
       exportConstruct({ roll: partialRoll, constructId: construct.id })
         .then(resultFileName => {
-          res.download(resultFileName, roll.project.id + '.fasta', err => {
-            fileSystem.fileDelete(resultFileName);
-          });
+          downloadAndDelete(res, resultFileName, roll.project.id + '.fasta');
         });
     })
     .catch(err => {
@@ -125,11 +130,8 @@ router.get('/export/:projectId/:constructId?', permissionsMiddleware, (req, res,
           fileSystem.fileRead(resultFileName, false)
             .then(fileOutput => {
               // We have to disambiguate between zip files and gb files!
-              console.log('First Letters: ' + fileOutput.substring(0, 4));
               const fileExtension = (fileOutput.substring(0, 5) !== 'LOCUS') ? '.zip' : '.gb';
-              res.download(resultFileName, name + fileExtension, err => {
-                fileSystem.fileDelete(resultFileName);
-              });
+              downloadAndDelete(res, resultFileName, name + fileExtension);
             });
         });
     })
@@ -170,9 +172,6 @@ router.post('/import/convert', (req, resp, next) => {
         const payload = constructsOnly ?
         { roots, blocks: rootBlocks } :
           converted;
-
-        console.log('Converting Import');
-        console.log(JSON.stringify(payload));
 
         resp.status(200).json(payload);
       })
