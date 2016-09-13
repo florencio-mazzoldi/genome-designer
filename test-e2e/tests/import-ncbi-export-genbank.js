@@ -60,45 +60,5 @@ module.exports = {
       .pause(1000)
       .assert.countelements('//div[@data-nodetype="block"]', 7)
       .end();
-/*
-    // import from menu
-    clickMainMenu(browser, 1, 7);
-
-    browser
-      .waitForElementPresent('.genbank-import-form', 5000, 'Expect the import dialog to appear')
-      // click import into new project
-      .click('.genbank-import-form input:nth-of-type(1)');
-
-      browser.execute(function() {
-        document.querySelector('.genbank-import-form input[type="file"]').style.display = 'block';
-        document.querySelector('.dropzone').style.marginBottom = '5rem';
-      }, [], function() {});
-
-    var gbFile = path.resolve(__dirname + '/../fixtures/test.gb');
-
-      // send file name to hidden input[file]
-    browser
-      .setValue('.genbank-import-form input[type="file"]', gbFile)
-      .pause(3000)
-      // click submit button to start the upload of fake data
-      .submitForm('.genbank-import-form')
-      // wait for a construct viewer to become visible
-      .waitForElementPresent('.construct-viewer', 5000, 'expected a construct viewer to appear')
-      .pause(1000);
-
-    // we can't actually download the file but we can ensure the correct header is present at the expected url
-    browser.url(function (response) {
-      // save original project url
-      var projectURL = response.value;
-      var projectId = response.value.split('/').pop();
-      var uri = 'http://localhost:3001/extensions/api/genbank/export/' + projectId;
-      browser
-        .url(uri)
-        .pause(5000)
-        .assert.urlContains(projectURL)
-        .saveScreenshot('./test-e2e/current-screenshots/import-export-genbank-file.png')
-        .end();
-    });
-*/
   }
 };

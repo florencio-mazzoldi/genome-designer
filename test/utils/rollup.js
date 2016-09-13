@@ -83,3 +83,39 @@ export const createSequencedRollup = () => {
   Object.assign(roll, { sequences: sequenceMap });
   return roll;
 };
+
+//creates project with 4 list blocks, each with 5 options (all active, all with a random sequence)
+export const createListRollup = () => {
+  const numListBlocks = 4;
+  const numOptions = 5;
+  const totalBlocks = numListBlocks * numOptions;
+
+  const sequences = range(totalBlocks).map(() => generateRandomSequence());
+  const sequenceMd5s = sequences.map(seq => md5(seq));
+  const sequenceMap = sequenceMd5s.reduce((acc, seqMd5, index) => {
+    return Object.assign(acc, { [seqMd5]: sequences[index] });
+  }, {});
+
+  const options = range(totalBlocks).map((index) => Block.classless({
+    sequence: {
+      md5: sequenceMd5s[index],
+    },
+  }));
+
+  const listBlocks = range(numListBlocks).map(index => {
+    const opts = options.slice(index * numOptions, (index + 1) * numOptions);
+    const optionIds = opts.map(opt => opt.id);
+
+    return Block.classless({
+      options: optionIds.reduce((acc, optionId) => Object.assign(acc, { [optionId]: true }), {}),
+    });
+  });
+
+  const project = Project.classless({
+    components: listBlocks.map(block => block.id),
+  });
+
+  const roll = rollupFromArray(project, ...listBlocks, ...options);
+  Object.assign(roll, { sequences: sequenceMap });
+  return roll;
+};

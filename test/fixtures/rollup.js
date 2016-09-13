@@ -4,7 +4,7 @@ import Block from '../../src/models/Block';
 import Project from '../../src/models/Project';
 import * as rollup from '../../server/data/rollup';
 import * as persistence from '../../server/data/persistence';
-import { createExampleRollup, createSequencedRollup } from '../utils/rollup';
+import { createExampleRollup, createSequencedRollup, createListRollup } from '../utils/rollup';
 
 /**
  * only for testing... all created with test user account
@@ -43,12 +43,15 @@ export const createExampleProject = () => {
   Object.assign(roll.blocks, sequenceRoll.blocks);
 
   //construct 2
-  //todo
+  const listRoll = createListRollup();
+  roll.project.components.push(...listRoll.project.components);
+  Object.assign(roll.blocks, listRoll.blocks);
 
   //write everything
   return Promise.all([
     rollup.writeProjectRollup(roll.project.id, roll, '0'),
     ...Object.keys(sequenceRoll.sequences).map(seqMd5 => persistence.sequenceWrite(seqMd5, sequenceRoll.sequences[seqMd5])),
+    ...Object.keys(listRoll.sequences).map(seqMd5 => persistence.sequenceWrite(seqMd5, listRoll.sequences[seqMd5])),
   ])
     .then(() => roll);
 };
