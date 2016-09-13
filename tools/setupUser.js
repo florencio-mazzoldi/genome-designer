@@ -1,5 +1,5 @@
 import { defaultUser } from '../server/auth/local';
-import setupUserData from '../server/auth/userSetup';
+import setupUserData from '../server/onboarding/userSetup';
 
 /*
 When developing locally, set up a project for the default user.

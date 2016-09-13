@@ -29,4 +29,4 @@ function render(container, options) {
   return subscriber;
 }
 
-window.constructor.extensions.register('webpacked', render);
+window.constructor.extensions.register('webpacked', 'projectDetail', render);

@@ -91,4 +91,4 @@ function render(container, options) {
   };
 }
 
-window.constructor.extensions.register('construct-burst', render);
+window.constructor.extensions.register('construct-burst', 'projectDetail', render);

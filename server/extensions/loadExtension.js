@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import path from 'path';
+import invariant from 'invariant';
 import { errorDoesNotExist } from '../utils/errors';
 import registry from './registry';
-import { clientBundleUrl, defaultClientFilePath } from './constants';
 
-//todo - no need for this right now - everything is statically avaialbe in the beginning (but other code expects this to be a promise)
+//everything is statically avaialbe in the beginning, but other code expects this to be a promise, and may have dynamic extensions in the future
 const loadExtension = (name) => {
   return new Promise((resolve, reject) => {
     const manifest = registry[name];
@@ -30,17 +30,13 @@ const loadExtension = (name) => {
   });
 };
 
-export const getExtensionInternalPath = (name, fileName = clientBundleUrl) => {
+export const getExtensionInternalPath = (name, fileName) => {
   const extensionPath = path.resolve(__dirname, `./node_modules/${name}`);
 
-  //if requesting the bundle, see if the extension has a preferred route for it, otherwise just use index.js
-  if (fileName === clientBundleUrl) {
-    const manifest = registry[name];
-    const client = manifest.geneticConstructor.client || defaultClientFilePath;
-    return path.resolve(extensionPath, client);
-  }
+  //if no file name is sent, this is likely a malformed request (since multiple files may be present)
+  invariant(fileName && typeof fileName === 'string', 'must pass a specific file name');
 
-  path.resolve(extensionPath, fileName);
+  return path.resolve(extensionPath, fileName);
 };
 
 export default loadExtension;

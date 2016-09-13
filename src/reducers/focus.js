@@ -107,7 +107,6 @@ export default function inventory(state = initialState, action) {
     }
     return state;
 
-  case ActionTypes.USER_SET_USER :
   case LOCATION_CHANGE :
     //project page sets project ID properly, running after the state changes
     return Object.assign({}, initialState);

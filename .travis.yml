@@ -12,14 +12,17 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - g++-4.8
-before_install:
-- ./tools/travis-ci-fsharp.sh
+#  sauce_connect:
+#    username: autodesk-bionano
+#    access_key:
+#      secure: Obz8aK8m9hKMfiNicD/IWBnYVC5PqLLoTfgpM31ppaGsgpd+//YMrGqgcPQY91m5TRpgmNsYRsEKKnv2yKa8ALxCZ0i0VZCZwuFCG8Zgld78RiiAli+gJISeEPqR+Js+Txz0nf1y1WYyzocfl14/cqGq9cpnhEa9Lkz618C+KZFqXuLo4P0oAf76GnM5/SE7d6dyZ8p1FMGSBendb1fn4lWEa7oAIaeoTOZzVeJeIYptjKGCd5PqE6rN7T1QVZBnpUV1OhmjcAZprRUQNFvD+2aM+LtxG2HUB1LcJAI07PhcU8rLAtE96ZJMsJj0/XRzeMTi+JF/rN7bZh5R+wlNO/jiCIRFT00I2+jKWWzXwxHLUBxcujN/ky5L8cAHq6gXQo+brgQFJifzgls2YMIn2KPqk0Q31gG7hoDOBlK4NN5a6sSzkFewdd4KWqf1iilcbVdSlkM2/yohIMTq5Vvuq0GI8XUFnRUC4+qvcBKmRa9fYzCTv2v5zA4LaR+VdsnzYg8I1ahY4RwADewP1INMD2lqxNt3tFQQKmgrxEYOCrpR3gdI5gDxCpYcgsO5+TOmr94ZE4GLr2JbCTPAxVi8ZOAv5r0JoY1+0GDT+m1UaxlpybMezXmy2/64uy+ru8Z0aUBkFfUBzgGYfOvlRSZJTTPIcYsQyHpm+i/++HtHqp4=
 install:
 - npm install
-- pip install --user biopython
 script:
 - npm run lint
 - npm run test
+- npm run test-coverage-report
+#- npm run start-testing; npm run nightwatch-saucelabs; pkill node
 cache:
   directories:
   - node_modules

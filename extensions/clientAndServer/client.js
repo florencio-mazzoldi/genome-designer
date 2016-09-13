@@ -10,6 +10,7 @@ function render(container, options) {
   var subscriber = window.constructor.store.subscribe(function storeSubscription(state, lastAction) {
     window.fetch(apiEndpoint, {
       method: 'POST',
+      credentials: 'same-origin',
       headers: {
         'Content-Type': 'text/plain',
       },
@@ -27,4 +28,4 @@ function render(container, options) {
   return subscriber;
 }
 
-window.constructor.extensions.register(extensionKey, render);
+window.constructor.extensions.register(extensionKey, 'projectDetail', render);

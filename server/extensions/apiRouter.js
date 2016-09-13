@@ -16,30 +16,33 @@
 import express from 'express';
 import path from 'path';
 import bodyParser from 'body-parser';
-import { errorExtensionNotFound } from '../utils/errors';
-import extensionRegistry, { getServerExtensions } from './registry';
+import { getServerExtensions } from './registry';
+import { pruneUserObjectMiddleware } from '../user/utils';
+import {
+  checkExtensionExistsMiddleware,
+  checkUserExtensionAccessMiddleware,
+  checkExtensionIsServerMiddleware,
+} from './middlewareChecks';
 
 const router = express.Router(); //eslint-disable-line new-cap
 const jsonParser = bodyParser.json();
 router.use(jsonParser);
 
-/** Route Checking **/
+//overwrite the user object so that only relevant fields are passed to extensions
+//todo - test works + always run
+router.use(pruneUserObjectMiddleware);
 
-//for URLs properly formed with an extension already registered, delegate to the router
-router.all('/:ext/*', (req, res, next) => {
-  const { ext, route } = req.params;
+router.all('/:extension/*',
+  //ensure extensions exist or 404
+  checkExtensionExistsMiddleware,
 
-  const extension = extensionRegistry[ext];
+  //ensure user has access
+  //todo - test works + always run
+  checkUserExtensionAccessMiddleware,
 
-  if (!extension) {
-    console.log(`could not find extension ${ext} in registry (${Object.keys(extensionRegistry).join(', ')})`);
-    return res.status(404).send(errorExtensionNotFound);
-  }
-
-  //let the route continue
-  //todo - reassign user object? remove cookies? prune request
-  next();
-});
+  //make sure its a server extension
+  checkExtensionIsServerMiddleware,
+);
 
 /** Route Registering **/
 
@@ -49,11 +52,10 @@ Object.keys(serverExtensions).forEach(key => {
   const routePath = manifest.geneticConstructor.router;
 
   try {
-    //todo - build dependent path lookup
+    //future - build dependent path lookup
     const extensionRouter = require(path.resolve(__dirname, 'node_modules', key, routePath));
 
-    //todo - error handling
-    //todo - wrap router in a try-catch? Put in own process?
+    //todo - Put in own process?
     router.use(`/${key}/`, extensionRouter);
   } catch (err) {
     console.error('there was an error registering extension ' + key);

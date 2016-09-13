@@ -1,4 +1,4 @@
-import register from './registerExtension';
+import register from './register';
 import { isRegistered, onRegister, validRegion } from './clientRegistry';
 import { callExtensionApi as api } from '../middleware/extensions';
 import { readProjectFile as read, writeProjectFile as write, listProjectFiles as list } from '../middleware/projectFile';

@@ -36,8 +36,8 @@ export default class InspectorRowHeading extends Component {
   };
 
   handleToggle = () => {
-    this.setState({ active: !this.state.active });
-    this.props.onToggle(this.state.active);
+    this.setState({ active: !this.state.active },
+      () => this.props.onToggle(this.state.active));
   };
 
   getActiveState = () => {

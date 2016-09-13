@@ -21,13 +21,14 @@ limitations under the License.
  */
 //This module is not exported on the window, so marked as private
 import * as ActionTypes from '../constants/ActionTypes';
-import { register, login, logout, updateAccount } from '../middleware/auth';
+import { register, login, logout, updateAccount, setUserConfig } from '../middleware/auth';
 
 const mapUserFromServer = (serverUser) => ({
   userid: serverUser.uuid,
   firstName: serverUser.firstName,
   lastName: serverUser.lastName,
   email: serverUser.email,
+  config: serverUser.config || {},
 });
 
 /*
@@ -35,6 +36,7 @@ const mapUserFromServer = (serverUser) => ({
  */
 const _userSetUser = (user) => ({
   type: ActionTypes.USER_SET_USER,
+  updateConfig: true,
   user,
 });
 
@@ -75,9 +77,10 @@ export const userLogout = () => {
 
 //Promise
 ////email, password, firstName, lastName
-export const userRegister = (user) => {
+//config is configuration JSON for initial projects + extensions
+export const userRegister = (user, config) => {
   return (dispatch, getState) => {
-    return register(user)
+    return register(user, config)
       .then(user => {
         const mappedUser = mapUserFromServer(user);
         identifyUser(mappedUser.email);
@@ -95,6 +98,18 @@ export const userUpdate = (user) => {
         const mappedUser = mapUserFromServer(user);
         identifyUser(mappedUser.email);
         const setUserPayload = _userSetUser(mappedUser);
+        dispatch(setUserPayload);
+        return user;
+      });
+  };
+};
+
+export const userUpdateConfig = (config) => {
+  return (dispatch, getState) => {
+    return setUserConfig(config)
+      .then(config => {
+        const user = Object.assign({}, getState().user, { config });
+        const setUserPayload = _userSetUser(user);
         dispatch(setUserPayload);
         return user;
       });

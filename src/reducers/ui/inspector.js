@@ -28,9 +28,6 @@ export default function inspector(state = initialState, action) {
     setItem('inspectorVisibility', nextState.toString());
     return Object.assign({}, state, { isVisible: nextState });
 
-  case ActionTypes.USER_SET_USER :
-    return Object.assign({}, initialState);
-
   default :
     return state;
   }

@@ -12,7 +12,7 @@ module.exports = {
       // click user widget to access account dialog
       .click('div.signed-in')
       .pause(1000)
-      .click('.menu-popup-blocker-visible .menu-item:nth-of-type(2)')
+      .click('.menu-popup-blocker-visible .menu-item:nth-of-type(3)')
       .waitForElementPresent('#account-form', 5000, 'expected account form');
     // change password, email and names
     var newCredentials = {

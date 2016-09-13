@@ -4,9 +4,14 @@
   "description": "Extension with both Client and Server Components",
   "geneticConstructor": {
     "readable": "Counter Example",
-    "region": "projectDetail",
+    "type": "(Example)",
     "router": "router.js",
-    "client": "client.js"
+    "client": [
+      {
+        "file": "client.js",
+        "region": "projectDetail"
+      }
+    ]
   },
   "author": "",
   "license": "MIT",

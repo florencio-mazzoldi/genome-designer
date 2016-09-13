@@ -162,9 +162,6 @@ export default function inventory(state = initialState, action) {
     });
   }
 
-  case ActionTypes.USER_SET_USER :
-    return Object.assign({}, initialState);
-
   default :
     return state;
   }

@@ -29,6 +29,7 @@
 
   .title {
     font-size: var(--element-height * 0.5);
+    font-weight: 200;
     color: var(--textcolor);
     text-align: center;
     margin-top: 1rem;
@@ -79,6 +80,7 @@
     background-color: white;
     border: 1px solid lightgray;
     color: lightgray;
+    cursor: default;
   }
   /* errors are hidden by default, add the .visible class to make them appear*/
   .error {

@@ -4,6 +4,7 @@
   "description": "Create a simple REST router",
   "geneticConstructor": {
     "readable": "Minimal Server",
+    "type": "Server (Example)",
     "router": "index.js"
   },
   "author": "Autodesk Inc.",

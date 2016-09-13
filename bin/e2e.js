@@ -4,7 +4,7 @@ var readline = require('readline');
 var exec = require('child_process').exec;
 
 // Run from the root of the project.
-// To make it executable chmod a+x ./bin/e2e.js     
+// To make it executable chmod a+x ./bin/e2e.js
 
 fs.readdir('./test-e2e/tests', (err, files) => {
   if (err) {
@@ -23,7 +23,7 @@ fs.readdir('./test-e2e/tests', (err, files) => {
       rl.close();
       const number = parseFloat(answer);
       if (number >= 0 && number < files.length) {
-        exec(`node ./node_modules/nightwatch/bin/nightwatch --config ./test-e2e/nightwatch.json --test ./test-e2e/tests/${files[number]}`, (error, stdout, stderr) => {
+        exec(`node ./node_modules/nightwatch/bin/nightwatch --config ./test-e2e/nightwatch.js --env local --test ./test-e2e/tests/${files[number]}`, (error, stdout, stderr) => {
           console.log(`stdout: ${stdout}`);
           console.log(`stderr: ${stderr}`);
           if (error !== null) {

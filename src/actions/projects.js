@@ -27,7 +27,7 @@ import { push } from 'react-router-redux';
 import * as instanceMap from '../store/instanceMap';
 import Block from '../models/Block';
 import Project from '../models/Project';
-import rollupWithConstruct from '../utils/rollup/rollupWithConstruct';
+import emptyProjectWithConstruct from '../../data/emptyProject/index';
 import { pauseAction, resumeAction } from '../store/pausableStore';
 
 import { getItem, setItem } from '../middleware/localStorageCache';
@@ -252,6 +252,8 @@ const _projectLoad = (projectId, loadMoreOnFail = false, dispatch) => {
       return dispatch(projectList())
         .then(manifests => manifests
           .filter(manifest => !(ignores.indexOf(manifest.id) >= 0))
+          //first sort descending by created date (i.e. if never saved) then descending by saved date (so it takes precedence)
+          .sort((one, two) => two.metadata.created - one.metadata.created)
           .sort((one, two) => two.lastSaved - one.lastSaved)
         )
         .then(manifests => {
@@ -260,8 +262,10 @@ const _projectLoad = (projectId, loadMoreOnFail = false, dispatch) => {
             //recurse, ignoring this projectId
             return _projectLoad(nextId, ignores, dispatch);
           }
-          //if no manifests, create a new rollup - shouldnt happen while users have sample projects
-          return rollupWithConstruct();
+          //if no manifests, create a new rollup
+          //note - this shouldnt happen while users have sample projects
+          //todo - may want to hit the server to re-setup the user's account
+          return emptyProjectWithConstruct();
         });
     });
 };
@@ -322,6 +326,7 @@ export const projectOpen = (inputProjectId, skipSave = false) => {
     const currentProjectId = dispatch(projectSelectors.projectGetCurrentId());
     const projectId = inputProjectId || getItem(recentProjectKey);
 
+    //ignore if on a project, and passed the same one
     if (!!currentProjectId && currentProjectId === projectId) {
       return Promise.resolve();
     }
@@ -370,6 +375,7 @@ export const projectOpen = (inputProjectId, skipSave = false) => {
         type: ActionTypes.PROJECT_OPEN,
         projectId,
       });
+      return projectId;
     });
   };
 };

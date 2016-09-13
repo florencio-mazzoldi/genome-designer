@@ -1,20 +1,22 @@
 /*
-Copyright 2016 Autodesk,Inc.
+ Copyright 2016 Autodesk,Inc.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
 import React, { Component, PropTypes } from 'react';
-import {connect} from 'react-redux';
+import queryString from 'query-string';
+import { connect } from 'react-redux';
+import invariant from 'invariant';
 import {
   uiShowAuthenticationForm,
   uiSetGrunt,
@@ -22,7 +24,6 @@ import {
 } from '../../actions/ui';
 import { projectOpen } from '../../actions/projects';
 import { userRegister } from '../../actions/user';
-import invariant from 'invariant';
 import { tos, privacy } from '../../utils/ui/uiapi';
 import track from '../../analytics/ga';
 
@@ -57,8 +58,7 @@ const errors = {
   },
 };
 
-class RegisterForm extends Component {
-
+export class RegisterForm extends Component {
   static propTypes = {
     uiShowAuthenticationForm: PropTypes.func.isRequired,
     uiSetGrunt: PropTypes.func.isRequired,
@@ -69,7 +69,7 @@ class RegisterForm extends Component {
 
   constructor() {
     super();
-    this.state = Object.assign({}, errors, {canSubmit: false});
+    this.state = Object.assign({}, errors, { canSubmit: false });
   }
 
   // on form submission, first perform client side validation then submit
@@ -79,7 +79,7 @@ class RegisterForm extends Component {
     evt.preventDefault();
     // client side validation first
     if (this.clientValidation()) {
-      track('Authentication', 'Sign Up', 'Failed client validation');
+      track('Authentication', 'Register', 'Failed client validation');
       return;
     }
     this.props.uiSpin('Creating your account... Please wait.');
@@ -88,23 +88,23 @@ class RegisterForm extends Component {
       password: this.password,
       firstName: this.firstName,
       lastName: this.lastName,
-    })
-    .then((json) => {
-      track('Authentication', 'Sign Up', 'Success');
-      // close the form / wait message
-      this.props.uiSpin();
-      this.props.uiShowAuthenticationForm('none');
-      this.props.projectOpen(null);
-    })
-    .catch((reason) => {
-      this.props.uiSpin();
-      const defaultMessage = 'Unexpected error, please check your connection';
-      const { message = defaultMessage } = reason;
-      this.showServerErrors({
-        message,
+    }, this.getConfig())
+      .then((json) => {
+        track('Authentication', 'Register', 'Success');
+        // close the form / wait message
+        this.props.uiSpin();
+        this.props.uiShowAuthenticationForm('none');
+        this.props.projectOpen(null, true);
+      })
+      .catch((reason) => {
+        this.props.uiSpin();
+        const defaultMessage = 'Unexpected error, please check your connection';
+        const { message = defaultMessage } = reason;
+        this.showServerErrors({
+          message,
+        });
+        track('Authentication', 'Register', message);
       });
-      track('Authentication', 'Sign Up', message);
-    });
   }
 
   onSignIn(evt) {
@@ -114,14 +114,14 @@ class RegisterForm extends Component {
 
   onTextChanged() {
     if (this.firstName === 'darwin magic') {
-        this.refs.firstName.value = 'Charles';
-        this.refs.lastName.value = 'Darwin';
-        const email = `charlesdarwin_${Date.now()}@royalsociety.co.uk`;
-        this.refs.emailAddress.value = email;
-        this.refs.emailConfirm.value = email;
-        this.refs.password.value = '123456';
-        this.refs.passwordConfirm.value = '123456';
-        this.refs.tos.checked = true;
+      this.refs.firstName.value = 'Charles';
+      this.refs.lastName.value = 'Darwin';
+      const email = `charlesdarwin_${Date.now()}@royalsociety.co.uk`;
+      this.refs.emailAddress.value = email;
+      this.refs.emailConfirm.value = email;
+      this.refs.password.value = '123456';
+      this.refs.passwordConfirm.value = '123456';
+      this.refs.tos.checked = true;
     }
     this.setState({
       canSubmit: this.firstName &&
@@ -129,7 +129,8 @@ class RegisterForm extends Component {
       this.emailAddress &&
       this.emailConfirm &&
       this.password &&
-      this.passwordConfirm,
+      this.passwordConfirm &&
+      this.tos,
     });
   }
 
@@ -138,6 +139,7 @@ class RegisterForm extends Component {
    */
   showServerErrors(json) {
     invariant(json && json.message, 'We expected an error message');
+
     if (json.path === 'email' && json.type === 'unique violation') {
       this.setState({
         email1Error: {
@@ -185,7 +187,6 @@ class RegisterForm extends Component {
     });
   }
 
-
   /**
    * basic validation occurs on client i.e. matching email addresses, Passwords
    * and all required fields present
@@ -195,25 +196,25 @@ class RegisterForm extends Component {
     const newState = Object.assign({}, errors);
     // parse individual problems and report
     if (!this.firstName || !this.lastName) {
-      newState.nameError = { visible: true, text: 'Please enter a first and last name'};
+      newState.nameError = { visible: true, text: 'Please enter a first and last name' };
     }
     if (!this.emailAddress) {
-      newState.email1Error = { visible: true, text: 'Please enter a valid email address.'};
+      newState.email1Error = { visible: true, text: 'Please enter a valid email address.' };
     }
     if (!this.emailConfirm || this.emailAddress !== this.emailConfirm) {
-      newState.email2Error = { visible: true, text: 'The email addresses entered don\’t match.'};
+      newState.email2Error = { visible: true, text: 'The email addresses entered don\'t match.' };
     }
     if (!this.password) {
-      newState.password1Error = { visible: true, text: 'Please enter a password'};
+      newState.password1Error = { visible: true, text: 'Please enter a password' };
     }
     if (!this.passwordConfirm || this.password !== this.passwordConfirm) {
-      newState.password2Error = { visible: true, text: 'The passwords entered don\’t match.'};
+      newState.password2Error = { visible: true, text: 'The passwords entered don\'t match.' };
     }
     if (this.password.length < 6) {
-      newState.password1Error = { visible: true, text: 'Passwords must be at least six characters long'};
+      newState.password1Error = { visible: true, text: 'Passwords must be at least six characters long' };
     }
     if (!this.tos) {
-      newState.tosError = { visible: true, text: 'Please agree to our terms of service'};
+      newState.tosError = { visible: true, text: 'Please agree to our terms of service' };
     }
     // display appropriate errors
     this.setState(newState);
@@ -227,23 +228,51 @@ class RegisterForm extends Component {
   get firstName() {
     return this.refs.firstName.value.trim();
   }
+
   get lastName() {
     return this.refs.lastName.value.trim();
   }
+
   get emailAddress() {
     return this.refs.emailAddress.value.trim();
   }
+
   get emailConfirm() {
     return this.refs.emailConfirm.value.trim();
   }
+
   get password() {
     return this.refs.password.value.trim();
   }
+
   get passwordConfirm() {
     return this.refs.passwordConfirm.value.trim();
   }
+
   get tos() {
     return this.refs.tos.checked;
+  }
+
+  getConfig() {
+    const params = queryString.parse(window.location.search);
+    const { projects, extensions } = params;
+    const config = {};
+
+    if (!!projects) {
+      const projectNames = projects.split(',');
+      config.projects = projectNames.reduce((acc, projectName) => {
+        return Object.assign(acc, { [projectName]: {} });
+      }, {});
+      Object.assign(config.projects[projectNames[0]], { default: true });
+    }
+
+    if (!!extensions) {
+      config.extensions = extensions.split(',').reduce((acc, projectName) => {
+        return Object.assign(acc, { [projectName]: { active: true } });
+      }, {});
+    }
+
+    return config;
   }
 
   render() {
@@ -253,8 +282,8 @@ class RegisterForm extends Component {
     };
 
     return (
-      <form id="auth-signup" className="gd-form authentication-form" onSubmit={this.onSubmit.bind(this)}>
-        <div className="title">Sign Up</div>
+      <form id="auth-register" className="gd-form authentication-form" onSubmit={this.onSubmit.bind(this)}>
+        <div className="title">Register</div>
         <span style={registerStyle}>{"Already have an account? "}
           <a className="blue-link" href="/" onClick={this.onSignIn.bind(this)}>Sign In&nbsp;</a>
         </span>
@@ -269,7 +298,8 @@ class RegisterForm extends Component {
           onChange={this.onTextChanged.bind(this)}
           placeholder="Last Name"/>
         <div className={`error ${this.state.nameError.visible ? 'visible' : ''}`}>{`${this.state.nameError.text}`}</div>
-        <div className={`error ${this.state.email1Error.visible ? 'visible' : ''}`}>{`${this.state.email1Error.text}`}</div>
+        <div
+          className={`error ${this.state.email1Error.visible ? 'visible' : ''}`}>{`${this.state.email1Error.text}`}</div>
         <input
           ref="emailAddress"
           onChange={this.onTextChanged.bind(this)}
@@ -280,15 +310,17 @@ class RegisterForm extends Component {
           onChange={this.onTextChanged.bind(this)}
           className="input"
           placeholder="Confirm Email Address"/>
-        <div className={`error ${this.state.email2Error.visible ? 'visible' : ''}`}>{`${this.state.email2Error.text}`}</div>
-        <div className={`error ${this.state.password1Error.visible ? 'visible' : ''}`}>{`${this.state.password1Error.text}`}</div>
-         <input
-           ref="password"
-           onChange={this.onTextChanged.bind(this)}
-           maxLength={32}
-           type="password"
-           className="input"
-           placeholder="Password"/>
+        <div
+          className={`error ${this.state.email2Error.visible ? 'visible' : ''}`}>{`${this.state.email2Error.text}`}</div>
+        <div
+          className={`error ${this.state.password1Error.visible ? 'visible' : ''}`}>{`${this.state.password1Error.text}`}</div>
+        <input
+          ref="password"
+          onChange={this.onTextChanged.bind(this)}
+          maxLength={32}
+          type="password"
+          className="input"
+          placeholder="Password"/>
         <input
           ref="passwordConfirm"
           onChange={this.onTextChanged.bind(this)}
@@ -296,7 +328,8 @@ class RegisterForm extends Component {
           type="password"
           className="input"
           placeholder="Confirm Password"/>
-        <div className={`error ${this.state.password2Error.visible ? 'visible' : ''}`}>{`${this.state.password2Error.text}`}</div>
+        <div
+          className={`error ${this.state.password2Error.visible ? 'visible' : ''}`}>{`${this.state.password2Error.text}`}</div>
         <div className="checkbox">
           <input
             ref="tos"
@@ -315,12 +348,14 @@ class RegisterForm extends Component {
         <button
           type="submit"
           disabled={!this.state.canSubmit}
-          >Sign Up</button>
+        >Register
+        </button>
         <button
           type="button"
           onClick={() => {
             this.props.uiShowAuthenticationForm('signin');
-          }}>Cancel</button>
+          }}>Cancel
+        </button>
       </form>
     );
   }

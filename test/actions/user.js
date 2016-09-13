@@ -10,6 +10,7 @@ describe('Actions', () => {
       email: null,
       firstName: null,
       lastName: null,
+      config: {},
     };
 
     //this actually comes from the default user in server/auth/local
@@ -18,16 +19,18 @@ describe('Actions', () => {
       firstName: 'Dev',
       lastName: 'Eloper',
       email: 'developer@localhost',
+      config: {},
     };
 
     const userStore = simpleStore(initialState, userReducer, 'user');
 
     it('should update user on userLogin', () => {
-      const loginPromise = userStore.dispatch(actions.userLogin(dummyUser));
+      const loginPromise = userStore.dispatch(actions.userLogin(dummyUser.email, '123456'));
 
       return loginPromise.then(user => {
-        expect(user).to.eql(dummyUser);
-        expect(userStore.getState().user).to.eql(dummyUser);
+        expect(user.email).to.eql(dummyUser.email);
+        expect(userStore.getState().user).to.eql(user);
+        expect(user.config).to.be.defined;
       });
     });
 

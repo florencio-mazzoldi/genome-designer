@@ -54,7 +54,7 @@ export const permissionsMiddleware = (req, res, next) => {
   const { projectId, user } = req;
 
   if (!user) {
-    console.error('no user attached by auth middleware!', req.url);
+    console.error('no user attached by auth middleware @', req.url);
     next('[permissionsMiddleware] user not attached to request by middleware');
     return;
   }

@@ -4,6 +4,16 @@
   "description": "Basic extension to test client capabilities",
   "geneticConstructor": {
     "readable": "Test Client",
-    "region": "projectDetail"
+    "type": "(Example)",
+    "client": [
+      {
+        "file": "index.js",
+        "region": "projectDetail"
+      },
+      {
+        "file": "background.js",
+        "region": null
+      }
+    ]
   }
 }

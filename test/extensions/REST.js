@@ -1,6 +1,7 @@
 import { assert, expect } from 'chai';
 
 import request from 'supertest';
+import { validateManifest } from '../../server/extensions/manifestUtils';
 import devServer from '../../server/server';
 
 describe('Extensions', () => {
@@ -8,6 +9,7 @@ describe('Extensions', () => {
     //keys of test extensions
     const testClient = 'testClient';
     const testServer = 'testServer';
+    const filePath = 'index.js';
 
     it('should list the client extensions, manifests keyed by name', (done) => {
       const url = '/extensions/list';
@@ -19,20 +21,19 @@ describe('Extensions', () => {
             return done(err);
           }
 
-          console.log(result.body);
-
           expect(result.body).to.be.an.object;
           assert(Object.keys(result.body).length > 0, 'there should be extensions registered');
           assert(Object.keys(result.body).every(key => {
             const manifest = result.body[key];
-            const { name, version } = manifest;
-            const { region } = manifest.geneticConstructor;
+            try {
+              validateManifest(manifest);
+              return true;
+            } catch (err) {
+              console.log(key, err);
+              return false;
+            }
+          }), 'expected all manifests to be in valid format');
 
-            //region check is only valid for client extension, but these should all be client extensions...
-            const regionValid = region === null || !!region;
-
-            return !!name && !!version && regionValid;
-          }), 'invalid manifest format');
           done();
         });
     });
@@ -46,17 +47,16 @@ describe('Extensions', () => {
           if (err) {
             return done(err);
           }
-          console.log(result.body);
 
           expect(result.body).to.be.an.object;
           assert(result.body.name === testClient, 'wrong name');
-          assert(result.body.geneticConstructor.region === 'projectDetail', 'wrong region');
+          assert(result.body.geneticConstructor.client[0].region === 'projectDetail', 'wrong region');
           done();
         });
     });
 
     it('/load/ to get the index.js script', (done) => {
-      const url = `/extensions/manifest/${testClient}`;
+      const url = `/extensions/load/${testClient}/${filePath}`;
       request(devServer)
         .get(url)
         .expect(200)

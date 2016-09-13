@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import request from 'supertest';
 import fs from 'fs';
-import { createFilePath } from '../../../server/utils/filePaths';
+import { createFilePath } from '../../server/utils/filePaths';
 
-const devServer = require('../../../server/server');
+const devServer = require('../../server/server');
 
 describe('Server', () => {
   describe('Files', () => {

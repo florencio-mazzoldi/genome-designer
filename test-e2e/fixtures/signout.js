@@ -7,7 +7,7 @@ var signout = function(browser) {
     // click sign out menu item
     .waitForElementPresent('.menu-item:nth-of-type(3)', 5000, 'expected menu to appear')
     .pause(1000)
-    .click('.menu-item:nth-of-type(3)')
+    .click('.menu-item:nth-of-type(4)')
     .waitForElementPresent('.homepage', 5000, 'expected to be signed out')
 }
 

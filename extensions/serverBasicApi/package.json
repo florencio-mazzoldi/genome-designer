@@ -4,6 +4,7 @@
   "description": "Extension with a Basic file writing API",
   "geneticConstructor": {
     "readable": "Basic File API",
+    "type": "Server (Example)",
     "router": "index.js"
   },
   "author": "",

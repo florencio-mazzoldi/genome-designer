@@ -34,9 +34,6 @@ export default function inventory(state = initialState, action) {
     setItem('inventoryTab', tab);
     return Object.assign({}, state, { currentTab: tab });
 
-  case ActionTypes.USER_SET_USER :
-    return Object.assign({}, initialState);
-
   default :
     return state;
   }

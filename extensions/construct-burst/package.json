@@ -5,13 +5,18 @@
   "main": "index.js",
   "geneticConstructor": {
     "readable": "Sunburst",
-    "client": "index.js",
-    "region": "sequenceDetail"
+    "type": "Visualization",
+    "client": [
+      {
+        "file": "index.js",
+        "region": "projectDetail"
+      }
+    ]
   },
   "scripts": {
     "dev": "webpack main.js -o index.js -d -s --watch",
     "build": "webpack main.js -o index.js -d -s",
-    "prepublish": "npm run build",
+    "postinstall": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

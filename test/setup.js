@@ -16,7 +16,7 @@ global.navigator = global.window.navigator;
 window.console = global.console;
 
 //hack - for history/lib/DOMStateStorage
-window.localStorage = window.sessionStorage = {
+global.localStorage = global.sessionStorage = window.localStorage = window.sessionStorage = {
   getItem: function getItem(key) {
     return this[key];
   },

@@ -16,11 +16,13 @@
 import path from 'path';
 import fs from 'fs';
 import { pickBy } from 'lodash';
-import { manifestIsServer, manifestIsClient } from './manifestUtils';
+import { validateManifest, manifestIsServer, manifestIsClient } from './manifestUtils';
 
 const nodeModulesDir = process.env.BUILD ? 'gd_extensions' : path.resolve(__dirname, './node_modules');
 
 const registry = {};
+
+//todo - this should include the 'native' extensions -- these wont show up in registry currently
 
 fs.readdirSync(nodeModulesDir).forEach(packageName => {
   try {
@@ -33,30 +35,36 @@ fs.readdirSync(nodeModulesDir).forEach(packageName => {
     const filePath = path.resolve(nodeModulesDir, packageName + '/package.json');
     const depManifest = require(filePath);
 
-    if (!depManifest.geneticConstructor) {
-      console.log('ignoring package ' + packageName + ', no field geneticConstructor');
-      return;
-    }
+    validateManifest(depManifest);
 
     Object.assign(registry, {
       [packageName]: depManifest,
     });
   } catch (err) {
-    console.warn('error loading extension: ' + packageName);
+    console.warn('\n\nerror loading extension: ' + packageName);
     console.error(err);
   }
 });
+
+console.log('[Extensions Loaded] ' + Object.keys(registry));
 
 export const isRegistered = (name) => {
   return registry.hasOwnProperty(name);
 };
 
-export const getClientExtensions = () => {
-  return pickBy(registry, (manifest, key) => manifestIsClient(manifest));
+//each filter takes arguments (manifest, key), should return true or false
+export const getExtensions = (...filters) => {
+  return filters.reduce((acc, filter) => {
+    return pickBy(acc, filter);
+  }, registry);
 };
 
-export const getServerExtensions = () => {
-  return pickBy(registry, (manifest, key) => manifestIsServer(manifest));
+export const getClientExtensions = (...filters) => {
+  return getExtensions(manifestIsClient, ...filters);
+};
+
+export const getServerExtensions = (...filters) => {
+  return getExtensions(manifestIsServer, ...filters);
 };
 
 export default registry;

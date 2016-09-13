@@ -83,7 +83,7 @@ class SignInForm extends Component {
 
   onRegister(evt) {
     evt.preventDefault();
-    this.props.uiShowAuthenticationForm('signup');
+    this.props.uiShowAuthenticationForm('register');
   }
   onTextChanged() {
     this.setState({
@@ -125,7 +125,7 @@ class SignInForm extends Component {
         onSubmit={this.onSubmit.bind(this)}>
         <div className="title">Sign In</div>
           <span style={registerStyle}>{"Don't have an account? "}
-            <a className="blue-link" href="/" onClick={this.onRegister.bind(this)}>Sign Up&nbsp;</a>
+            <a className="blue-link" href="/" onClick={this.onRegister.bind(this)}>Register&nbsp;</a>
             <span>{"- it's free!"}</span>
           </span>
         <input

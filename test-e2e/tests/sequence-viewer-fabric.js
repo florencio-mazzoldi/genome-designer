@@ -30,8 +30,8 @@ module.exports = {
       .assert.countelements(".viewer .sequence-text-marker", 6)
       .assert.countelements(".viewer .sequence-text-reverse", 6)
       .assert.countelements(".viewer .sequence-ruler", 1)
-      .assert.countelements(".viewer .sequence-ruler .number", 8)
-      .assert.countelements(".viewer .sequence-ruler .tick", 8)
+      .assert.countelements(".viewer .sequence-ruler .number", 5)
+      .assert.countelements(".viewer .sequence-ruler .tick", 5)
       .end();
   }
 };

@@ -1,23 +1,25 @@
 /*
-Copyright 2016 Autodesk,Inc.
+ Copyright 2016 Autodesk,Inc.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
 import path from 'path';
 import fs from 'fs';
 import express from 'express';
 import morgan from 'morgan';
 
+import { registrationHandler } from './user/updateUserHandler';
+import userRouter from './user/userRouter';
 import dataRouter from './data/index';
 import orderRouter from './order/index';
 import fileRouter from './file/index';
@@ -25,11 +27,10 @@ import extensionsRouter from './extensions/index';
 import reportRouter from './report/index';
 import bodyParser from 'body-parser';
 import errorHandlingMiddleware from './utils/errorHandlingMiddleware';
-import checkUserSetup from './auth/userSetup';
+import checkUserSetup from './onboarding/userSetup';
+import { pruneUserObject } from './user/utils';
 
-const DEFAULT_PORT = 3000;
-const port = parseInt(process.argv[2], 10) || process.env.PORT || DEFAULT_PORT;
-const hostname = '0.0.0.0';
+import { HOST_PORT, HOST_NAME, API_END_POINT } from './urlConstants';
 
 //file paths depending on if building or not
 //note that currently, you basically need to use npm run start in order to serve the client bundle + webpack middleware
@@ -74,6 +75,19 @@ app.set('view engine', 'pug');
 // Register API middleware
 // ----------------------------------------------------
 
+const onLoginHandler = (req, res, next) => {
+  return checkUserSetup(req.user)
+    .then((projectId) => {
+      //note this expects an abnormal return of req and res to the next function
+      return next(req, res);
+    })
+    .catch(err => {
+      console.log(err);
+      console.log(err.stack);
+      res.status(500).end();
+    });
+};
+
 // insert some form of user authentication
 // the auth routes are currently called from the client and expect JSON responses
 if (process.env.BIO_NANO_AUTH) {
@@ -85,14 +99,8 @@ if (process.env.BIO_NANO_AUTH) {
     loginLanding: false,
     loginFailure: false,
     resetForm: '/homepage/reset',
-    apiEndPoint: process.env.API_END_POINT || 'http://localhost:8080/api',
-    onLogin: (req, res, next) => {
-      return checkUserSetup(req.user)
-        .then((projectId) => {
-          //note this expects an abnormal return of req and res to the next function
-          return next(req, res);
-        });
-    },
+    apiEndPoint: API_END_POINT,
+    onLogin: onLoginHandler,
     registerRedirect: false,
   };
   app.use(initAuthMiddleware(authConfig));
@@ -103,6 +111,10 @@ if (process.env.BIO_NANO_AUTH) {
   const authRouter = require('./auth/local').router;
   app.use('/auth', authRouter);
 }
+
+//expose our own register route to handle custom onboarding
+app.post('/register', registrationHandler);
+app.use('/user', userRouter);
 
 //primary routes
 app.use('/data', dataRouter);
@@ -139,7 +151,10 @@ app.get('*', (req, res) => {
       discourseDomain: process.env.BNR_ENV_URL_SUFFIX || `https://forum.bionano.autodesk.com`,
     };
     //so that any routing is delegated to the client
-    res.render(path.join(pathContent + '/index.pug'), Object.assign({}, req.user, discourse, {
+    const prunedUser = pruneUserObject(req.user);
+    const config = prunedUser.config ? JSON.stringify(prunedUser.config) : '{}';
+    const user = Object.assign({}, prunedUser, { config });
+    res.render(path.join(pathContent + '/index.pug'), Object.assign({}, user, discourse, {
       productionEnvironment: process.env.NODE_ENV === 'production',
     }));
   }
@@ -161,29 +176,26 @@ const isPortFree = (port, cb) => {
       tester.once('close', () => {
         cb(null, true);
       })
-      .close();
+        .close();
     })
     .listen({
       port,
-      host: hostname,
+      host: HOST_NAME,
       exclusive: true,
     });
 };
 
-const startServer = () => app.listen(port, hostname, (err) => {
+const startServer = () => app.listen(HOST_PORT, HOST_NAME, (err) => {
   if (err) {
     console.log('error listening!', err.stack);
     return;
   }
 
   /* eslint-disable no-console */
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(JSON.stringify(process.memoryUsage(), null, 2));
-  }
-  console.log(`Server listening at http://${hostname}:${port}/`);
+  console.log(`Server listening at http://${HOST_NAME}:${HOST_PORT}/`);
 });
 
 //start the server by default, if port is not taken
-isPortFree(port, (err, free) => free && startServer());
+isPortFree(HOST_PORT, (err, free) => free && startServer());
 
 export default app;

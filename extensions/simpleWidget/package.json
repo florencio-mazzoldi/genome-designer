@@ -4,7 +4,13 @@
   "description": "Extension which renders basic widget into the web app",
   "geneticConstructor": {
     "readable": "Simple Widget",
-    "region": "projectDetail"
+    "type": "(Example)",
+    "client": [
+      {
+        "file": "index.js",
+        "region": "projectDetail"
+      }
+    ]
   },
   "main": "index.js",
   "author": "",

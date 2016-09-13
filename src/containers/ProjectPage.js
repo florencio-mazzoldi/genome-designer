@@ -32,12 +32,14 @@ import { uiSetGrunt } from '../actions/ui';
 import { focusConstruct } from '../actions/focus';
 import { orderList } from '../actions/orders';
 import autosaveInstance from '../store/autosave/autosaveInstance';
+import loadAllExtensions from '../extensions/loadExtensions';
 
 import '../styles/ProjectPage.css';
 import '../styles/SceneGraphPage.css';
 
 class ProjectPage extends Component {
   static propTypes = {
+    userId: PropTypes.string,
     showingGrunt: PropTypes.bool,
     projectId: PropTypes.string.isRequired,
     project: PropTypes.object, //if have a project (not fetching)
@@ -56,6 +58,11 @@ class ProjectPage extends Component {
     // todo - use react router History to do this:
     // https://github.com/mjackson/history/blob/master/docs/ConfirmingNavigation.md
     window.onbeforeunload = window.onunload = this.onWindowUnload;
+
+    //load extensions (also see componentWillReceiveProps)
+    if (!!this.props.userId) {
+      loadAllExtensions();
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -68,6 +75,12 @@ class ProjectPage extends Component {
       //get all the projects orders lazily, will re-render when have them
       //run in project page so only request them when we actually load the project
       this.props.orderList(nextProps.projectId);
+    }
+
+    //reload extensions if user changed
+    //could be smarter about this... but probably not an issue since log the user out and refrresh the page
+    if (this.props.userId !== nextProps.userId && nextProps.userId) {
+      loadAllExtensions();
     }
   }
 
@@ -131,6 +144,8 @@ class ProjectPage extends Component {
 }
 
 function mapStateToProps(state, ownProps) {
+  const userId = state.user.userid;
+
   const projectId = ownProps.params.projectId;
   const project = state.projects[projectId];
   const showingGrunt = !!state.ui.modals.gruntMessage;
@@ -154,6 +169,7 @@ function mapStateToProps(state, ownProps) {
     project,
     constructs,
     orders,
+    userId,
   };
 }
 

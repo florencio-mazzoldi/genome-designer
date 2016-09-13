@@ -4,8 +4,6 @@ import { applyMiddleware, createStore, combineReducers } from 'redux';
 import { expect } from 'chai';
 import saveLastActionMiddleware from '../../src/store/saveLastActionMiddleware';
 
-console.error('todo - update this with freezeing reducer enhancer... or deprecate this all together?');
-
 const middlewares = [
   thunk,
   saveLastActionMiddleware,
@@ -15,11 +13,13 @@ const middlewares = [
 //first two arguments required,
 //combineUnderNamespace to create namespaced store automatically
 export function simpleStore(initialState, reducer, combineUnderNamespace) {
+  console.error('todo - update store mock with freezeing reducer enhancer... or deprecate mock all together?');
+
   const finalReducer = (typeof combineUnderNamespace === 'string') ?
-    combineReducers({[combineUnderNamespace]: reducer}) :
+    combineReducers({ [combineUnderNamespace]: reducer }) :
     reducer;
   const finalInitialState = (typeof combineUnderNamespace === 'string') ?
-  {[combineUnderNamespace]: initialState} :
+  { [combineUnderNamespace]: initialState } :
     initialState;
 
   return applyMiddleware(...middlewares)(createStore)(finalReducer, finalInitialState);

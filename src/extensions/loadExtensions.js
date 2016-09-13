@@ -13,13 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { registry, registerManifest } from './clientRegistry';
-//import downloadExtension from './downloadExtension';
+import { registry, registerManifest, clearRegistry } from './clientRegistry';
 import { getExtensionsInfo } from '../middleware/extensions';
 
 //for now, build the registry using everything registered on the server, and load automatically
-function loadAllExtensions() {
-  getExtensionsInfo()
+export default function loadAllExtensions(loadAll = true, shouldClear = true) {
+  if (shouldClear === true) {
+    clearRegistry();
+  }
+
+  getExtensionsInfo(loadAll)
     .then(manifests => {
       Object.keys(manifests)
         .map(key => manifests[key])
@@ -27,7 +30,3 @@ function loadAllExtensions() {
     })
     .then(() => registry);
 }
-
-//todo - is this necessary?
-//load everything automatically after a moment...
-setTimeout(loadAllExtensions, 100);

@@ -21,8 +21,6 @@ import Spinner from './ui/Spinner';
 
 import '../styles/ExtensionView.css';
 
-//todo - either get rid of the visible flag (just unmount the extension), or support unregistering when it is set to false
-
 export default class ExtensionView extends Component {
   static propTypes = {
     region: function regionPropValidator(props, name) {
@@ -36,7 +34,8 @@ export default class ExtensionView extends Component {
         return new Error(`invalid extension key, got ${extension}`);
       }
     },
-    isVisible: PropTypes.bool,
+    //isVisible is required so tha the extension unmounts properly (with this component)
+    isVisible: PropTypes.bool.isRequired,
   };
 
   static defaultProps = {
@@ -95,7 +94,7 @@ export default class ExtensionView extends Component {
   }
 
   renderExtension() {
-    const { extension } = this.props;
+    const { region, extension } = this.props;
 
     //clear contents
     this.element.innerHTML = '';
@@ -104,12 +103,12 @@ export default class ExtensionView extends Component {
       return;
     }
 
-    try {
-      //wait till next tick so DOM ready etc.
-      setTimeout(() => {
+    //wait till next tick so DOM ready etc.
+    setTimeout(() => {
+      try {
         const boundingBox = this.element.getBoundingClientRect();
 
-        downloadAndRender(extension, this.element, { boundingBox })
+        downloadAndRender(extension, region, this.element, { boundingBox })
           .then(unregister => {
             //todo - better handle scenario of extension loaded but not rendered (i.e. callback not yet set) - want to unregister immediately
             this.callback = unregister;
@@ -124,11 +123,11 @@ export default class ExtensionView extends Component {
               hasError: err,
             });
           });
-      });
-    } catch (err) {
-      console.error('error loading / rendering extension ' + extension);
-      throw err;
-    }
+      } catch (err) {
+        console.error('error loading / rendering extension ' + extension);
+        throw err;
+      }
+    });
   }
 
   //todo - better error handling for extension loading + the status / default text

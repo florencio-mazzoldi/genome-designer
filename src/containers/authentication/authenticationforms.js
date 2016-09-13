@@ -16,7 +16,7 @@ limitations under the License.
 import React, {Component, PropTypes} from 'react';
 import {connect} from 'react-redux';
 import ModalWindow from '../../components/modal/modalwindow';
-import SignUpForm from '../../components/authentication/signup';
+import RegisterForm from '../../components/authentication/register';
 import SignInForm from '../../components/authentication/signin';
 import ForgotForm from '../../components/authentication/forgot';
 import ResetForm from '../../components/authentication/reset';
@@ -39,7 +39,7 @@ class AuthenticationForms extends Component {
   render() {
     let form;
     switch (this.props.authenticationForm) {
-    case 'signup' : form = <SignUpForm/>; break;
+    case 'register' : form = <RegisterForm/>; break;
     case 'signin' : form = <SignInForm/>; break;
     case 'forgot' : form = <ForgotForm/>; break;
     case 'reset' : form = <ResetForm/>; break;

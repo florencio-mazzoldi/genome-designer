@@ -19,6 +19,8 @@ export const serverRoot = (global.location && (/http/gi).test(global.location.pr
   `${global.location.protocol}//${global.location.host}/` :
   'http://localhost:3000/';
 
+export const serverPath = (path) => serverRoot + path;
+export const registerPath = () => serverRoot + 'register';
 export const authPath = (path) => serverRoot + 'auth/' + path;
 export const dataApiPath = (path) => serverRoot + 'data/' + path;
 export const orderApiPath = (path) => serverRoot + 'order/' + path;

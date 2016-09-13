@@ -6,4 +6,4 @@ function render(container, options) {
   container.style.cssText = 'background: red; height: 100%; width: 100%';
 }
 
-window.constructor.extensions.register('testClient', render);
+window.constructor.extensions.register('testClient', 'projectDetail', render);

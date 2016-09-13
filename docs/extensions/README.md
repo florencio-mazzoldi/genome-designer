@@ -10,11 +10,13 @@ Extensions must be valid NPM packages, including a file `package.json`.
 
 Extensions must include a field `geneticConstructor: {}` in `package.json` or they will be ignored.
 
+The `geneticConstructor` object must include the field `type`, and either `client` for Client Extensions, or `router` for Server Extensions, or both if there are components on both the client and server.
+
 ### Install extensions
 
 In general, extensions listed in `/server/extensions/package.json` and are installed using `npm run install-extensions`. This will install packages, which are assumed to be already build. You may wish to use `npm link` while you are developing a local extension (see Tips section).
 
-We make no guarantees that all package dependencies will be installed (currently, we use `npm install`, which installs dependencies and runs `prepublish` scripts, but that may change in the future).
+We make no guarantees that all package dependencies will be installed (currently, we use `npm install`, which installs dependencies and runs `postinstall` scripts, but that may change in the future).
 
 If you are developing locally, you may list packages in `package.json` with relative paths, as allowed by NPM.
 
@@ -32,6 +34,12 @@ See the npm documentation for how to update `package.json`.
 ### package.json
 
 A few additional fields in `package.json` indicate to Constructor information and intent about the extension. See the docs on [Client extensions](ClientExtensions.md) and [Server Extensions](ServerExtensions.md) for specifics.
+
+### Developing Extensions
+
+To develop an extension, you should download and run Genetic Constructor locally, and develop your extension by including it in the local server. The recommended way of including your extension is to use [`npm link`](npmLink.md).
+
+When running locally, simple / mocked [authentication](../../server/auth/README.md) is used.
 
 ### Tips
 

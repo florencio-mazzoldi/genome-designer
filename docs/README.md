@@ -31,6 +31,8 @@ The following are the primary topics of the Constructor Application:
     - Sequences
     - Extensions
 
+- [Registration](registration.md)
+
 - Extensions
     - [Overview](extensions/README.md)
     - [Client Extensions](extensions/ClientExtensions.md)

@@ -20,4 +20,4 @@ function render(container, options) {
   };
 }
 
-window.constructor.extensions.register('simpleWidget', render);
+window.constructor.extensions.register('simpleWidget', 'projectDetail', render);

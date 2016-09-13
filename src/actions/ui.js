@@ -135,7 +135,7 @@ export const detailViewSelectExtension = (key) => {
 
 export const uiShowAuthenticationForm = (name) => {
   return (dispatch, getState) => {
-    invariant(['signin', 'signup', 'forgot', 'reset', 'account', 'none'].indexOf(name) >= 0, 'attempting to show invalid form name');
+    invariant(['signin', 'register', 'forgot', 'reset', 'account', 'none'].indexOf(name) >= 0, 'attempting to show invalid form name');
     dispatch({
       type: ActionTypes.UI_SHOW_AUTHENTICATION_FORM,
       authenticationForm: name,
@@ -234,3 +234,15 @@ export const uiReportError = (nextState) => {
     return null;
   };
 };
+
+export const uiShowExtensionPicker = (nextState = true) => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.UI_SHOW_EXTENSION_PICKER,
+      pickerState: nextState,
+    });
+    return nextState;
+  };
+};
+
+
