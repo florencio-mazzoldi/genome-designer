@@ -34,9 +34,15 @@ const createFileUrl = (fileName) => {
 
 // Download a temporary file and delete it afterwards
 const downloadAndDelete = (res, tempFileName, downloadFileName) => {
-  res.download(tempFileName, downloadFileName, err => {
-    fileSystem.fileDelete(tempFileName);
-  });
+  return new Promise((resolve, reject) => {
+    res.download((tempFileName, downloadFileName, err) => {
+      if (err) {
+        return reject(err);
+      }
+      fileSystem.fileDelete(tempFileName);
+      resolve();
+    });
+  })
 };
 
 //create the router
@@ -101,9 +107,9 @@ router.get('/export/blocks/:projectId/:blockIdList', permissionsMiddleware, (req
         }),
       };
 
-      exportConstruct({ roll: partialRoll, constructId: construct.id })
+      return exportConstruct({ roll: partialRoll, constructId: construct.id })
         .then(resultFileName => {
-          downloadAndDelete(res, resultFileName, roll.project.id + '.fasta');
+          return downloadAndDelete(res, resultFileName, roll.project.id + '.fasta');
         });
     })
     .catch(err => {
@@ -127,11 +133,11 @@ router.get('/export/:projectId/:constructId?', permissionsMiddleware, (req, res,
 
       return promise
         .then((resultFileName) => {
-          fileSystem.fileRead(resultFileName, false)
+          return fileSystem.fileRead(resultFileName, false)
             .then(fileOutput => {
               // We have to disambiguate between zip files and gb files!
               const fileExtension = (fileOutput.substring(0, 5) !== 'LOCUS') ? '.zip' : '.gb';
-              downloadAndDelete(res, resultFileName, name + fileExtension);
+              return downloadAndDelete(res, resultFileName, name + fileExtension);
             });
         });
     })
