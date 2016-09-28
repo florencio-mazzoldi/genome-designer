@@ -41,7 +41,7 @@ def add_GC_info(sf, block, allblocks):
 def add_features(block, allblocks, gb, start):
     # Disregard fillers... don't create features for them
     if is_filler(block):
-        return start + block["sequence"]["length"] + 1
+        return start + block["sequence"]["length"]
 
     # For handling list blocks!
     if "current_option" in block:
