@@ -62,6 +62,7 @@ export const setExtensionConfig = (nextConfig = {}) => {
     merge(extensionConfig, nextConfig);
     return true;
   }
+
   return false;
 };
 

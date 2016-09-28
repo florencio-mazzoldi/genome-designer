@@ -1,22 +1,23 @@
 /*
-Copyright 2016 Autodesk,Inc.
+ Copyright 2016 Autodesk,Inc.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { inventoryToggleVisibility, inventorySelectTab } from '../actions/ui';
 import InventoryGroup from '../components/Inventory/InventoryGroup';
+import { onRegister, extensionIsActive } from '../extensions/clientRegistry';
 
 import '../styles/Inventory.css';
 import '../styles/SidePanel.css';
@@ -29,6 +30,22 @@ export class Inventory extends Component {
     inventoryToggleVisibility: PropTypes.func.isRequired,
     inventorySelectTab: PropTypes.func.isRequired,
   };
+
+  //hack - listen for GSL editor to show its inventory section
+
+  componentDidMount() {
+    //listen to get relevant manifests here.
+    //run on first time (key === null) in case registry is already populated.
+    this.extensionsListener = onRegister((registry, key, regions) => {
+      if (key === null || key === 'gslEditor') {
+        this.forceUpdate();
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this.extensionsListener();
+  }
 
   toggle = (forceVal) => {
     this.props.inventoryToggleVisibility(forceVal);
@@ -66,11 +83,11 @@ export class Inventory extends Component {
             <InventoryGroup title="Sketch Library"
                             type="role"
                             isActive={currentTab === 'role'}
-                            setActive={() => inventorySelectTab('role')} />
-            <InventoryGroup title="GSL Library"
-                            type="gsl"
-                            isActive={currentTab === 'gsl'}
-                            setActive={() => inventorySelectTab('gsl')} />
+                            setActive={() => inventorySelectTab('role')}/>
+            {extensionIsActive('gslEditor') && (<InventoryGroup title="GSL Library"
+                                                                type="gsl"
+                                                                isActive={currentTab === 'gsl'}
+                                                                setActive={() => inventorySelectTab('gsl')}/>)}
           </div>
         </div>
       </div>

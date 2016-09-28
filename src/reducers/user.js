@@ -16,6 +16,7 @@
 import invariant from 'invariant';
 import * as ActionTypes from '../constants/ActionTypes';
 import { setExtensionConfig } from '../extensions/clientRegistry';
+import loadAllExtensions from '../extensions/loadExtensions';
 
 const flashedUser = global.flashedUser || {};
 const initialState = {
@@ -52,6 +53,9 @@ export default function user(state = initialState, action) {
     //update config in clientRegistry here (before all listeners are called - components, user promises, etc.)
     if (updateConfig) {
       setExtensionConfig(nextState.config.extensions);
+
+      //update all listeners by re-fetching extension list + register again
+      loadAllExtensions(true, true);
     }
 
     return nextState;
