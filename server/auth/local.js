@@ -23,6 +23,8 @@
  * This user is used in unit testing.
  */
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import { testUserId } from '../../test/constants';
 import bodyParser from 'body-parser';
 import validEmail from 'valid-email';
@@ -48,6 +50,16 @@ const defaultUserForcedFields = {
 const configForDefaultUser = Object.assign({}, userConfigDefaults);
 const userData = Object.assign({}, { [userConfigKey]: configForDefaultUser });
 
+//save user in a temporary file, so it is not cleared across server-reloads
+const userConfigTempPath = path.resolve(__dirname, 'temp.config.json');
+let loadedUser = {};
+try {
+  const fileText = fs.readFileSync(userConfigTempPath, 'utf8');
+  loadedUser = JSON.parse(fileText);
+} catch (err) {
+  //no need to report error...
+}
+
 //this object will get updated as /register and /update the user (one user in local auth)
 export const defaultUser = Object.assign(
   {
@@ -56,6 +68,7 @@ export const defaultUser = Object.assign(
     lastName: 'Eloper',
   },
   { data: userData },
+  loadedUser,
   defaultUserForcedFields
 );
 
@@ -108,7 +121,7 @@ const handleUpdate = (req, res, next) => {
   Object.assign(defaultUser, mappedUser, defaultUserForcedFields);
 
   console.log('[Local Auth - User Update]');
-  console.log(JSON.stringify(defaultUser, null, 2));
+  fs.writeFileSync(userConfigTempPath, JSON.stringify(defaultUser, null, 2), 'utf8');
 
   res.json(defaultUser);
 };

@@ -361,7 +361,7 @@ export default class ConstructViewerUserInterface extends UserInterface {
   constructExpander(evt, point) {
     const hits = this.sg.findNodesAt(point);
     const hit = hits.length ? hits.pop() : null;
-    if (hit.dataAttribute && hit.dataAttribute.value === 'moreLabel') {
+    if (hit && hit.dataAttribute && hit.dataAttribute.value === 'moreLabel') {
       return true;
     }
     if (hit === this.layout.banner) {

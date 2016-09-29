@@ -19,9 +19,9 @@ The following are the primary topics of the Constructor Application:
     - [Schemas](../src/schemas/README.md)
 
 - Client API
-    - [Store](../src/store/README.md)
-    - [Actions](../src/actions/README.md)
-    - [Selectors](../src/selectors/README.md)
+    - [Store](http://geneticconstructor.com/help/docs/module-constructor.module_store.html)
+    - [Actions](http://geneticconstructor.com/help/docs/module-Actions.html)
+    - [Selectors](http://geneticconstructor.com/help/docs/module-Selectors.html)
     - [Reducers](../src/reducers/README.md)
     - [Middleware](../src/middleware/README.md)
 

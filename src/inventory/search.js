@@ -21,20 +21,24 @@ import { registry, getSources } from './registry';
  *
  * Sources must conform to a prescribed structure to work with Constructor. They must support the following functions:
  *
- * ### `search(query, options)`
+ * ##### `search(query, options)`
  *
  * Search the source for a given query.
  *
  * sources must support the following `options`
  *
- * `start` - index of search results at which to start
- * `entries` - number of entries to fetch
+ * ```
+ * start - index of search results at which to start
+ * entries - number of entries to fetch
+ * ```
  *
  * Results returned from each source are an array of Block models, with the property `parameters` assigned to the array, reflecting the parameters actually used in the search (determined by the search extension, defaults are not attached)
  *
- * These models can and likely should be minimal, as they are only shown in the inventory. `get()` will be called before showing in the inspector or adding to the project. They must include `block.source = { source: <key>, id: <source_id> }` for the `get()`
+ * These models can and likely should be minimal, as they are only shown in the inventory. `get()` will be called before showing in the inspector or adding to the project. get() must include:
  *
- * ### `get(id, options, searchResult)`
+ * `block.source = { source: <key>, id: <source_id> }`
+ *
+ * ##### `get(id, options, searchResult)`
  *
  * Given an ID, get complete Block from the source. Passed the searchResult e.g. to map over the ID (note that Blocks should be cloned when added to the project e.g. by drag and drop).
  *
@@ -44,7 +48,7 @@ import { registry, getSources } from './registry';
  *
  * `onlyConstruct` - only return one block, the construct (e.g. to show in the inspector, without adding to project)
  *
- * ### `sourceUrl(blockSource)`
+ * ##### `sourceUrl(blockSource)`
  *
  * Given a block's source (`block.source`), generate a URL for where more information about the block can be found
  *
@@ -54,6 +58,7 @@ import { registry, getSources } from './registry';
 /**
  * Run a search over a inventory source.
  * @memberOf module:search
+ * @function
  * @param {string} term Search term
  * @param {Object} parameters Parameters, defined in {@link module:search}
  * @param {string} sourceKey Key of search in search registry
@@ -80,6 +85,7 @@ export const search = (term, parameters = {}, sourceKey) => {
 /**
  * Search multiple sources at once
  * @memberOf module:search
+ * @function
  * @param {string} term search
  * @param {Object} options See search
  * @param {Array} sourceList

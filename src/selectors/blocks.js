@@ -13,6 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+/**
+ * @module Selectors_Blocks
+ * @memberOf module:Selectors
+ */
 import invariant from 'invariant';
 import BlockSchema from '../schemas/Block';
 import { values, flatten, get as pathGet, pickBy } from 'lodash';
@@ -54,6 +58,7 @@ const _getAllComponents = (rootId, store, children = []) => {
   return children;
 };
 
+//return map, of children IDs to depth
 const _getAllComponentsByDepth = (rootId, store, children = {}, depth = 1) => {
   const kids = _getComponentsShallow(rootId, store);
   if (kids.length) {
@@ -149,18 +154,38 @@ const _getWithFieldValue = (path, value, store) => {
   return pickBy(store.blocks, (block) => pathGet(block, path) === value);
 };
 
+/**
+ * Retrieves a block by ID
+ * @function
+ * @param {UUID} blockId
+ * @throws if block doesn't exist
+ * @returns {Block} Block
+ */
 export const blockGet = (blockId) => {
   return (dispatch, getState) => {
     return _getBlockFromStore(blockId, getState());
   };
 };
 
+/**
+ * Retrieves a block by ID
+ * @function
+ * @param {string} name
+ * @returns {Array<Block>} Blocks with matching name (exact), or empty array
+ */
 export const blockGetBlocksWithName = (name) => {
   return (dispatch, getState) => {
     return _getWithFieldValue('metadata.name', name, getState());
   };
 };
 
+/**
+ * Check if block is a top-level construct (direct descendant of project)
+ * @function
+ * @param {UUID} blockId
+ * @throws if blockId does not exist
+ * @returns {boolean} true if direct descendant
+ */
 export const blockIsTopLevelConstruct = (blockId) => {
   return (dispatch, getState) => {
     const state = getState();
@@ -179,21 +204,37 @@ export const blockIsTopLevelConstruct = (blockId) => {
   };
 };
 
+/**
+ * Get a block's parent
+ * @function
+ * @param {UUID} blockId
+ * @returns {Block} parent Block, or null
+ */
 export const blockGetParent = (blockId) => {
   return (dispatch, getState) => {
     return _getParentFromStore(blockId, getState());
   };
 };
 
-//first parent is direct parent, last parent is construct
-//returns blocks, not ids
+/**
+ * Get all of a block's parents.
+ * @function
+ * @param {UUID} blockId
+ * @throws if blockId does not exist
+ * @returns {Array<Block>} Parents, first parent is direct parent, last parent is top-level construct
+ */
 export const blockGetParents = (blockId) => {
   return (dispatch, getState) => {
     return _getParents(blockId, getState());
   };
 };
 
-//i.e. get construct, or null if it is the construct (or detached)
+/**
+ * Get Block's top-level construct
+ * @function
+ * @param {UUID} blockId
+ * @returns {Block} Top-level construct, or null if it is detached.
+ */
 export const blockGetParentRoot = (blockId) => {
   return (dispatch, getState) => {
     const parents = _getParents(blockId, getState());
@@ -201,41 +242,75 @@ export const blockGetParentRoot = (blockId) => {
   };
 };
 
+/**
+ * Get all components, recursively, of a Block. Does not include options.
+ * todo - move to object, not array
+ * @function
+ * @param {UUID} blockId
+ * @returns {Array<Block>} All components.
+ */
 export const blockGetComponentsRecursive = (blockId) => {
   return (dispatch, getState) => {
     return _getAllComponents(blockId, getState());
   };
 };
 
+/**
+ * Get all components, recursively, of a Block, and returns their depth, relative to the block.
+ * @function
+ * @param {UUID} blockId
+ * @returns {Object.<UUID,number>} All components mapped to depth, { BlockId: depth }
+ */
 export const blockGetComponentsByDepth = (blockId) => {
   return (dispatch, getState) => {
     return _getAllComponentsByDepth(blockId, getState());
   };
 };
 
-//returns object
+/**
+ * Get all options, recursively, of a Block
+ * @function
+ * @param {UUID} blockId
+ * @returns {Object.<UUID,Block>} All options by id
+ */
 export const blockGetOptionsRecursive = (blockId) => {
   return (dispatch, getState) => {
     return _getAllOptions(blockId, getState());
   };
 };
 
-//returns object
+/**
+ * Get all contents (components & options), recursively, of a Block
+ * @function
+ * @param {UUID} blockId
+ * @returns {Object.<UUID,Block>} All contents by id
+ */
 export const blockGetContentsRecursive = (blockId) => {
   return (dispatch, getState) => {
     return _getAllContents(blockId, getState());
   };
 };
 
-//get all non-constructs
-//todo - move to object
-//todo - include list blocks
+/**
+ * Get all blocks which are not constructs (i.e., have no components). They are leaves of the tree.
+ * //todo - move to object
+ * //todo - include list blocks
+ * @function
+ * @param {UUID} blockId
+ * @returns {Object.<UUID,Block>} All components mapped to depth, { BlockId: depth }
+ */
 export const blockGetLeaves = (blockId) => {
   return (dispatch, getState) => {
     return _filterToLeafNodes(_getAllComponents(blockId, getState()));
   };
 };
 
+/**
+ * Get all siblings of a Block, including the block itself. I.e. get components of parent
+ * @function
+ * @param {UUID} blockId
+ * @returns {Array<Block>} sibling Blocks, including block itself
+ */
 export const blockGetSiblings = (blockId) => {
   return (dispatch, getState) => {
     const state = getState();
@@ -296,12 +371,24 @@ const _getBoundingBlocks = (state, ...blockIds) => {
   return [left, right];
 };
 
+/**
+ * Get bounds of the current selection, using the lowest common parent,
+ * @function
+ * @param {...UUID} blockIds
+ * @returns {Array<Block>} [ start, end ] bounds, where start === end === parent if only one block selected
+ */
 export const blockGetBounds = (...blockIds) => {
   return (dispatch, getState) => {
     return _getBoundingBlocks(getState(), ...blockIds);
   };
 };
 
+/**
+ * Get range of selection
+ * @function
+ * @param {UUID} blockId
+ * @returns {Array<Block>} Components of lowest common parent, trimmed to bounding components
+ */
 export const blockGetRange = (...blockIds) => {
   return (dispatch, getState) => {
     const state = getState();
@@ -315,6 +402,12 @@ export const blockGetRange = (...blockIds) => {
   };
 };
 
+/**
+ * Get component index
+ * @function
+ * @param {UUID} blockId
+ * @returns {number} index of component, -1 if no parent
+ */
 export const blockGetIndex = (blockId) => {
   return (dispatch, getState) => {
     const parent = _getParentFromStore(blockId, getState(), {});
@@ -327,6 +420,12 @@ const _checkSingleBlockIsSpec = (block) => {
   return block.sequence.length > 0;
 };
 
+/**
+ * Check if a block is a spec. That is, all of its components and options have a sequence
+ * @function
+ * @param {UUID} blockId
+ * @returns {number} index of component, -1 if no parent
+ */
 export const blockIsSpec = (blockId) => {
   return (dispatch, getState) => {
     const store = getState();
@@ -343,26 +442,53 @@ export const blockIsSpec = (blockId) => {
   };
 };
 
+/**
+ * Validate a block mocel
+ * @function
+ * @param {object} model
+ * @returns {boolean} whether model is valid
+ */
 export const blockIsValid = (model) => {
   return (dispatch, getState) => {
     return BlockSchema.validate(model);
   };
 };
 
+/**
+ * Check if a block has sequence
+ * @function
+ * @param {UUID} blockId
+ * @throws if blockId not in store
+ * @returns {boolean} true if has sequence
+*/
 export const blockHasSequence = blockId => {
   return (dispatch, getState) => {
     const block = _getBlockFromStore(blockId, getState());
-    return !!block && block.hasSequence();
+    return block.hasSequence();
   };
 };
 
-//constructId is required as list options may exist in multiple places within a project - should be lowest known parent
+/**
+ * Given id of a list block option, get list block containing it
+ * @function
+ * @param {UUID} optionId
+ * @param {UUID} constructId required as list options may exist in multiple places within a project - should be lowest known parent
+ * @returns {number} index of component, -1 if no parent
+ */
 export const blockGetListOwner = (optionId, constructId) => {
   return (dispatch, getState) => {
     return _getListOwnerFromStore(optionId, constructId, getState());
   };
 };
 
+/**
+ * Check if a block is a list option of a given construct
+ * @function
+ * @param {UUID} optionId
+ * @param {UUID} constructId required as list options may exist in multiple places within a project - should be lowest known parent
+ * @param {boolean} [returnParentId=false] if true, returns ID instead of true
+ * @returns {boolean} true if has a list owner
+ */
 export const blockIsListOption = (optionId, constructId, returnParentId = false) => {
   return (dispatch, getState) => {
     const state = getState();
@@ -383,34 +509,14 @@ export const blockIsListOption = (optionId, constructId, returnParentId = false)
   };
 };
 
-/*
- deprecated filters for now
- //expects object block.rules.filter
- export const blockGetFiltered = filters => {
- return (dispatch, getState) => {
- invariant(typeof filters === 'object', 'must pass ovject of filters');
- const blockState = getState().blocks;
-
- return Object.keys(blockState)
- .map(id => blockState[id])
- .filter(block => {
- return Object.keys(filters).every(key => {
- const value = filters[key];
- return pathGet(block, key) === value;
- });
- });
- };
- };
- */
-
-//given a construct, returns an array of parts that have sequence / are list blocks, including hidden blocks
-export const blockFlattenConstruct = (blockId) => {
-  return (dispatch, getState) => {
-    return _flattenConstruct(blockId, getState());
-  };
-};
-
-/*
+/**
+ * Get 2D array, maintaing component indices, where each index is an array of blocks (1 if part, N if list block)
+ * @function
+ * @param {UUID} blockId
+ * @param {boolean} [onlyIds=true] return Block ids. False to get blocks.
+ * @param {UUID} [includeUnselected=false] include inactive list options
+ * @returns {Array<Array<Block>>} Flat list of blocks which either 1) have sequence 2) are list blocks or 3) are sketches. includes hidden blocks.
+ * @example
  returns 2D array - based on position - of block combinations (including hidden blocks), e.g.
 
  given:
@@ -418,14 +524,14 @@ export const blockFlattenConstruct = (blockId) => {
  B: { options: {2: true, 3: true, 4: true, 5: false } } //list block with 3 selected options
  C: { options: { 6: true } }                            //list block, one option
 
- generates:
+ generates
  [
- [A],
- [block2, block3, block4],
- [block6],
+   [A],
+   [block2, block3, block4],
+   [block6],
  ]
  */
-export const blockGetPositionalCombinations = (blockId, onlyIds = false, includeUnselected = false) => {
+export const blockGetPositionalCombinations = (blockId, onlyIds = true, includeUnselected = false) => {
   return (dispatch, getState) => {
     invariant(dispatch(blockIsSpec(blockId)), 'block must be a spec to get combinations');
 
@@ -444,13 +550,28 @@ export const blockGetPositionalCombinations = (blockId, onlyIds = false, include
   };
 };
 
+/**
+ * Get number of possible combinations of a given construct
+ * @function
+ * @param {UUID} blockId
+ * @param {boolean} [includeUnselected=false] Unselected list options
+ * @returns {number} number combinations
+ */
 export const blockGetNumberCombinations = (blockId, includeUnselected = false) => {
   return (dispatch, getState) => {
     const positions = dispatch(blockGetPositionalCombinations(blockId, includeUnselected));
     return positions.reduce((acc, position) => acc * position.length, 1);
   };
 };
-/*
+
+/**
+ * Get all combinations of blocks, returning an array of combinations
+ * @function
+ * @param {UUID} blockId
+ * @param {boolean} onlyIds
+ * @param {boolean} includeUnselected
+ * @returns {Array<Array<Block>>} Array of combinations, where each combination is an array of blocks, or blockIds if onlyIds = true
+ * @example
  returns 2D array of all possible constructs, flattened, and with options unfurled, including hidden blocks
 
  given:
@@ -460,9 +581,9 @@ export const blockGetNumberCombinations = (blockId, includeUnselected = false) =
 
  generates:
  [
- [A, block2, block6],
- [A, block3, block6],
- [A, block4, block6],
+   [A, block2, block6],
+   [A, block3, block6],
+   [A, block4, block6],
  ]
  */
 export const blockGetCombinations = (blockId, onlyIds, includeUnselected) => {
@@ -487,6 +608,24 @@ export const blockGetCombinations = (blockId, onlyIds, includeUnselected) => {
   };
 };
 
+/**
+ * Flatten a construct to its leaf nodes (non-construct blocks)
+ * @function
+ * @param {UUID} blockId
+ * @returns {Array<Block>} Flat list of blocks which either 1) have sequence 2) are list blocks or 3) are sketches. includes hidden blocks.
+ */
+export const blockFlattenConstruct = (blockId) => {
+  return (dispatch, getState) => {
+    return _flattenConstruct(blockId, getState());
+  };
+};
+
+/**
+ * Flatten a construct and list blocks -> array of parts, no list blocks.
+ * @function
+ * @param {UUID} blockId
+ * @returns {Array<Block>} Array of blocks
+ */
 export const blockFlattenConstructAndLists = (blockId) => {
   return (dispatch, getState) => {
     const state = getState();

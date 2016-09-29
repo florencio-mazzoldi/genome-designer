@@ -114,6 +114,7 @@ async function start() {
           const ignoreDotFilesAndNestedNodeModules = /([\/\\]\.)|(node_modules\/.*?\/node_modules)/gi;
           const checkSymlinkedNodeModule = /(.*?\/)?extensions\/.*?\/node_modules/;
           const checkIsInServerExtensions = /^server\//;
+          const checkTempFile = /temp/gi;
           const ignoreFilePathCheck = (path) => {
             if (ignoreDotFilesAndNestedNodeModules.test(path)) {
               return true;
@@ -126,6 +127,9 @@ async function start() {
             //additional check needed to handle symlinked files (nested node modules wont pick this up in symlinks)
             //ugly because javascript doesnt support negative lookaheads
             if (checkSymlinkedNodeModule.test(path) && checkIsInServerExtensions.test(path)) {
+              return true;
+            }
+            if (checkTempFile.test(path)) {
               return true;
             }
           };

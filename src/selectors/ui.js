@@ -42,11 +42,11 @@ export const inspectorIsVisible = () => {
 };
 
 /**
- * Check if the detail view is open
+ * Check if the project detail view is open
  * @function
  * @returns {boolean} true if the detail view is open
  */
-export const detailViewIsVisible = () => {
+export const projectDetailViewIsVisible = () => {
   return (dispatch, getState) => {
     return getState().detailView.isVisible;
   };

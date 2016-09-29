@@ -19,7 +19,6 @@ import { merge } from 'lodash';
 import ModalWindow from './modalwindow';
 import { uiShowExtensionPicker } from '../../actions/ui';
 import { userUpdateConfig } from '../../actions/user';
-import loadAllExtensions from '../../extensions/loadExtensions';
 import registry from '../../extensions/clientRegistry';
 import {
   extensionName,
@@ -73,7 +72,6 @@ export class ExtensionPicker extends Component {
 
     this.props.userUpdateConfig(nextConfig)
       .then(user => {
-        loadAllExtensions(true, true);
         this.setState({ dirty: false });
         this.props.uiShowExtensionPicker(false);
       });

@@ -1,18 +1,22 @@
 /*
-Copyright 2016 Autodesk,Inc.
+ Copyright 2016 Autodesk,Inc.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+/**
+ * @module Selectors_Projects
+ * @memberOf module:Selectors
+ */
 import invariant from 'invariant';
 import * as blockSelectors from './blocks';
 
@@ -28,19 +32,36 @@ const _getProjectFromStore = (projectId, store) => {
   return store.projects[projectId];
 };
 
+/**
+ * Get a project by ID
+ * @function
+ * @param {UUID} projectId
+ * @returns {Project}
+ */
 export const projectGet = (projectId) => {
   return (dispatch, getState) => {
     return _getProjectFromStore(projectId, getState());
   };
 };
 
-//get the focused project from the URL, since react-router is only accessible in react components
+/**
+ * Get current project ID, from the URL
+ * @function
+ * @param {UUID} projectId
+ * @returns {UUID} current project ID
+ */
 export const projectGetCurrentId = () => {
   return (dispatch, getState) => {
     return _getCurrentProjectId();
   };
 };
 
+/**
+ * Get current project version
+ * @function
+ * @param {UUID} projectId
+ * @returns {SHA} latest project version
+ */
 export const projectGetVersion = (projectId) => {
   return (dispatch, getState) => {
     const project = _getProjectFromStore(projectId, getState());
@@ -48,7 +69,13 @@ export const projectGetVersion = (projectId) => {
   };
 };
 
-//note - does not include options
+/**
+ * Get all components of a project (does not include list block options, just list blocks). See projectListAllBlocks()
+ * todo - move to object
+ * @function
+ * @param {UUID} projectId
+ * @returns {UUID} current project ID
+ */
 export const projectListAllComponents = (projectId) => {
   return (dispatch, getState) => {
     const project = _getProjectFromStore(projectId, getState());
@@ -62,7 +89,13 @@ export const projectListAllComponents = (projectId) => {
   };
 };
 
-//note - does not include components
+/**
+ * Get all list options of a project.
+ * todo - move to object
+ * @function
+ * @param {UUID} projectId
+ * @returns {Array<Block>}
+ */
 export const projectListAllOptions = (projectId) => {
   return (dispatch, getState) => {
     const components = dispatch(projectListAllComponents(projectId));
@@ -71,7 +104,13 @@ export const projectListAllOptions = (projectId) => {
   };
 };
 
-//all contents
+/**
+ * Get all contents of a project.
+ * todo - move to object
+ * @function
+ * @param {UUID} projectId
+ * @returns {Array<Block>}
+ */
 export const projectListAllBlocks = (projectId) => {
   return (dispatch, getState) => {
     const components = dispatch(projectListAllComponents(projectId));
@@ -80,6 +119,13 @@ export const projectListAllBlocks = (projectId) => {
   };
 };
 
+/**
+ * Check if a project contains a block
+ * @function
+ * @param {UUID} projectId
+ * @param {UUID} blockId
+ * @returns {boolean}
+ */
 export const projectHasComponent = (projectId, blockId) => {
   return (dispatch, getState) => {
     const components = dispatch(projectListAllComponents(projectId));
@@ -87,6 +133,13 @@ export const projectHasComponent = (projectId, blockId) => {
   };
 };
 
+/**
+ * Check if a project contains a list option
+ * @function
+ * @param {UUID} projectId
+ * @param {UUID} blockId
+ * @returns {boolean}
+ */
 export const projectHasOption = (projectId, blockId) => {
   return (dispatch, getState) => {
     const options = dispatch(projectListAllOptions(projectId));
@@ -94,9 +147,16 @@ export const projectHasOption = (projectId, blockId) => {
   };
 };
 
-//check if a block with { source: { source: sourceKey, id: sourceId } } is present in the project (e.g. so dont clone it in more than once)
-//only checks options, since if its a component we should clone it
-//returns block if exists, or null
+/**
+ * Find a list block option with a given source key and source ID.
+ * check if a block with { source: { source: sourceKey, id: sourceId } } is present in the project (e.g. so dont clone it in more than once)
+ * Only checks options, since if its a component we should clone it
+ * @function
+ * @param {UUID} projectId
+ * @param {string} sourceKey
+ * @param {string} sourceId
+ * @returns {Block} Block if it exists, or null
+ */
 export const projectGetOptionWithSource = (projectId, sourceKey, sourceId) => {
   return (dispatch, getState) => {
     invariant(sourceKey && sourceId, 'source key and ID are required');
@@ -105,6 +165,13 @@ export const projectGetOptionWithSource = (projectId, sourceKey, sourceId) => {
   };
 };
 
+/**
+ * Create project rollup
+ * @function
+ * @param {UUID} projectId
+ * @param {UUID} blockId
+ * @returns {Object} { project: Project, blocks: Object.<blockId:Block> }
+ */
 export const projectCreateRollup = (projectId) => {
   return (dispatch, getState) => {
     const project = _getProjectFromStore(projectId, getState());

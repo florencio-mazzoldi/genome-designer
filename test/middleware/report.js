@@ -23,7 +23,7 @@ describe('Middleware', () => {
   describe('Reporting', () => {
     const issueId = 10;
     //only run this test in CI, where env var is set
-    if (process.env.GITHUB_ACCESS_TOKEN || (process.env.CI && process.env.TRAVIS_SECURE_ENV_VARS)) {
+    if (!!process.env.GITHUB_ACCESS_TOKEN || (process.env.CI && process.env.TRAVIS_SECURE_ENV_VARS === 'true')) {
       it('should be able to talk to github', () => {
         return rejectingFetch(reportApiPath('githubIssue/' + issueId), headersGet())
           .then(resp => resp.json())

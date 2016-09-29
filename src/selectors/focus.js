@@ -13,6 +13,12 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
+/**
+ * @module Selectors_Focus
+ * @memberOf module:Selectors
+ */
+
 import * as BlockSelector from './blocks';
 
 const _getCurrentProjectId = () => {
@@ -42,7 +48,7 @@ export const _getFocused = (state, defaultToConstruct = true, defaultProjectId =
   }
 
   //focus doesnt update on undo, just the blocks... so need to filter / make sure defined
-  const project = forceProject || state.projects[projectId || defaultProjectId];
+  const project = forceProject || state.projects[defaultProjectId || projectId];
   const construct = state.blocks[constructId];
   const blocks = !!forceBlocks.length ?
     forceBlocks :
@@ -75,7 +81,16 @@ export const _getFocused = (state, defaultToConstruct = true, defaultProjectId =
   };
 };
 
-//primary way to get focused things for the inspector
+/**
+ * Get pieces of app in focus. May be project, top-level construct, block, option, or role
+ * @function
+ * @param {boolean} [defaultToConstruct=true]
+ * @param {*} [defaultProjectId=null] Default if current project is not defined
+ * @returns {Object} returns {type: string, readOnly: boolean, focused: *}
+ * Where type is project, construct, block, option, or role
+ * readOnly is if forced, or block is frozen
+ * focused may be a project, block
+ */
 export const focusGetFocused = (defaultToConstruct = true, defaultProjectId = null) => {
   return (dispatch, getState) => {
     const state = getState();
@@ -83,6 +98,11 @@ export const focusGetFocused = (defaultToConstruct = true, defaultProjectId = nu
   };
 };
 
+/**
+ * Get currently selected project
+ * @function
+ * @returns {Project} null if no project id is active
+ */
 export const focusGetProject = () => {
   return (dispatch, getState) => {
     const { forceProject } = getState().focus;
@@ -94,6 +114,11 @@ export const focusGetProject = () => {
   };
 };
 
+/**
+ * Currently selected top-level construct
+ * @function
+ * @returns {Block}
+ */
 export const focusGetConstruct = () => {
   return (dispatch, getState) => {
     const state = getState();
@@ -101,6 +126,12 @@ export const focusGetConstruct = () => {
   };
 };
 
+/**
+ * Get currently selected blocks
+ * @function
+ * @param {boolean} [defaultToConstruct=true]
+ * @returns {Array<Block>}
+ */
 export const focusGetBlocks = (defaultToConstruct = true) => {
   return (dispatch, getState) => {
     const state = getState();
@@ -115,6 +146,11 @@ export const focusGetBlocks = (defaultToConstruct = true) => {
   };
 };
 
+/**
+ * Get range of currently selected blocks
+ * @function
+ * @returns {Array<Block>} Array of currently selected blocks, construct if no blocks selected, or empty if neither selected
+ */
 export const focusGetBlockRange = () => {
   return (dispatch, getState) => {
     const focusedBlocks = dispatch(focusGetBlocks(false));
@@ -133,8 +169,11 @@ export const focusGetBlockRange = () => {
   };
 };
 
-//if focused blocks / construct have components
-//e.g. whether can open sequence detail view
+/**
+ * Check if the detail view is relevant, i.e. there are blocks / construct selected
+ * @function
+ * @returns {boolean} true if relevant
+ */
 export const focusDetailsExist = () => {
   return (dispatch, getState) => {
     const state = getState();

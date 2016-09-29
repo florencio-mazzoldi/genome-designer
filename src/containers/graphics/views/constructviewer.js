@@ -216,10 +216,10 @@ export class ConstructViewer extends Component {
   onOrderDNA = () => {
     let order = this.props.orderCreate(this.props.currentProjectId, [this.props.construct.id]);
     this.props.orderList(this.props.currentProjectId)
-    .then((orders) => {
-      order = this.props.orderSetName(order.id, `Order ${orders.length}`);
-      this.props.uiShowOrderForm(true, order.id);
-    });
+      .then((orders) => {
+        order = this.props.orderSetName(order.id, `Order ${orders.length}`);
+        this.props.uiShowOrderForm(true, order.id);
+      });
   };
 
   /**
@@ -610,14 +610,22 @@ export class ConstructViewer extends Component {
     if (this.props.construct.isTemplate() && !this.isSampleProject()) {
       const canOrderFromEGF = this.props.construct.components.every(blockId => {
         const block = this.props.blocks[blockId];
+
+        //check blocks' source
         if (block.source.source === 'egf') {
           return true;
         }
+
+        //check block options if source not valid
         const optionIds = Object.keys(block.options);
-        return optionIds.every(optionId => {
-          const option = this.props.blocks[optionId];
-          return option.source.source === 'egf';
-        });
+        if (optionIds.length > 0) {
+          return optionIds.every(optionId => {
+            const option = this.props.blocks[optionId];
+            return option.source.source && option.source.source === 'egf';
+          });
+        }
+
+        return false;
       });
 
       return canOrderFromEGF ?

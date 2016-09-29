@@ -1,6 +1,10 @@
 Genetic Constructor uses its own format of Schema for ensuring data validatity and consistency. Schemas back scaffolding and validation of [Models](../models/README.md).
 
-Schemas are objects which take a field, description, and options. These are currently best documented in the code in the folder `/fields/`.
+Schemas are objects which take a field, description, and options.
+
+Schemas are described in [main documentation](http://geneticconstructor.com/help/docs/module-Schemas.html)
+
+Fields are These are currently best documented in the code in the folder `/fields/`.
 
 ### Example
 
