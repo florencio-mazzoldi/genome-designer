@@ -281,9 +281,7 @@ def has_parent(block_id, all_blocks):
 def block_by_old_id(old_id, all_blocks):
     for block in all_blocks.values():
         if "old_id" in block["metadata"] and block["metadata"]["old_id"] == old_id:
-            print "returning", block
             return block
-    print "Looking for Block with old id:", old_id
     raise Exception("Block not Found!")
 
 # Traverse an array of blocks and build a hierarchy. The hierarchy embeds blocks into other blocks in order,
