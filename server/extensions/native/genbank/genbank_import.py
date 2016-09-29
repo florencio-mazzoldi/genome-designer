@@ -7,6 +7,7 @@ import sys
 # Ex: if genbank says "gene", turn it into an role_type of "cds" as we import
 role_type_table = {
     "CDS": "cds",
+    "cds": "cds",
     "regulatory": "promoter", #promoter is actually a subclass of regulatory
     "promoter": "promoter",
     "terminator": "terminator",
@@ -126,7 +127,8 @@ def convert_block_to_annotation(all_blocks, to_convert, parent, to_remove_list):
         elif key == "strand":
             annotation["isForward"] = (value == 1)
         else:
-            annotation["notes"][key] = value
+            if key not in ["is_annotation", "old_parents", "old_id"]:
+                annotation["notes"][key] = value
 
     if "role" in to_convert["rules"]:
         annotation["role"] = to_convert["rules"]["role"]
@@ -145,7 +147,7 @@ def convert_block_to_annotation(all_blocks, to_convert, parent, to_remove_list):
         for annotation in to_convert["sequence"]["annotations"]:
             # We need to normalize the start and end for the annotation to the new parent start and end
             annotation["start"] = annotation["start"] + to_convert["metadata"]["start"] - parent["metadata"]["start"]
-            annotation["end"] = annotation["end"] + to_convert["metadata"]["end"] - parent["metadata"]["end"]
+            annotation["end"] = annotation["end"] + to_convert["metadata"]["start"] - parent["metadata"]["start"]
             parent["sequence"]["annotations"].append(annotation)
 
     # And also convert to features all the components of the removed block, recursively
@@ -215,9 +217,15 @@ def convert_GC_info(f, block):
             block["metadata"]["description"] = all_info["GC"]["description"]
         if "note" in all_info:
             block["metadata"]["genbank"]["note"] = all_info["note"]
+        if "id" in all_info["GC"]:
+            block["metadata"]["old_id"] = all_info["GC"]["id"]
+        if "parents" in all_info["GC"] and len(all_info["GC"]["parents"]) > 0:
+            block["metadata"]["old_parents"] = all_info["GC"]["parents"]
+        if "type" in all_info["GC"]:
+            block["metadata"]["is_annotation"] = (all_info["GC"]["type"] == "annotation")
+
     except:
-        print "Exception: ", sys.exc_info()
-        pass
+        block["metadata"]["genbank"]["note"] = f.qualifiers["note"][0]
 
 # Takes a BioPython SeqFeature and turns it into a block
 def create_child_block_from_feature(f, all_blocks, root_block, sequence):
@@ -261,7 +269,6 @@ def create_child_block_from_feature(f, all_blocks, root_block, sequence):
         if role_type:
             child_block["rules"]["role"] = role_type
 
-
         all_blocks[block_id] = child_block
 
 # Returns true if a block id is a children of any other block
@@ -270,6 +277,14 @@ def has_parent(block_id, all_blocks):
         if block_id in block["components"]:
             return True
     return False
+
+def block_by_old_id(old_id, all_blocks):
+    for block in all_blocks.values():
+        if "old_id" in block["metadata"] and block["metadata"]["old_id"] == old_id:
+            print "returning", block
+            return block
+    print "Looking for Block with old id:", old_id
+    raise Exception("Block not Found!")
 
 # Traverse an array of blocks and build a hierarchy. The hierarchy embeds blocks into other blocks in order,
 # and create filler blocks where needed
@@ -292,6 +307,15 @@ def build_block_hierarchy(all_blocks, root_block, sequence):
         if block == root_block or block["id"] in to_remove or has_parent(block["id"], all_blocks):
             continue
 
+        # Try to rebuild the hierarchy if it's an import from GC
+        if "old_parents" in block["metadata"] and len(block["metadata"]["old_parents"]) > 0:
+            if "is_annotation" in block["metadata"] and block["metadata"]["is_annotation"]:
+                convert_block_to_annotation(all_blocks, block, block_by_old_id(block["metadata"]["old_parents"][0], all_blocks), to_remove)
+            else:
+                for old_parent_id in block["metadata"]["old_parents"]:
+                    insert_child_in_parent(all_blocks, block, full_length, block_by_old_id(old_parent_id, all_blocks), to_remove)
+            continue
+
         inserted = False
 
         parents = []
@@ -308,24 +332,7 @@ def build_block_hierarchy(all_blocks, root_block, sequence):
         for other_block in parents:
             rel = relationship(block, other_block, full_length)
             if rel == "child":
-                i = 0
-                is_partial_overlap = False
-                # Go through the siblins to see where to insert the current block
-                for sib_id in other_block["components"]:
-                    sibling = all_blocks[sib_id]
-                    relationship_to_sibling = relationship(block, sibling, full_length)
-                    # Keep moving forward until we get to one where we need to be "before"
-                    if relationship_to_sibling == "after":
-                        i += 1
-                    elif relationship_to_sibling != "before":  # Partial match!
-                        is_partial_overlap = True
-                        break
-                # Insert the block where it goes
-                if not is_partial_overlap:
-                    other_block["components"].insert(i, block["id"])
-                else:
-                    # Partial match, make this block just an annotation of the parent
-                    convert_block_to_annotation(all_blocks, block, other_block, to_remove)
+                insert_child_in_parent(all_blocks, block, full_length, other_block, to_remove)
                 inserted = True
                 break
             elif rel == "equal":
@@ -347,6 +354,28 @@ def build_block_hierarchy(all_blocks, root_block, sequence):
     # Delete all the blocks that were converted to features
     for removing in to_remove:
         all_blocks.pop(removing)
+
+
+def insert_child_in_parent(all_blocks, block, full_length, parent_block, to_remove):
+    i = 0
+    is_partial_overlap = False
+    # Go through the siblins to see where to insert the current block
+    for sib_id in parent_block["components"]:
+        sibling = all_blocks[sib_id]
+        relationship_to_sibling = relationship(block, sibling, full_length)
+        # Keep moving forward until we get to one where we need to be "before"
+        if relationship_to_sibling == "after":
+            i += 1
+        elif relationship_to_sibling != "before":  # Partial match!
+            is_partial_overlap = True
+            break
+    # Insert the block where it goes
+    if not is_partial_overlap:
+        parent_block["components"].insert(i, block["id"])
+    else:
+        # Partial match, make this block just an annotation of the parent
+        convert_block_to_annotation(all_blocks, block, parent_block, to_remove)
+
 
 # Create blocks that fill holes between siblings.
 def create_filler_blocks_for_holes(all_blocks, sequence):
@@ -400,6 +429,9 @@ def remove_start_and_end_of_blocks(all_blocks):
         try:
             del block["metadata"]["start"]
             del block["metadata"]["end"]
+            del block["metadata"]["is_annotation"]
+            del block["metadata"]["old_id"]
+            del block["metadata"]["old_parents"]
         except KeyError:
             pass
 
